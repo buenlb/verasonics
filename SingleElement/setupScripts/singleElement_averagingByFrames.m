@@ -1,5 +1,9 @@
 clear all
 
+%% Set up path locations
+srcDirectory = setPaths();
+
+%%
 NA = 4;
 
 % Specify system parameters
@@ -138,4 +142,6 @@ SeqControl(6).command = 'jump';
 SeqControl(6).argument = 1;
 
 % Save all the structures to a .mat file.
-save('C:\Users\Verasonics\Desktop\Taylor\MatFiles\singleElement_averagingByFrames');
+scriptName = mfilename('fullpath');
+svName = matFileName(scriptName);
+save(svName);

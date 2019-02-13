@@ -1,19 +1,6 @@
 clear; close all; clc;
 
-%% Setup paths
-% Find the directory this script is in (could be different since this can
-% be run in simulation on individual laptops as well as on the main
-% machine) and add the lib path. This will also be used to save the
-% resulting mat file.
-workingDirectory = which('setupTransmit.m');
-idx = strfind(workingDirectory,'\');
-workingDirectory = workingDirectory(1:idx(end));
-srcDirectory = workingDirectory(1:idx(end-1));
-
-if ~exist('computeTXDelays_monkey.m','file')
-    addpath([srcDirectory,'lib'])
-    addpath([srcDirectory,'MATFILES'])
-end
+srcDirectory = setPaths();
 
 %% Setup the transducer
 setupVerasonicsStruct;
@@ -81,6 +68,9 @@ SeqControl(1).command = 'transferToHost';
 
 
 %% Output resulting MAT file that will be passed to VSX
-save([srcDirectory,'MATFILES/setupTransmit.mat'])
+% Save all the structures to a .mat file.
+scriptName = mfilename('fullpath');
+svName = matFileName(scriptName);
+save(svName);
 
 % showTXPD
