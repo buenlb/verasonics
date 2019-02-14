@@ -23,7 +23,7 @@ TX(1).waveform = 1;
 TX(1).Apod = ones(1,Trans.numelements);
 
 %% I have had trouble getting the default Verasonics function to work so this is ignored - I left it here in case it is useful in the future.
-if 0
+if 1
 % This is the origin from which you want to steer. Generally this will be
 % just the origin of the Tx but if you want to do something fancy (ex: wide
 % beam imaging with the focus behind the Tx) setting it to something
@@ -35,7 +35,7 @@ TX(1).Delay = computeTXDelays(TX);
 end
 
 %% Compute delays with custom function
-TX(1).Delay = computeTXDelays_monkey([5,r,0],Trans,Resource);
+TX(1).Delay = computeTXDelays_monkey([0,0,r],Trans,Resource);
 
 %% Set up PData in order to visualize transmit
 PData.PDelta = ones(1,3);
