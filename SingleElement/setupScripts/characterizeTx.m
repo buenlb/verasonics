@@ -4,13 +4,14 @@ clear all; close all; clc;
 srcDirectory = setPaths();
 
 %%
-NA = 2;
+NA = 1;
 
 % Specify system parameters
 Resource.Parameters.numTransmit = 1; % no. of xmit chnls (V64LE,V128 or V256).
 Resource.Parameters.numRcvChannels = 1; % change to 64 for Vantage 64 or 64LE
 Resource.Parameters.connector = 1; % trans. connector to use (V256).
-Resource.Parameters.speedOfSound = 1540; % speed of sound in m/sec
+Resource.Parameters.speedOfSound = 1490; % speed of sound in m/sec
+Resource.Parameters.numAvg = NA;
 % Resource.Parameters.simulateMode = 1; % runs script in simulate mode
 
 % Specify media points
@@ -18,7 +19,7 @@ Media.MP(1,:) = [0,0,100,1.0]; % [x, y, z, reflectivity]
 
 % Specify Trans structure array.
 Trans.name = 'Custom';
-Trans.frequency = 2.25; % not needed if using default center frequency
+Trans.frequency = 2.25;
 Trans.units = 'mm';
 Trans.lensCorrection = 1;
 Trans.Bandwidth = [1.5,3];
@@ -29,6 +30,8 @@ Trans.ElementPos = ones(1,5);
 Trans.ElementSens = ones(101,1);
 Trans.connType = 1;
 Trans.Connector = 1;
+Trans.impedance = 50;
+Trans.maxHighVoltage = 96;
 
 
 % Specify Resource buffers.
@@ -58,7 +61,7 @@ TGC(1).Waveform = computeTGCWaveform(TGC);
 % Specify Receive structure array -
 Receive(1).Apod = 1;
 Receive(1).startDepth = 0;
-Receive(1).endDepth = 250;
+Receive(1).endDepth = 150;
 Receive(1).TGC = 1; % Use the first TGC waveform defined above
 Receive(1).mode = 0;
 Receive(1).bufnum = 1;
@@ -87,19 +90,19 @@ Event(1).tx = 1; % use 1st TX structure.
 Event(1).rcv = 1; % use 1st Rcv structure.
 Event(1).recon = 0; % no reconstruction.
 Event(1).process = 0; % no processing
-Event(1).seqControl = [1,2];
+Event(1).seqControl = [1,2,3];
 SeqControl(1).command = 'timeToNextAcq';
-SeqControl(1).argument = 50000;
+SeqControl(1).argument = 21400;
 SeqControl(2).command = 'transferToHost';
-
+SeqControl(3).command = 'triggerOut';
 n = 2;
 
 
-nsc = 3;
+nsc = 4;
 for ii = 2:NA
     Event(n) = Event(1);
     Event(n).rcv = ii;
-    Event(n).seqControl = [1,nsc];
+    Event(n).seqControl = [1,3,nsc];
      SeqControl(nsc).command = 'transferToHost';
 	   nsc = nsc + 1;
     n = n+1;
@@ -118,6 +121,7 @@ SeqControl(nsc).argument = 2;
 SeqControl(nsc+1).command = 'markTransferProcessed';
 SeqControl(nsc+1).argument = 2;
 SeqControl(nsc+2).command = 'sync';
+SeqControl(nsc+2).argument = 25e6;
 nsc = nsc+3;
 n = n+1;
 
