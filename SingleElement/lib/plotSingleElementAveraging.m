@@ -17,6 +17,6 @@ for ii = 1:length(Receive)
 end
 accum = accum/Resource.Parameters.numAvg;
 plot(t,accum)
-axis([0,max(t),-4096,4096])
+% axis([0,max(t),-1.5e4,1.5e4])
 drawnow
 return

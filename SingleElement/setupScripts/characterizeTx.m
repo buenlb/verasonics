@@ -41,11 +41,11 @@ Resource.RcvBuffer(1).colsPerFrame = 1; % change to 256 for V256 system
 Resource.RcvBuffer(1).numFrames = 1; % minimum size is 1 frame.
 
 % Specify Transmit waveform structure.
-% TW(1).type = 'parametric';
-% TW(1).Parameters = [2.25,0.67,2,1]; % A, B, C, D
-TW(1).type = 'pulseCode';
+TW(1).type = 'parametric';
+TW(1).Parameters = [2.25,0.67,1,1]; % A, B, C, D
+% TW(1).type = 'pulseCode';
 % TW(1).PulseCode = generateImpulse(1/(4*2.25e6));
-TW(1).PulseCode = generateImpulse(3/250e6);
+% TW(1).PulseCode = generateImpulse(3/250e6);
 
 % Specify TX structure array.
 TX(1).waveform = 1; % use 1st TW structure.

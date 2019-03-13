@@ -5,6 +5,7 @@ srcDirectory = setPaths();
 
 %%
 NA = 128;
+nFrames = 4;
 
 % Specify system parameters
 Resource.Parameters.numTransmit = 1; % no. of xmit chnls (V64LE,V128 or V256).
@@ -38,7 +39,7 @@ Trans.maxHighVoltage = 96;
 Resource.RcvBuffer(1).datatype = 'int16';
 Resource.RcvBuffer(1).rowsPerFrame = NA*2048*4; % this allows for 1/4 maximum range
 Resource.RcvBuffer(1).colsPerFrame = 1; % change to 256 for V256 system
-Resource.RcvBuffer(1).numFrames = 1; % minimum size is 1 frame.
+Resource.RcvBuffer(1).numFrames = nFrames; % minimum size is 1 frame.
 
 % Specify Transmit waveform structure.
 TW(1).type = 'parametric';
@@ -59,21 +60,25 @@ TGC(1).rangeMax = 250;
 TGC(1).Waveform = computeTGCWaveform(TGC);
 
 % Specify Receive structure array -
-Receive(1).Apod = 1;
-Receive(1).startDepth = 0;
-Receive(1).endDepth = 400;
-Receive(1).TGC = 1; % Use the first TGC waveform defined above
-Receive(1).mode = 0;
-Receive(1).bufnum = 1;
-Receive(1).framenum = 1;
-Receive(1).acqNum = 1;
-Receive(1).sampleMode = 'NS200BW';
-Receive(1).LowPassCoef = [];
-Receive(1).InputFilter = [];
+firstReceive.Apod = 1;
+firstReceive.startDepth = 0;
+firstReceive.endDepth = 400;
+firstReceive.TGC = 1; % Use the first TGC waveform defined above
+firstReceive.mode = 0;
+firstReceive.bufnum = 1;
+firstReceive.framenum = 1;
+firstReceive.acqNum = 1;
+firstReceive.sampleMode = 'NS200BW';
+firstReceive.LowPassCoef = [];
+firstReceive.InputFilter = [];
 
-for n = 2:NA
-    Receive(n) = Receive(1);
-    Receive(n).acqNum = n;
+for ii = 1:nFrames
+    for jj = 1:NA
+        idx = (ii-1)*NA+jj;
+        Receive(idx) = firstReceive;
+        Receive(idx).acqNum = jj;
+        Receive(idx).framenum = ii;
+    end
 end
 
 % Specify an external processing event.
@@ -85,29 +90,28 @@ Process(1).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'dstbuffer','none'};
 
 % Specify sequence events.
-Event(1).info = 'Acquire RF Data.';
-Event(1).tx = 1; % use 1st TX structure.
-Event(1).rcv = 1; % use 1st Rcv structure.
-Event(1).recon = 0; % no reconstruction.
-Event(1).process = 0; % no processing
-Event(1).seqControl = [1,2];
+firstEvent.info = 'Acquire RF Data.';
+firstEvent.tx = 1; % use 1st TX structure.
+firstEvent.rcv = 1; % use 1st Rcv structure.
+firstEvent.recon = 0; % no reconstruction.
+firstEvent.process = 0; % no processing
+firstEvent.seqControl = [1,2];
 SeqControl(1).command = 'timeToNextAcq';
-SeqControl(1).argument = 400;
+SeqControl(1).argument = 1500;
 SeqControl(2).command = 'transferToHost';
 
-n = 2;
-
-
-nsc = 3;
-for ii = 2:NA
-    Event(n) = Event(1);
-    Event(n).rcv = ii;
-    Event(n).seqControl = [1,nsc];
-     SeqControl(nsc).command = 'transferToHost';
-	   nsc = nsc + 1;
-    n = n+1;
-%     Event(n) = Event(2);
-%     n = n+1;
+n = 1;
+nsc = 2;
+for ii = 1:nFrames
+    for jj = 1:NA
+        idx = (ii-1)*NA+jj;
+        Event(n) = firstEvent;
+        Event(n).rcv = idx;
+        Event(n).seqControl = [1,nsc];
+         SeqControl(nsc).command = 'transferToHost';
+           nsc = nsc + 1;
+        n = n+1;
+    end
 end
 
 Event(n).info = 'Call external Processing function.';
