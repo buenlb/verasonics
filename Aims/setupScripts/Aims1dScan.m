@@ -6,10 +6,15 @@ srcDirectory = setPaths();
 %% Set scan parameters
 [lib,axis,locs] = verasonics1dScan(1,-49,50,100);
 
-%%
+%% User defined Scan Parameters
 NA = 4;
 nFrames = length(locs);
+positionerDelay = 1000; % Positioner delay in ms
+prf = 500; % Pulse repitition Frequency in Hz
 
+%% Setup System
+% Since there are often long pauses after moving the positioner
+% set a high timeout value for the verasonics DMA system
 Resource.VDAS.dmaTimeout = 10000;
 
 % Specify system parameters
@@ -123,7 +128,7 @@ firstEvent.recon = 0; % no reconstruction.
 firstEvent.process = 0; % no processing
 firstEvent.seqControl = [1,2];
     SeqControl(nsc).command = 'timeToNextAcq';
-    SeqControl(nsc).argument = 2000;
+    SeqControl(nsc).argument = (1/prf)*1e6;
     nsc = nsc+1;
 
 for ii = 1:nFrames
@@ -167,7 +172,7 @@ for ii = 1:nFrames
         Event(n).process = 0;
         Event(n).seqControl = nsc;
             SeqControl(nsc).command = 'noop';
-            SeqControl(nsc).argument = 5e6;
+            SeqControl(nsc).argument = (positionerDelay*1e-3)/200e-9;
             SeqControl(nsc).condition = 'Hw&Sw';
             nsc = nsc+1;
         n = n+1;
