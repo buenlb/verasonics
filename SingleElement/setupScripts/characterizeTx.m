@@ -42,7 +42,8 @@ Resource.RcvBuffer(1).numFrames = 1; % minimum size is 1 frame.
 
 % Specify Transmit waveform structure.
 TW(1).type = 'parametric';
-TW(1).Parameters = [5,0.67,1,1]; % A, B, C, D
+numberHalfCycles = 2;
+TW(1).Parameters = [5,0.67,numberHalfCycles,1]; % A, B, C, D
 % TW(1).type = 'pulseCode';
 % TW(1).PulseCode = generateImpulse(1/(4*2.25e6));
 % TW(1).PulseCode = generateImpulse(3/250e6);

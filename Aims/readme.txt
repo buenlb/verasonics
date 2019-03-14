@@ -15,6 +15,8 @@ Changes to the Soniq system are made by external processing function calls. Thes
 		-NA: number of averages to acquire at each positioner location
 		-positionerDelay: delay in ms between positioner movement and data acquisition
 		-prf: pulse repitition frequency in Hz for the NA Transmit/receive pulses acquired at each positioner location
+		-centerFrequency: Center transmit/receive frequency
+		-numHalfCycles: number of half cycles to use in transmit pulse
 		
 # Soniq Helper Functions (all housed in lib)
 	- loadSoniqLibrary: This must be called before any other soniq helper functions are called. It loads the DLL and assigns it an alias which is returned as the output variable of the function. Currently the alias is set to be 'soniq'. This alias must then be passed to the other helper functions. It is stored in Resource.Parameters so that it can be used by VSX

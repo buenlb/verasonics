@@ -11,6 +11,9 @@ NA = 4;
 nFrames = length(locs);
 positionerDelay = 1000; % Positioner delay in ms
 prf = 500; % Pulse repitition Frequency in Hz
+centerFrequency = 5; % Frequency in MHz
+numHalfCycles = 2; % Number of half cycles to use in each pulse
+desiredDepth = 150; % Desired depth in mm
 
 %% Setup System
 % Since there are often long pauses after moving the positioner
@@ -33,7 +36,7 @@ Media.MP(1,:) = [0,0,100,1.0]; % [x, y, z, reflectivity]
 
 % Specify Trans structure array.
 Trans.name = 'Custom';
-Trans.frequency = 2.25; % not needed if using default center frequency
+Trans.frequency = centerFrequency; % not needed if using default center frequency
 Trans.units = 'mm';
 Trans.lensCorrection = 1;
 Trans.Bandwidth = [1.5,3];
@@ -56,7 +59,7 @@ Resource.RcvBuffer(1).numFrames = nFrames; % minimum size is 1 frame.
 
 % Specify Transmit waveform structure.
 TW(1).type = 'parametric';
-TW(1).Parameters = [2.25,0.67,1,1]; % A, B, C, D
+TW(1).Parameters = [centerFrequency,0.67,numHalfCycles,1]; % A, B, C, D
 % TW(1).type = 'pulseCode';
 % TW(1).PulseCode = generateImpulse(1/(4*2.25e6));
 % TW(1).PulseCode = generateImpulse(3/250e6);
@@ -77,7 +80,8 @@ TGC(1).Waveform = computeTGCWaveform(TGC);
 % Specify Receive structure array -
 firstReceive.Apod = 1;
 firstReceive.startDepth = 0;
-firstReceive.endDepth = 250;
+% Use user supplied depth to set the depth in wavelengths
+firstReceive.endDepth = ceil(desiredDepth*1e-3/(Resource.Parameters.speedOfSound/(centerFrequency*1e6)));
 firstReceive.TGC = 1; % Use the first TGC waveform defined above
 firstReceive.mode = 0;
 firstReceive.bufnum = 1;
