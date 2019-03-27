@@ -31,8 +31,8 @@ if nargin == 0
     %% Get user defined parameters of scan
     axis = input('Axis ?>>');
     % Make sure an allowed axis was entered
-    if axis < 0 || axis > 4 || mod(axis,1)
-        error('Axis must be 0, 1, 2, 3, or 4')
+    if axis < 0 || axis > 2 || mod(axis,1)
+        error('Axis must be 0, 1, or 2')
     end
     sl = input('Start Location ?>>');
     % Check limits
@@ -52,8 +52,8 @@ if nargin == 0
     end
 else
     %% User already supplied input - error check it
-    if axis < 0 || axis > 4 || mod(axis,1)
-        error('Axis must be 0, 1, 2, 3, or 4')
+    if axis < 0 || axis > 2 || mod(axis,1)
+        error('Axis must be 0, 1, or 2')
     end
     if ~withinLimits(lib,axis,sl)
         error('Start location is outside of limits!')

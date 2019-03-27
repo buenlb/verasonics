@@ -4,7 +4,7 @@ clear all; close all; clc;
 srcDirectory = setPaths();
 
 %% Set scan parameters
-[lib,axis,locs] = verasonics1dScan(4,-24,25,50);
+[lib,axis,locs] = verasonics1dScan(1,-49,50,100);
 
 %% User defined Scan Parameters
 NA = 32;
@@ -105,11 +105,11 @@ Process(1).classname = 'External';
 Process(1).method = 'continueScan';
 Process(1).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'srcbufnum',1,...
-'srcframenum',-1,...
+'srcframenum',1,...
 'dstbuffer','none'};
 
 Process(2).classname = 'External';
-Process(2).method = 'show1dScan';
+Process(2).method = 'show2dScan';
 Process(2).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'srcbufnum',1,...
 'srcframenum',0,...

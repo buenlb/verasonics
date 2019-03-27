@@ -23,6 +23,7 @@ srcDirectory = workingDirectory(1:idx(end-1));
 verasonicsCodeDirectory = workingDirectory(1:idx(end-2));
 
 addpath([srcDirectory,'lib'])
-addpath([srcDirectory,'lib\soniq'])
 addpath([srcDirectory,'MATFILES'])
+addpath([srcDirectory,'lib/soniq'])
+addpath([srcDirectory,'lib/fg'])
 addpath([verasonicsCodeDirectory,'lib'])

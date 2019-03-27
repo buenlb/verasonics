@@ -33,6 +33,8 @@ Trans.Connector = 1;
 Trans.impedance = 50;
 Trans.maxHighVoltage = 96;
 
+TPC(1).hv = 96;
+
 
 % Specify Resource buffers.
 Resource.RcvBuffer(1).datatype = 'int16';
@@ -54,8 +56,8 @@ TX(1).Apod = 1;
 TX(1).Delay = 0;
 
 % Specify TGC Waveform structure.
-TGC(1).CntrlPts = [500,590,650,710,770,830,890,950];
-TGC(1).rangeMax = 250;
+TGC(1).CntrlPts = ones(1,8)*0;
+TGC(1).rangeMax = 1;
 TGC(1).Waveform = computeTGCWaveform(TGC);
 
 % Specify Receive structure array -
@@ -90,15 +92,16 @@ Event(1).tx = 1; % use 1st TX structure.
 Event(1).rcv = 1; % use 1st Rcv structure.
 Event(1).recon = 0; % no reconstruction.
 Event(1).process = 0; % no processing
-Event(1).seqControl = [1,2];
+Event(1).seqControl = [1,2,3];
 SeqControl(1).command = 'timeToNextAcq';
 SeqControl(1).argument = 400;
 SeqControl(2).command = 'transferToHost';
+SeqControl(3).command = 'triggerOut';
 
 n = 2;
 
 
-nsc = 3;
+nsc = 4;
 for ii = 2:NA
     Event(n) = Event(1);
     Event(n).rcv = ii;

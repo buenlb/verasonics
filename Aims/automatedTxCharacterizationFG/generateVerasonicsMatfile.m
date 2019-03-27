@@ -1,11 +1,26 @@
-clear all; close all; clc;
+% generateVerasonicsMatfile generates a matfile that runs a single element
+% transducer at according to the input parameters
+% 
+% @INPUTS
+%   frequency: center frequency in MHz
+%   amp: voltage at which to run the transducer in volts
+%   prf: pulse repitition frequency
+%   nCycles: number of cycles with which to drive the pulse (can be
+%     multiples of 0.5
+% 
+% @OUTPUTS
+%   svName: name of matfile that was created
+% 
+% Taylor Webb
+% University of Utah
+
+function svName = generateVerasonicsMatfile(frequency,amp,prf,nCycles)
 
 %% Set up path locations
 srcDirectory = setPaths();
 
 %%
 NA = 1;
-frequency = 2.25;
 
 % Specify system parameters
 Resource.Parameters.numTransmit = 1; % no. of xmit chnls (V64LE,V128 or V256).
@@ -32,7 +47,7 @@ Trans.ElementSens = ones(101,1);
 Trans.connType = 1;
 Trans.Connector = 1;
 Trans.impedance = 50;
-Trans.maxHighVoltage = 96;
+Trans.maxHighVoltage = amp;
 
 
 % Specify Resource buffers.
@@ -43,8 +58,7 @@ Resource.RcvBuffer(1).numFrames = 1; % minimum size is 1 frame.
 
 % Specify Transmit waveform structure.
 TW(1).type = 'parametric';
-numberHalfCycles = 2;
-TW(1).Parameters = [frequency,0.67,numberHalfCycles,1]; % A, B, C, D
+TW(1).Parameters = [frequency,0.67,2*nCycles,1]; % A, B, C, D
 % TW(1).type = 'pulseCode';
 % TW(1).PulseCode = generateImpulse(1/(4*2.25e6));
 % TW(1).PulseCode = generateImpulse(3/250e6);
@@ -80,7 +94,7 @@ end
 
 % Specify an external processing event.
 Process(1).classname = 'External';
-Process(1).method = 'plotSingleElementAveraging';
+Process(1).method = 'plotSingleElementAveraging_characterizeTx';
 Process(1).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'srcbufnum',1,...
 'srcframenum',1,...
@@ -94,7 +108,7 @@ Event(1).recon = 0; % no reconstruction.
 Event(1).process = 0; % no processing
 Event(1).seqControl = [1,2,3];
 SeqControl(1).command = 'timeToNextAcq';
-SeqControl(1).argument = 25e3;
+SeqControl(1).argument = 1/prf;
 SeqControl(2).command = 'transferToHost';
 SeqControl(3).command = 'triggerOut';
 n = 2;

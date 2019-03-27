@@ -8,9 +8,13 @@
 
 function show1dScan(RData)
 
+fid = fopen('aimsGrid.Taylor');
+a = fscanf(fid,'%d,%f');
+fclose(fid);
+stepSize = a(2);
+
 Receive = evalin('base','Receive');
 Resource = evalin('base','Resource');
-keyboard
 
 nPoints = Resource.RcvBuffer.numFrames;
 NA = length(Receive)/nPoints;
