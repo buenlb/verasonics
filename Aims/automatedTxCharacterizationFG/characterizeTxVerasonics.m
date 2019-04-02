@@ -13,32 +13,32 @@ Grid.yStart = -5;
 Grid.yEnd = 5;
 
 % length to scan along z-axis
-Grid.zLength = 50; 
-% Grid.zStart = 140;
-% Grid.zEnd = 220;
+% Grid.zLength = 20; 
+Grid.zStart = 75;
+Grid.zEnd = 210;
 
 % time to wait after positioner moves before acquiring data
 Grid.pause = 10;
 
 % Set grid spacing. If not set these will be automatically set to lambda/4
-Grid.dx = 0.2;
-Grid.dy = 0.2;
-Grid.dz = 0.2;
+% Grid.dx = 0.15;
+% Grid.dy = 0.15;
+% Grid.dz = 0.15;
 
 % Transducer Parameters
-Tx.frequency = 0.27;
-Tx.diameter = 64; % aperture diameter in mm
-Tx.focalLength = 51.74; % Focal length in mm. Use zero if Tx is unfocused
-Tx.serial = '001';
-Tx.model = 'Sonic Concept H115-MR';
+Tx.frequency = 0.5;
+Tx.diameter = 24.24; % aperture diameter in mm
+Tx.focalLength = 0; % Focal length in mm. Use zero if Tx is unfocused
+Tx.serial = '1199121';
+Tx.model = 'Harisonic';
 
 % Function Generator Parameters
-FgParams.fg = 'FunctionGenerator';
-FgParams.gridVoltage = 100; % FG voltage for full grid (mVpp)
-FgParams.maxVoltage = 500; % max FG voltage when testing Tx efficiency (mVpp)
+FgParams.fg = 'Verasonics';
+FgParams.gridVoltage = 29.9; % FG voltage for full grid (mVpp)
+FgParams.maxVoltage = 96; % max FG voltage when testing Tx efficiency (mVpp)
 FgParams.frequency = Tx.frequency; % center frequency in MHz
-FgParams.nCycles = 10; % number of cicles in pulse
-FgParams.burstPeriod = 10; % burst period in ms
+FgParams.nCycles = 1; % number of cicles in pulse
+FgParams.burstPeriod = 25; % burst period in ms
 
 % Pre-Amp Info
 PreAmp.model = 'AG-2010';
@@ -99,10 +99,10 @@ Grid = initializeGrid(lib,Grid,Tx);
 setTxParams(lib,Tx,FgParams);
 
 % Set the Oscope parameters based on frequency
-setOscopeParameters(lib,{'timeBase',4/FgParams.frequency,'averages',Grid.averages});
+setOscopeParameters(lib,{'timeBase',35/FgParams.frequency,'averages',Grid.averages});
 
 %% Write a readme file with details of the characterization
-writeReadme(Tx,Grid,FgParams,Hydrophone,PreAmp,saveDirectory);
+% writeReadme(Tx,Grid,FgParams,Hydrophone,PreAmp,saveDirectory);
 
 %% Estimate Scan Time
 time = estimateCharacterizationTime(Grid,Tx);
@@ -138,7 +138,6 @@ tic
 % !matlab -r startCharacterization('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\Aims\MATFILES\generateVerasonicsMatfile.mat')
 
 %% Find the center
-keyboard
 findCenter(lib,Tx,Grid);
 keyboard
 %% Characterize Tx

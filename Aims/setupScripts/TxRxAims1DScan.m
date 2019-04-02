@@ -63,7 +63,7 @@ TX(1).waveform = 1; % use 1st TW structure.
 TX(1).focus = 0;
 TX(1).Apod = zeros([1,30]);
 TX(1).Apod(1)=1;
-TX(1).Delay = 0;
+TX(1).Delay = zeros([1,30]);
 
 TPC(1).hv = 96;
 

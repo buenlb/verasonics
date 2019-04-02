@@ -5,7 +5,7 @@ srcDirectory = setPaths();
 
 %%
 NA = 1;
-frequency = 2.25;
+frequency = 0.5;
 
 % Specify system parameters
 Resource.Parameters.numTransmit = 1; % no. of xmit chnls (V64LE,V128 or V256).
@@ -43,7 +43,7 @@ Resource.RcvBuffer(1).numFrames = 1; % minimum size is 1 frame.
 
 % Specify Transmit waveform structure.
 TW(1).type = 'parametric';
-numberHalfCycles = 2;
+numberHalfCycles = 200;
 TW(1).Parameters = [frequency,0.67,numberHalfCycles,1]; % A, B, C, D
 % TW(1).type = 'pulseCode';
 % TW(1).PulseCode = generateImpulse(1/(4*2.25e6));
@@ -94,7 +94,7 @@ Event(1).recon = 0; % no reconstruction.
 Event(1).process = 0; % no processing
 Event(1).seqControl = [1,2,3];
 SeqControl(1).command = 'timeToNextAcq';
-SeqControl(1).argument = 25e3;
+SeqControl(1).argument = 200e3;
 SeqControl(2).command = 'transferToHost';
 SeqControl(3).command = 'triggerOut';
 n = 2;

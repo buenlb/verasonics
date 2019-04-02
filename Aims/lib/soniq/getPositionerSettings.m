@@ -10,6 +10,7 @@
 %           X.Axis: number of x-axis
 %           X.lowLimit: lower software limit for x-axis on the positioner
 %           X.highLimit: upper software limit for x-axis on the positioner
+%           X.loc: current location
 %           Other identical fields for Y and Z axis
 % 
 % Taylor Webb
@@ -23,11 +24,14 @@ Pos.Z.Axis = calllib(lib,'GetOrientationZAxis');
 
 Pos.X.lowLimit = calllib(lib,'GetPositionerLowLimit',Pos.X.Axis);
 Pos.X.highLimit = calllib(lib,'GetPositionerHighLimit',Pos.X.Axis);
+Pos.X.loc = calllib(lib,'GetPosition',Pos.X.Axis);
 
 Pos.Y.lowLimit = calllib(lib,'GetPositionerLowLimit',Pos.Y.Axis);
 Pos.Y.highLimit = calllib(lib,'GetPositionerHighLimit',Pos.Y.Axis);
+Pos.Y.loc = calllib(lib,'GetPosition',Pos.Y.Axis);
 
 Pos.Z.lowLimit = calllib(lib,'GetPositionerLowLimit',Pos.Z.Axis);
 Pos.Z.highLimit = calllib(lib,'GetPositionerHighLimit',Pos.Z.Axis);
+Pos.Z.loc = calllib(lib,'GetPosition',Pos.Z.Axis);
 
 Pos.AxisLabels = {'Left/Right','Front/Back','Up/Down'};

@@ -1,9 +1,8 @@
 close all; clearvars -except fg; clc;
 
 setPaths();
-
 %% User Defined Variables
-saveDirectory = 'C:\Users\Verasonics\Desktop\Taylor\TransducerCharacterization\';
+saveDirectory = 'C:\Users\Verasonics\Desktop\Taylor\AmplifierCharacterization\';
 
 %% Final Characterization Grid
 % Start and end points for x and y axis
@@ -13,31 +12,35 @@ Grid.yStart = -5;
 Grid.yEnd = 5;
 
 % length to scan along z-axis
-Grid.zLength = 55; 
-% Grid.zStart = 40;
-% Grid.zEnd = 200;
+% Grid.zLength = 20; 
+Grid.zStart = 100;
+Grid.zEnd = 200;
 
 % time to wait after positioner moves before acquiring data
 Grid.pause = 10;
 
 % Set grid spacing. If not set these will be automatically set to lambda/4
-Grid.dx = 0.5;
-Grid.dy = 0.5;
-Grid.dz = 0.5;
+Grid.dx = 0.15;
+Grid.dy = 0.15;
+Grid.dz = 0.15;
 
 % Transducer Parameters
-Tx.frequency = 0.27;
-Tx.diameter = 64; % aperture diameter in mm
-Tx.focalLength = 51.74; % Focal length in mm. Use zero if Tx is unfocused
-Tx.serial = '001';
-Tx.model = 'Sonic Concept H115-MR';
+Tx.frequency = 0.5;
+Tx.diameter = 24.24; % aperture diameter in mm
+Tx.focalLength = 0; % Focal length in mm. Use zero if Tx is unfocused
+Tx.serial = '1199121';
+Tx.model = 'Harisonic';
 
 % Function Generator Parameters
-FgParams.gridVoltage = 100; % FG voltage for full grid (mVpp)
-FgParams.maxVoltage = 500; % max FG voltage when testing Tx efficiency (mVpp)
+FgParams.amplifierModel = 'ENI A150';
+FgParams.amplifierSerial = '1104';
+FgParams.gridVoltage = 50; % FG voltage for full grid (mVpp)
+FgParams.maxVoltage = 400; % max FG voltage when testing Tx efficiency (mVpp)
 FgParams.frequency = Tx.frequency; % center frequency in MHz
-FgParams.nCycles = 200; % number of cicles in pulse
-FgParams.burstPeriod = 10; % burst period in ms
+FgParams.nCycles = 1; % number of cicles in pulse
+% For long pulses use a burst period that results in 0.1% duty cycle to be
+% extra careful with hydrophone.
+FgParams.burstPeriod = 1000*FgParams.nCycles/Tx.frequency/1e3; % burst period in ms
 
 % Pre-Amp Info
 PreAmp.model = 'AG-2010';
@@ -52,13 +55,13 @@ Hydrophone.rightAngleConnector = 'true';
 % Calibration file for 0.25-1 MHz
 Hydrophone.calibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\Aims\Calibrations\Combined\HGL0200-1782_AG2010-1199-20_xx_20190129.txt';
 % Calibration file for 1-20 MHz with connector
-% Hydrophone.calibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\Aims\Calibrations\Combined\HGL0200-1782_AG-2010-1199_OndaCombineCal_20190129_1-20MHz_withConnector.txt';
+Hydrophone.calibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\Aims\Calibrations\Combined\HGL0200-1782_AG-2010-1199_OndaCombineCal_20190129_1-20MHz_withConnector.txt';
 
 % Run findCalibration so that the user is notified right away if the
 % calibration file appears to be the wrong one.
 findCalibration(Tx.frequency,Hydrophone.calibrationFile,1);
 
-saveDirectory = [saveDirectory,num2str(Tx.frequency),'MHz\',Tx.model,'\'];
+saveDirectory = [saveDirectory,num2str(Tx.frequency),'MHz\',Tx.model,'_stanford\'];
 if ~exist(saveDirectory,'dir')
     mkdir(saveDirectory);
 elseif exist([saveDirectory,'report'],'dir')
@@ -98,7 +101,7 @@ Grid = initializeGrid(lib,Grid,Tx);
 setTxParams(lib,Tx,FgParams);
 
 % Set the Oscope parameters based on frequency
-setOscopeParameters(lib,{'timeBase',30/FgParams.frequency,'averages',Grid.averages});
+setOscopeParameters(lib,{'timeBase',8/FgParams.frequency,'averages',Grid.averages});
 
 %% Write a readme file with details of the characterization
 writeReadme(Tx,Grid,FgParams,Hydrophone,PreAmp,saveDirectory);
@@ -120,15 +123,18 @@ Pos = getPositionerSettings(lib);
 disp('Current Settings:')
 disp(['Estimated Time: ', time]);
 disp(['  X-axis: ', Pos.AxisLabels{Pos.X.Axis+1},...
-    '. Lower limit:', num2str(Pos.X.lowLimit),...
+    ': Position:' num2str(Pos.X.loc),...
+    ', Lower limit:', num2str(Pos.X.lowLimit),...
     ', Upper limit:', num2str(Pos.X.highLimit)]);
 
 disp(['  Y-axis: ', Pos.AxisLabels{Pos.Y.Axis+1},...
-    '. Lower limit:', num2str(Pos.Y.lowLimit),...
+    ': Position:' num2str(Pos.Y.loc),...
+    ', Lower limit:', num2str(Pos.Y.lowLimit),...
     ', Upper limit:', num2str(Pos.Y.highLimit)]);
 
 disp(['  Z-axis: ', Pos.AxisLabels{Pos.Z.Axis+1},...
-    '. Lower limit:', num2str(Pos.Z.lowLimit),...
+    ': Position:' num2str(Pos.Z.loc),...
+    ', Lower limit:', num2str(Pos.Z.lowLimit),...
     ', Upper limit:', num2str(Pos.Z.highLimit)]);
 
 disp('Please confirm that you have set software limits to protect') 
@@ -141,6 +147,7 @@ if confirm ~= 'y'
 end
 tic
 %% Find the center
+return
 findCenter(lib,Tx,Grid);
 keyboard
 %% Characterize Tx

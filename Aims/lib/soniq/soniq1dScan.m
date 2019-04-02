@@ -24,6 +24,13 @@ end
 disp(['Scanning 1D. Axis: ', num2str(axis), ', sp: ', num2str(sp),...
     ', ep: ', num2str(ep), ', np: ', num2str(np)])
 
+if ~withinLimits(lib,axis,sp)
+    error('Start point is outside of limits!');
+end
+if ~withinLimits(lib,axis,ep)
+    error('End point is outside of limits!');
+end
+
 calllib(lib,'SetWaveformAutoScaleMode','true');
 
 calllib(lib,'Set1DScanAxis',axis);

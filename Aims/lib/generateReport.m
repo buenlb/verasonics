@@ -43,18 +43,7 @@ print([imgpath,'yz'],'-dpng')
 fileBase = 'wv_';
 folder = [imgpath,'..\efficiencyCurve\'];
 
-wvForms = dir([folder,fileBase,'*']);
-
-vIn = zeros(size(wvForms));
-vpp = vIn;
-for ii = 1:length(wvForms)
-    [t,v] = readWaveform([folder,wvForms(ii).name]);
-    vIn(ii) = findNextNumber(wvForms(ii).name,1);
-    vpp(ii) = -min(v);
-    if ii == 1
-        v1 = v;
-    end
-end
+[vpp,vIn,v1,t] = readEfficiencyData(folder,fileBase);
 
 figure;
 ax = gca;

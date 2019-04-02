@@ -54,5 +54,5 @@ end
 
 %% Find z-axis peak
 % 1D scan with at leaset 2 points/wavelength
-soniq1dScan(lib,Pos.Z.Axis,Grid.zStart,Grid.zEnd+80,4*ceil((Grid.zEnd-Grid.zStart)/lambda)+1,100);
+soniq1dScan(lib,Pos.Z.Axis,Grid.zStart,Grid.zEnd,4*ceil((Grid.zEnd-Grid.zStart)/lambda)+1,100);
 calllib(lib,'MoveTo1DScanLAM');
