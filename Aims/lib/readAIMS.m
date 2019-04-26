@@ -1,4 +1,4 @@
-function [rawData,xAxis,yAxis,xName,yName] = readAIMS(fileName)
+function [allData,xAxis,yAxis,xName,yName,position] = readAIMS(fileName)
 
 % readAIMS - This code reads AIM files containing hydrophone data.
 %    [] = readAIMS(fileName, folderName, newAxis)
@@ -46,6 +46,11 @@ for q = 1:p_num
     newline = '[\n]';
     n = regexp(text, newline);
     m = regexp(text, dataHeader);
+    planeLoc = regexp(text,'Axis . Position');
+    position = zeros(1,3);
+    for ii = 1:3
+        position(ii) = findNextNumber(text,planeLoc(ii)+7);
+    end
     numHeaderLines = sum(n<m);
 
     % read file

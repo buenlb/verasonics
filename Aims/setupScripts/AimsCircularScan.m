@@ -4,18 +4,34 @@ clear all; close all; clc;
 srcDirectory = setPaths();
 
 %% Set scan parameters
-[lib,axis,LOCS1,LOCS2] = verasonics2dScan([1,2],[-1,-2],[1,2],[4,8]);
+theta = linspace(-15,16,32)*pi/180;
+radius = 110;
+axis = 1;
+rotAxis = 4;
+
+lib = loadSoniqLibrary();
+openSoniq(lib);
+
+Pos = getPositionerSettings(lib);
+
+% As a safety precaution, first go to raius on Z and 0 on the angle. This
+% way if the circle went all the way to a z where a collision might occur
+% we avoid that collision
+movePositionerAbs(lib,Pos.Z.Axis,radius);
+movePositionerAbs(lib,rotAxis,0);
+
+movePositionerAbs(lib,Pos.Z.Axis,radius*cos(theta(1)));
+movePositionerAbs(lib,rotAxis,180/pi*theta(1));
+movePositionerAbs(lib,axis,radius*sin(theta(1)));
 
 %% User defined Scan Parameters
-NA = 1;
-nFrames = length(LOCS1(:));
-positionerDelay = 10; % Positioner delay in ms
+NA = 32;
+nFrames = length(theta);
+positionerDelay = 1000; % Positioner delay in ms
 prf = 500; % Pulse repitition Frequency in Hz
-centerFrequency = 1; % Frequency in MHz
+centerFrequency = 2.25; % Frequency in MHz
 numHalfCycles = 2; % Number of half cycles to use in each pulse
-desiredDepth = 10; % Desired depth in mm
-Vpp = 10; % Desired peak to peak voltage (TPC.hv)
-saveLocation = 'C:\Users\verasonics\Desktop\Taylor\test\'; % Desired location to save results
+desiredDepth = 130; % Desired depth in mm
 
 %% Setup System
 % Since there are often long pauses after moving the positioner
@@ -29,20 +45,14 @@ Resource.Parameters.connector = 1; % trans. connector to use (V256).
 Resource.Parameters.speedOfSound = 1490; % speed of sound in m/sec
 Resource.Parameters.numAvg = NA;
 Resource.Parameters.soniqLib = lib;
-Resource.Parameters.LOCS1 = LOCS1;
-Resource.Parameters.LOCS2 = LOCS2;
+Resource.Parameters.theta = theta;
+Resource.Parameters.radius = radius;
 Resource.Parameters.Axis = axis;
-if saveLocation(end) ~= '\' && saveLocation(end) ~= '/'
-    saveLocation = [saveLocation, '\'];
-end
-Resource.Parameters.fileLocation = saveLocation;
-
-setOscopeParameters(lib,{'averaging',NA});
+Resource.Parameters.rotAxis = rotAxis;
+% Resource.Parameters.simulateMode = 1; % runs script in simulate mode
 
 % Specify media points
 Media.MP(1,:) = [0,0,100,1.0]; % [x, y, z, reflectivity]
-
-verasonicsNA = 128;
 
 % Specify Trans structure array.
 Trans.name = 'Custom';
@@ -58,12 +68,12 @@ Trans.ElementSens = ones(101,1);
 Trans.connType = 1;
 Trans.Connector = 1;
 Trans.impedance = 50;
-Trans.maxHighVoltage = Vpp;
+Trans.maxHighVoltage = 96;
 
 
 % Specify Resource buffers.
 Resource.RcvBuffer(1).datatype = 'int16';
-Resource.RcvBuffer(1).rowsPerFrame = verasonicsNA*2048*4; % this allows for 1/4 maximum range
+Resource.RcvBuffer(1).rowsPerFrame = NA*2048*4; % this allows for 1/4 maximum range
 Resource.RcvBuffer(1).colsPerFrame = 1; % change to 256 for V256 system
 Resource.RcvBuffer(1).numFrames = nFrames; % minimum size is 1 frame.
 
@@ -83,7 +93,7 @@ TX(1).Delay = 0;
 TPC(1).hv = 96;
 
 % Specify TGC Waveform structure.
-TGC(1).CntrlPts = ones(1,8)*0;
+TGC(1).CntrlPts = ones(1,8)*700;
 TGC(1).rangeMax = 1;
 TGC(1).Waveform = computeTGCWaveform(TGC);
 
@@ -102,8 +112,8 @@ firstReceive.LowPassCoef = [];
 firstReceive.InputFilter = [];
 
 for ii = 1:nFrames
-    for jj = 1:verasonicsNA
-        idx = (ii-1)*verasonicsNA+jj;
+    for jj = 1:NA
+        idx = (ii-1)*NA+jj;
         Receive(idx) = firstReceive;
         Receive(idx).acqNum = jj;
         Receive(idx).framenum = ii;
@@ -112,21 +122,21 @@ end
 
 % Specify an external processing event.
 Process(1).classname = 'External';
-Process(1).method = 'continueScan2d';
+Process(1).method = 'continueScanCircular';
 Process(1).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'srcbufnum',1,...
-'srcframenum',1,...
+'srcframenum',-1,...
 'dstbuffer','none'};
 
 Process(2).classname = 'External';
-Process(2).method = 'show2dScan';
+Process(2).method = 'show1dScanCircular';
 Process(2).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'srcbufnum',1,...
 'srcframenum',0,...
 'dstbuffer','none'};
 
 Process(3).classname = 'External';
-Process(3).method = 'startScan';
+Process(3).method = 'startScanCircular';
 Process(3).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'srcbufnum',1,...
 'srcframenum',1,...
@@ -144,17 +154,14 @@ firstEvent.seqControl = [1,2];
     SeqControl(nsc).command = 'timeToNextAcq';
     SeqControl(nsc).argument = (1/prf)*1e6;
     nsc = nsc+1;
-    SeqControl(nsc).command = 'triggerOut';
-    nsc = nsc+1;    
 
 for ii = 1:nFrames
-    for jj = 1:verasonicsNA
-        idx = (ii-1)*verasonicsNA+jj;
+    for jj = 1:NA
+        idx = (ii-1)*NA+jj;
         Event(n) = firstEvent;
         Event(n).rcv = idx;
-        Event(n).seqControl = [1,2,nsc];
+        Event(n).seqControl = [1,nsc];
          SeqControl(nsc).command = 'transferToHost';
-           curTrans = nsc;
            nsc = nsc + 1;
         n = n+1;
     end
@@ -201,13 +208,13 @@ Event(n).info = 'Call external Processing function.';
 Event(n).tx = 0; % no TX structure.
 Event(n).rcv = 0; % no Rcv structure.
 Event(n).recon = 0; % no reconstruction.
-Event(n).process = 0; % call processing function
+Event(n).process = 2; % call processing function
 Event(n).seqControl = [nsc,nsc+1,nsc+2]; % wait for data to be transferred
     SeqControl(nsc).command = 'waitForTransferComplete';
-    SeqControl(nsc).argument = curTrans;
+    SeqControl(nsc).argument = 2;
     nsc = nsc+1;
     SeqControl(nsc).command = 'markTransferProcessed';
-    SeqControl(nsc).argument = curTrans;
+    SeqControl(nsc).argument = 2;
     nsc = nsc+1;
     SeqControl(nsc).command = 'sync';
     nsc = nsc+1;

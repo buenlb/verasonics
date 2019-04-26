@@ -34,4 +34,12 @@ Pos.Z.lowLimit = calllib(lib,'GetPositionerLowLimit',Pos.Z.Axis);
 Pos.Z.highLimit = calllib(lib,'GetPositionerHighLimit',Pos.Z.Axis);
 Pos.Z.loc = calllib(lib,'GetPosition',Pos.Z.Axis);
 
-Pos.AxisLabels = {'Left/Right','Front/Back','Up/Down'};
+Pos.PHI.lowLimit = calllib(lib,'GetPositionerLowLimit',3);
+Pos.PHI.highLimit = calllib(lib,'GetPositionerHighLimit',3);
+Pos.PHI.loc = calllib(lib,'GetPosition',3);
+
+Pos.THETA.lowLimit = calllib(lib,'GetPositionerLowLimit',4);
+Pos.THETA.highLimit = calllib(lib,'GetPositionerHighLimit',4);
+Pos.THETA.loc = calllib(lib,'GetPosition',4);
+
+Pos.AxisLabels = {'Left/Right','Front/Back','Up/Down','Angular Arm','Angular Turn Table'};

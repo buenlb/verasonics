@@ -36,11 +36,14 @@ while ~endHeader
         if strcmp(curLine(1:10),'HEADER_END')
             endHeader = 1;
         end
+        if strcmp(curLine(1:11),'DATA_FIELDS')
+            numFields = sscanf(curLine(12:end),'%f');
+        end
     end
 end
 
 tmp = fscanf(fid,'%f');
-table = reshape(tmp,[4,length(tmp)/4]);
+table = reshape(tmp,[numFields,length(tmp)/numFields]);
 
 freqs = table(1,:);
 [~,idx] = min(abs(frequency-freqs));
@@ -58,7 +61,7 @@ if checkRange
     end
     
     if idx == length(freqs)
-        if frequency > freqs(1)
+        if frequency > freqs(end)
             disp('WARNING: Calibration Frequency is not ')
             disp(['within range of cal file (', num2str(min(freqs)), ' - ', num2str(max(freqs)), 'MHz)'])
             cont = input('Continue? (y/n)>','s');

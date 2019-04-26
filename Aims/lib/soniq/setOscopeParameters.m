@@ -16,5 +16,10 @@ for ii = 1:length(parameters)/2
         case 'timeBase'
             tb = parameters{ii*2};
             calllib(lib,'SetScopeTimebase',tb);
+        case 'nSamples'
+            ns = parameters{ii*2};
+            calllib(lib,'SetScopePoints',ns);
+        otherwise
+            error([parameters{ii*2-1} ' is not a valid option.'])
     end
 end

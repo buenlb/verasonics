@@ -1,4 +1,4 @@
-function writeLatex(Grid,Tx,FgParams,fileLoc)
+function writeLatex(Grid,Tx,FgParams,Hydrophone,fileLoc)
 fid = fopen([fileLoc,'report.tex'],'w');
 
 %% Header (include packages etc)
@@ -18,18 +18,50 @@ fprintf(fid,'%s\n','\pagenumbering{gobble}');
 fprintf(fid,'%s\n','\begin{document}');
 
 %% Document
-fprintf(fid,'%s%s%s\n','\section*{',num2str(Tx.frequency,2),' MHz Transducer}');
-fprintf(fid,'%s%s%s%s%s%s\n','Beams are acquired with a ',num2str(FgParams.nCycles), ' cycle(s) pulse and ',...
-    num2str(FgParams.gridVoltage), ' mVpp input from the function generator.');
-fprintf(fid,'\n\n%s','\textbf{Transducer Info: }');
+% Latex needs underscores to be escaped - this does that for cone names
+coneName = Tx.cone;
+found = 0;
+for ii = 1:length(coneName)
+    if found
+        found = 0;
+        continue
+    end
+    if coneName(ii) == '_'
+        coneName = [coneName(1:ii-1),'\',coneName(ii:end)];
+        found = 1;
+    end
+end
+
+fprintf(fid,'%s%s%s%s%s\n','\section*{',num2str(Tx.frequency,2),' MHz Transducer, Cone: ', coneName, '.}');
+
+%% Tx
+fprintf(fid,'\n\n%s','\noindent\textbf{Transducer: }');
 fprintf(fid,'%s%s','Model: ', Tx.model);
 fprintf(fid,'%s%s%s',', Center Frequency: ', num2str(Tx.frequency,2), 'MHz');
 fprintf(fid,'%s%s',', Serial Number: ', Tx.serial);
 fprintf(fid,'%s%s%s\n',', Diameter: ', num2str(Tx.diameter), 'mm');
 
+%% Function Generator
+fprintf(fid,'\n\n%s','\noindent\textbf{Function Generator: }');
+fprintf(fid,'%s%s','Number of cycles: ', num2str(FgParams.nCycles));
+fprintf(fid,'%s%s%s',', Input voltage for beam patterns: ', num2str(FgParams.gridVoltage), 'Vpp');
+fprintf(fid,'%s%s%s',', Burst period: ', num2str(FgParams.burstPeriod),'ms');
+
+
+%% Amplifier
+fprintf(fid,'\n\n%s','\noindent\textbf{Amplifier: }');
+fprintf(fid,'%s%s','Model: ', FgParams.amplifierModel);
+fprintf(fid,'%s%s',', Serial Number: ', FgParams.amplifierSerial);
+%% Hydrophone
+fprintf(fid,'\n\n%s','\noindent\textbf{Hydrophone: }');
+fprintf(fid,'%s%s','Model: ', Hydrophone.model);
+fprintf(fid,'%s%s',', Serial Number: ', Hydrophone.serial);
+fprintf(fid,'%s%s\n',', Calibration Date: ', Hydrophone.calDate);
+
+%% Figures
 fprintf(fid,'%s\n','\begin{figure}[h!]');
 fprintf(fid,'%s\n','\centering');
-fprintf(fid,'%s\n','\subfigure[XY Plane]{');
+fprintf(fid,'%s\n',['\subfigure[XY Plane (Z=',num2str(Grid.XYPlaneLoc-Tx.coneEdge,4),')]{']);
 fprintf(fid,'%s\n','	\label{fig:xy}');
 fprintf(fid,'%s\n','	\includegraphics[width=0.3\textwidth]{xy.png}');
 fprintf(fid,'%s\n','}');
@@ -43,12 +75,19 @@ fprintf(fid,'%s\n','\subfigure[YZ Plane]{');
 fprintf(fid,'%s\n','	\label{fig:yz}');
 fprintf(fid,'%s\n','	\includegraphics[width=0.3\textwidth]{yz.png}');
 fprintf(fid,'%s\n','}');
-fprintf(fid,'%s\n','\caption{\label{fig:beamPattern}Beam patterns in three planes.}');
+if strcmp('none',coneName)
+    fprintf(fid,'%s\n','\caption{\label{fig:beamPattern}Beam patterns in three planes. The z-axis is referenced to the transducer face.}');
+else
+    fprintf(fid,'%s\n',['\caption{\label{fig:beamPattern}Beam patterns in three planes. The z-axis is referenced to the edge of the cone which was estimated to be ',...
+        num2str(Tx.coneEdge), 'mm from the Tx face.}']);
+end
 fprintf(fid,'%s\n','\end{figure}');
 
 fprintf(fid,'%s\n','\begin{figure}[h!]');
 fprintf(fid,'%s\n','\centering');
-fprintf(fid,'%s\n','\subfigure[Waveform at min voltage]{');
+
+fprintf(fid,'%s\n',['\subfigure[Waveform at min voltage. Positioner Locations relative to Tx: ('...
+    , num2str(Grid.wvPosition(1),4),',',num2str(Grid.wvPosition(2),2),',',num2str(Grid.wvPosition(3),2),')]{']);
 fprintf(fid,'%s\n','	\label{fig:xy}');
 fprintf(fid,'%s\n','	\includegraphics[width=0.45\textwidth]{wv.png}');
 fprintf(fid,'%s\n','}');

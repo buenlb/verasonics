@@ -29,7 +29,7 @@ calllib(lib,'Add2DScanParameter','Negative Peak Voltage')
 filename = [pwd,'\xy.snq'];
 
 pause = 10;
-
+recordWaveforms = 0;
 if nargin > 5
     if mod(length(valuePairs),2)
         error('You  must specify value pairs in pairs!')
@@ -48,6 +48,10 @@ if nargin > 5
                 filename = valuePairs{ii*2};
             case 'pause'
                 pause = valuePairs{ii*2};
+            case 'recordWaveforms'
+                recordWaveforms = valuePairs{ii*2};
+            otherwise
+                error([valuePairs{ii*2-1}, ' is not a valid parameter'])
         end
     end
 end
@@ -69,6 +73,8 @@ calllib(lib,'Set2DScanFirstPoints',np(1));
 calllib(lib,'Set2DScanSecondPoints',np(2));
 
 calllib(lib,'Set2DScanPause',pause);
+
+calllib(lib,'Set2DScanRecordWaveforms',recordWaveforms);
 
 calllib(lib,'Start2DScan');
 

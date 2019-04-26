@@ -1,8 +1,8 @@
-function [vpp,vIn,v1,t] = readEfficiencyData(folder, fileBase,plotWvs,cal)
+function [vpp,vIn,v1,t,position] = readEfficiencyData(folder, fileBase,FgParams,plotWvs,cal)
 
-if nargin < 3
+if nargin < 4
     plotWvs = 0;
-elseif nargin < 4
+elseif nargin < 5
     cal = 1;
     yLab = 'voltage (V)';
 else
@@ -18,14 +18,9 @@ wvForms = dir([folder,fileBase,'*']);
 vIn = zeros(size(wvForms));
 vpp = vIn;
 for ii = 1:length(wvForms)
-    [t,v] = readWaveform([folder,wvForms(ii).name]);
+    [t,v,position] = readWaveform([folder,wvForms(ii).name]);
     vIn(ii) = findNextNumber(wvForms(ii).name,1);
-    vpp(ii) = -min(v);
-%     dt = t(2)-t(1);
-%     v2 = v(t>100& t < 200);
-%     f = linspace(-1/(2*dt),1/(2*dt),length(v2));
-%     vpp(ii) = 2*max(abs(fft(v2)))/(length(f));
-
+    vpp(ii) = findPeakNegativeVoltage(v,FgParams.nCycles);
     if plotWvs
         rows = ceil(sqrt(length(wvForms)));
         cols = floor(sqrt(length(wvForms)));

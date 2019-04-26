@@ -5,13 +5,20 @@
 % [t, v] = readWaveform(fileName);
 % Reads waveform.aim files and outputs time and voltage in matrix form 
 
-function [time, volt] = readWaveform(fileName)
+function [time, volt, position] = readWaveform(fileName)
 
 % find start of waveform data
 text = fileread(fileName);
 dataHeader = '\[Waveform Data\]';
 m = regexp(text, dataHeader);
 n = regexp(text, '\n');
+
+planeLoc = regexp(text,'Axis . Position');
+position = zeros(1,5);
+for ii = 1:5
+    position(ii) = findNextNumber(text,planeLoc(ii)+7);
+end
+
 numHeaderLines = sum(n<m);
 
 % read file

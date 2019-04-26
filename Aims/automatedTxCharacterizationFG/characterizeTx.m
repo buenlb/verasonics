@@ -1,67 +1,87 @@
 close all; clearvars -except fg; clc;
 
 setPaths();
+
 %% User Defined Variables
-saveDirectory = 'C:\Users\Verasonics\Desktop\Taylor\AmplifierCharacterization\';
+saveResults = 0;
+saveDirectory = 'C:\Users\Verasonics\Box Sync\tmp\';
 
 %% Final Characterization Grid
 % Start and end points for x and y axis
-Grid.xStart = -5; 
-Grid.xEnd = 5;
-Grid.yStart = -5;
-Grid.yEnd = 5;
+Grid.xStart = -1.5; 
+Grid.xEnd = 1.5;
+Grid.yStart = -1.5;
+Grid.yEnd = 1.5;
 
 % length to scan along z-axis
-% Grid.zLength = 20; 
-Grid.zStart = 100;
-Grid.zEnd = 200;
+Grid.zLength = 20; 
+% Grid.zStart = 35;
+% Grid.zEnd = 65;
 
 % time to wait after positioner moves before acquiring data
 Grid.pause = 10;
 
 % Set grid spacing. If not set these will be automatically set to lambda/4
-Grid.dx = 0.15;
-Grid.dy = 0.15;
-Grid.dz = 0.15;
+Grid.dx = 0.015;
+Grid.dy = 0.015;
+Grid.dz = 0.2;
+
+% Set the parameter to measure on the grid
+% Grid.parameters = 'Pulse Intensity Integral';
+Grid.parameters = 'Negative Peak Voltage';
+
+% Determine wether or not to record waveforms at each individual location.
+Grid.recordWaveforms = 0;
 
 % Transducer Parameters
-Tx.frequency = 0.5;
-Tx.diameter = 24.24; % aperture diameter in mm
-Tx.focalLength = 0; % Focal length in mm. Use zero if Tx is unfocused
-Tx.serial = '1199121';
-Tx.model = 'Harisonic';
+Tx.frequency = 25;
+Tx.diameter = 6.35; % aperture diameter in mm
+Tx.focalLength = 25.4; % Focal length in mm. Use zero if Tx is unfocused
+Tx.serial = '1189209';
+Tx.model = 'Olympus V324';
+Tx.cone = 'none';
+Tx.coneEdge = 0;
 
 % Function Generator Parameters
-FgParams.amplifierModel = 'ENI A150';
-FgParams.amplifierSerial = '1104';
-FgParams.gridVoltage = 50; % FG voltage for full grid (mVpp)
-FgParams.maxVoltage = 400; % max FG voltage when testing Tx efficiency (mVpp)
+FgParams.amplifierModel = 'HD28631';
+FgParams.amplifierSerial = '1013';
+FgParams.gridVoltage = 100; % FG voltage for full grid (mVpp)
+FgParams.maxVoltage = 500; % max FG voltage when testing Tx efficiency (mVpp)
+FgParams.minVoltage = 50; % min FG voltage when testing Tx efficiency (mVpp)
 FgParams.frequency = Tx.frequency; % center frequency in MHz
-FgParams.nCycles = 1; % number of cicles in pulse
+FgParams.nCycles = 100; % number of cicles in pulse
 % For long pulses use a burst period that results in 0.1% duty cycle to be
 % extra careful with hydrophone.
 FgParams.burstPeriod = 1000*FgParams.nCycles/Tx.frequency/1e3; % burst period in ms
 
 % Pre-Amp Info
-PreAmp.model = 'AG-2010';
-PreAmp.serial = '1199';
-PreAmp.calDate = 'Jan-29-1029';
+PreAmp.model = 'None';
+PreAmp.serial = 'None';
+PreAmp.calDate = 'None';
 
 % Hydrophone Info
-Hydrophone.model = 'HGL0200';
-Hydropone.serial = '1782';
-Hydrophone.calDate = 'Jan-29-1029';
+Hydrophone.model = 'HGL1000';
+Hydrophone.serial = '1748';
+Hydrophone.calDate = '22-Jan-2018';
 Hydrophone.rightAngleConnector = 'true';
 % Calibration file for 0.25-1 MHz
-Hydrophone.calibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\Aims\Calibrations\Combined\HGL0200-1782_AG2010-1199-20_xx_20190129.txt';
+% Hydrophone.calibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\Aims\Calibrations\Combined\HGL0200-1782_AG2010-1199-20_xx_20190129.txt';
 % Calibration file for 1-20 MHz with connector
-Hydrophone.calibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\Aims\Calibrations\Combined\HGL0200-1782_AG-2010-1199_OndaCombineCal_20190129_1-20MHz_withConnector.txt';
+% Hydrophone.calibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\Aims\Calibrations\Combined\HGL0200-1782_AG-2010-1199_OndaCombineCal_20190129_1-20MHz_withConnector.txt';
+% Calibration file for 20-40 MHz
+% Hydrophone.calibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\Aims\Calibrations\Combined\HGL0200-1782_AG2010-1199-20_xx_20190129_20-40.txt';
+% Calibration file for Navid's hydrophone With our Amp
+Hydrophone.calibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\Aims\Calibrations\HGL1000 Calibration\combinedWithOurAmp.txt';
+% Calibration file for Navid's hydrophone open circuit
+% Hydrophone.calibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\Aims\Calibrations\HGL1000 Calibration\HGL1000-1745_xxxxxx-xxxx-xx_xx_20180622.txt';
+% Calibration file for Doug's Hydrophone
+% Hydrophone.calibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\Aims\Calibrations\HNR0500_1546\readFromPaper.txt';
 
 % Run findCalibration so that the user is notified right away if the
 % calibration file appears to be the wrong one.
 findCalibration(Tx.frequency,Hydrophone.calibrationFile,1);
 
-saveDirectory = [saveDirectory,num2str(Tx.frequency),'MHz\',Tx.model,'_stanford\'];
+saveDirectory = [saveDirectory,num2str(Tx.frequency),'MHz\',Tx.model,'\cone_',Tx.cone,'\'];
 if ~exist(saveDirectory,'dir')
     mkdir(saveDirectory);
 elseif exist([saveDirectory,'report'],'dir')
@@ -97,17 +117,33 @@ openSoniq(lib);
 % Set up grid values. This just fills in defaults for any empty fields
 Grid = initializeGrid(lib,Grid,Tx);
 
+% Error check Tx Struct and compute effective focal length
+Tx = initializeTx(Tx);
+
 % Set record keeping transducer stuff in Soniq
 setTxParams(lib,Tx,FgParams);
 
 % Set the Oscope parameters based on frequency
-setOscopeParameters(lib,{'timeBase',8/FgParams.frequency,'averages',Grid.averages});
+% Compute the Oscope time base such that there are at least 22 samples per
+% wavelength. This ensures that regardless of phase shift we will always
+% measure 0.99 of the peak voltage.
+if FgParams.nCycles > 50
+    windowLength = 2*FgParams.nCycles/FgParams.frequency;
+else
+    windowLength = 8*FgParams.nCycles/FgParams.frequency;
+end
+timeBase = windowLength/10;
+setOscopeParameters(lib,{'timeBase',timeBase,'averages',Grid.averages});
+actualWindowLength = calllib(lib,'GetScopePoints');
+dt = 1/(22*FgParams.frequency);
+nSamples = actualWindowLength/(dt);
+setOscopeParameters(lib,{'nSamples',nSamples});
 
 %% Write a readme file with details of the characterization
 writeReadme(Tx,Grid,FgParams,Hydrophone,PreAmp,saveDirectory);
 
 %% Estimate Scan Time
-time = estimateCharacterizationTime(Grid,Tx);
+time = estimateCharacterizationTime(Grid,Tx,FgParams);
 
 %% Prep function generator
 if ~exist('fg','var')
@@ -147,13 +183,18 @@ if confirm ~= 'y'
 end
 tic
 %% Find the center
-return
 findCenter(lib,Tx,Grid);
-keyboard
-%% Characterize Tx
-grid_xy = soniq2dScan(lib,[Pos.X.Axis,Pos.Y.Axis],[Grid.xStart,Grid.yStart],[Grid.xEnd,Grid.yEnd],...
-    [Grid.xPoints,Grid.yPoints],{'filename',[saveDirectory,'xy.snq'],'pause',Grid.pause});
 
+%% XY Plane
+grid_xy = soniq2dScan(lib,[Pos.X.Axis,Pos.Y.Axis],[Grid.xStart,Grid.yStart],[Grid.xEnd,Grid.yEnd],...
+    [Grid.xPoints,Grid.yPoints],{'filename',[saveDirectory,'xy.snq'],...
+    'pause',Grid.pause,'parameter',Grid.parameters,'recordWaveforms',Grid.recordWaveforms});
+
+% Record the z location of this plane
+Pos = getPositionerSettings(lib);
+Grid.XYPlaneLoc = Pos.Z.loc;
+
+% Display Result
 h = figure;
 subplot(311)
 imagesc(grid_xy.x,grid_xy.y,grid_xy.data);
@@ -164,9 +205,10 @@ ylabel(grid_xy.yLabel)
 makeFigureBig(h)
 set(h,'position',[962    42   958   954]);
 drawnow
-
+% YZ Plane
 grid_yz = soniq2dScan(lib,[Pos.Y.Axis,Pos.Z.Axis],[Grid.yStart,Grid.zStart],[Grid.yEnd,Grid.zEnd],...
-    [Grid.yPoints,Grid.zPoints],{'filename',[saveDirectory,'yz.snq'],'pause',Grid.pause});
+    [Grid.yPoints,Grid.zPoints],{'filename',[saveDirectory,'yz.snq'],...
+    'pause',Grid.pause,'parameter',Grid.parameters,'recordWaveforms',Grid.recordWaveforms});
 
 subplot(312)
 imagesc(grid_yz.x,grid_yz.y,grid_yz.data);
@@ -178,8 +220,10 @@ makeFigureBig(h)
 set(h,'position',[962    42   958   954]);
 drawnow
 
+% XZ Plane
 grid_xz = soniq2dScan(lib,[Pos.X.Axis,Pos.Z.Axis],[Grid.xStart,Grid.zStart],[Grid.xEnd,Grid.zEnd],...
-    [Grid.xPoints,Grid.zPoints],{'filename',[saveDirectory,'xz.snq'],'pause',Grid.pause});
+    [Grid.xPoints,Grid.zPoints],{'filename',[saveDirectory,'xz.snq'],...
+    'pause',Grid.pause,'parameter',Grid.parameters,'recordWaveforms',Grid.recordWaveforms});
 
 subplot(313)
 imagesc(grid_xz.x,grid_xz.y,grid_xz.data);
@@ -191,12 +235,15 @@ makeFigureBig(h)
 set(h,'position',[962    42   958   954]);
 drawnow
 
-%% Test output with different voltages
+% Test output with different voltages
 % calllib(lib,'MoveTo2DScanPeak');
 getEfficiencyCurve(lib,fg,FgParams,saveDirectory);
 
-%% Generate report
+% Generate report
 generateReport(Grid,Tx,FgParams,Hydrophone,grid_xy,grid_xz,grid_yz,[saveDirectory,'report\'])
 
 %% Close connection
+toc
+
+setFgBurstMode(fg,Tx.frequency,0,FgParams.burstPeriod,1);
 closeSoniq(lib);

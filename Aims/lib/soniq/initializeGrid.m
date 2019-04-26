@@ -27,6 +27,15 @@
 %       dx: spacing disance along x-axis
 %       dy: spacing distance along y-axis
 %       dz: spacing distance along z-axis
+%       recordWaveforms(1/0):  Specifies whether or not to record the full
+%          waveform at each grid location. Defaults to 0.
+%       parameter: parameter to measure on the grid. Examples:
+%          Negative Peak Voltage
+%          Positive Peak Voltage
+%          VRMS
+%          Peak to Peak Voltage
+%          Pulse Intensity Integral
+%          Temporal Average
 %   Tx: Transducer struct. See characterizeTx for Details
 % 
 % @OUTPUS
@@ -43,7 +52,7 @@ Pos = getPositionerSettings(lib);
 lambda = 1490000/(Tx.frequency*1e6);
 
 if Tx.focalLength <= 0
-    focus = Tx.diameter^2/(4*lambda);
+    focus = Tx.diameter^2/(2*lambda);
 else
     focus = Tx.focalLength;
 end
@@ -60,7 +69,7 @@ if ~isfield(Grid,'zStart')
 end
 
 if ~withinLimits(lib,Pos.Z.Axis,Grid.zStart)
-    Grid.zStart = calllib(lib,'GetPositionerLowLimit',Pos.Z.Axis);
+    Grid.zStart = calllib(lib,'GetPositionerLowLimit',Pos.Z.Axis)+0.1;
     warning(['Re-assigning Z start point to edge of Soniq software limit: ',num2str(Grid.zStart)]);
 end
 if ~withinLimits(lib,Pos.Z.Axis,Grid.zEnd)
@@ -91,4 +100,14 @@ end
 %% If user didn't specify pause time add it here
 if ~isfield(Grid,'pause')
     Grid.pause = 100;
+end
+
+%% If user didn't specify measured parameter add it here
+if ~isfield(Grid,'parameters')
+    Grid.parameters = 'Negative Peak Voltage';
+end
+
+%% If user didn't specify whether or not to record waveforms
+if ~isfield(Grid,'recordWaveforms')
+    Grid.recordWaveforms = 0;
 end
