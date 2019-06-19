@@ -20,7 +20,7 @@ function setFgBurstMode(fg, frequency, amplitude, period, nCycles)
 if amplitude > 750
     error('Amplitude is too high for amplifier! Please select an amplitude less than or equal to 750 mVpp')
 end
-if frequency < 0.25
+if frequency < 0.2
     error('Frequency is less than 250 kHz')
 end
 

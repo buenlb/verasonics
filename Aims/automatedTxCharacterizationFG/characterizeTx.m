@@ -4,27 +4,28 @@ setPaths();
 
 %% User Defined Variables
 saveResults = 0;
-saveDirectory = 'C:\Users\Verasonics\Box Sync\tmp\';
+saveDirectory = 'C:\Users\Verasonics\Box Sync\TransducerCharacterizations\HNR0500\';
 
-%% Final Characterization Grid
+%% User Defined Variables
+% Define the grid
 % Start and end points for x and y axis
-Grid.xStart = -1.5; 
-Grid.xEnd = 1.5;
-Grid.yStart = -1.5;
-Grid.yEnd = 1.5;
+Grid.xStart = -2.5; 
+Grid.xEnd = 2.5;
+Grid.yStart = -2.5;
+Grid.yEnd = 2.5;
 
 % length to scan along z-axis
-Grid.zLength = 20; 
-% Grid.zStart = 35;
-% Grid.zEnd = 65;
+% Grid.zLength = 20; 
+Grid.zStart = 15;
+Grid.zEnd = 30;
 
-% time to wait after positioner moves before acquiring data
-Grid.pause = 10;
+% time to wait in ms after positioner moves before acquiring data
+Grid.pause = 300;
 
 % Set grid spacing. If not set these will be automatically set to lambda/4
-Grid.dx = 0.015;
-Grid.dy = 0.015;
-Grid.dz = 0.2;
+Grid.dx = .03;
+Grid.dy = .03;
+Grid.dz = .1;
 
 % Set the parameter to measure on the grid
 % Grid.parameters = 'Pulse Intensity Integral';
@@ -34,17 +35,17 @@ Grid.parameters = 'Negative Peak Voltage';
 Grid.recordWaveforms = 0;
 
 % Transducer Parameters
-Tx.frequency = 25;
+Tx.frequency = .5; % Frequency in MHz
 Tx.diameter = 6.35; % aperture diameter in mm
 Tx.focalLength = 25.4; % Focal length in mm. Use zero if Tx is unfocused
-Tx.serial = '1189209';
-Tx.model = 'Olympus V324';
+Tx.serial = '1190657';
+Tx.model = 'Olympus V310';
 Tx.cone = 'none';
 Tx.coneEdge = 0;
 
-% Function Generator Parameters
-FgParams.amplifierModel = 'HD28631';
-FgParams.amplifierSerial = '1013';
+%% Function Generator Parameters
+FgParams.amplifierModel = 'ENI A150';
+FgParams.amplifierSerial = '1305';
 FgParams.gridVoltage = 100; % FG voltage for full grid (mVpp)
 FgParams.maxVoltage = 500; % max FG voltage when testing Tx efficiency (mVpp)
 FgParams.minVoltage = 50; % min FG voltage when testing Tx efficiency (mVpp)
@@ -60,9 +61,9 @@ PreAmp.serial = 'None';
 PreAmp.calDate = 'None';
 
 % Hydrophone Info
-Hydrophone.model = 'HGL1000';
-Hydrophone.serial = '1748';
-Hydrophone.calDate = '22-Jan-2018';
+Hydrophone.model = 'HNR0500';
+Hydrophone.serial = '1546';
+Hydrophone.calDate = '18-Aug-2008';
 Hydrophone.rightAngleConnector = 'true';
 % Calibration file for 0.25-1 MHz
 % Hydrophone.calibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\Aims\Calibrations\Combined\HGL0200-1782_AG2010-1199-20_xx_20190129.txt';
@@ -71,13 +72,13 @@ Hydrophone.rightAngleConnector = 'true';
 % Calibration file for 20-40 MHz
 % Hydrophone.calibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\Aims\Calibrations\Combined\HGL0200-1782_AG2010-1199-20_xx_20190129_20-40.txt';
 % Calibration file for Navid's hydrophone With our Amp
-Hydrophone.calibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\Aims\Calibrations\HGL1000 Calibration\combinedWithOurAmp.txt';
+% Hydrophone.calibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\Aims\Calibrations\HGL1000 Calibration\combinedWithOurAmp.txt';
 % Calibration file for Navid's hydrophone open circuit
 % Hydrophone.calibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\Aims\Calibrations\HGL1000 Calibration\HGL1000-1745_xxxxxx-xxxx-xx_xx_20180622.txt';
 % Calibration file for Doug's Hydrophone
-% Hydrophone.calibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\Aims\Calibrations\HNR0500_1546\readFromPaper.txt';
+Hydrophone.calibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\Aims\Calibrations\HNR0500_1546\readFromPaper.txt';
 
-% Run findCalibration so that the user is notified right away if the
+%% Run findCalibration so that the user is notified right away if the
 % calibration file appears to be the wrong one.
 findCalibration(Tx.frequency,Hydrophone.calibrationFile,1);
 
@@ -87,6 +88,7 @@ if ~exist(saveDirectory,'dir')
 elseif exist([saveDirectory,'report'],'dir')
     disp('This transducer has been characterized before.')
     disp('What do you want me to do?')
+    disp(['Current Path: ', saveDirectory])
     disp('  c: cancel')
     disp('  o: repeat and overwrite')
     disp('  s: repeat and save both copies')
@@ -114,11 +116,11 @@ end
 lib = loadSoniqLibrary();
 openSoniq(lib);
 
-% Set up grid values. This just fills in defaults for any empty fields
-Grid = initializeGrid(lib,Grid,Tx);
-
 % Error check Tx Struct and compute effective focal length
 Tx = initializeTx(Tx);
+
+% Set up grid values. This just fills in defaults for any empty fields
+Grid = initializeGrid(lib,Grid,Tx);
 
 % Set record keeping transducer stuff in Soniq
 setTxParams(lib,Tx,FgParams);
@@ -134,16 +136,22 @@ else
 end
 timeBase = windowLength/10;
 setOscopeParameters(lib,{'timeBase',timeBase,'averages',Grid.averages});
-actualWindowLength = calllib(lib,'GetScopePoints');
+actualTimeBase = calllib(lib,'GetScopeTimebase');
+actualWindowLength = actualTimeBase*10;
 dt = 1/(22*FgParams.frequency);
-nSamples = actualWindowLength/(dt);
+nSamples = ceil(actualWindowLength/(dt));
 setOscopeParameters(lib,{'nSamples',nSamples});
-
-%% Write a readme file with details of the characterization
-writeReadme(Tx,Grid,FgParams,Hydrophone,PreAmp,saveDirectory);
+nSamplesActual = calllib(lib,'GetScopePoints');
+idx = 1;
+while nSamplesActual < nSamples
+    setOscopeParameters(lib,{'nSamples',(idx+1)*nSamples});
+    nSamplesActual = calllib(lib,'GetScopePoints');
+    idx = idx+1;
+end
 
 %% Estimate Scan Time
 time = estimateCharacterizationTime(Grid,Tx,FgParams);
+disp(['Estimated Time: ', time])
 
 %% Prep function generator
 if ~exist('fg','var')
@@ -152,39 +160,19 @@ end
 if strcmp(fg.Status, 'closed')
     fopen(fg);
 end
+%%
 setFgBurstMode(fg,Tx.frequency,FgParams.gridVoltage,FgParams.burstPeriod,FgParams.nCycles);
 
-%% Confirm Soniq settings
-Pos = getPositionerSettings(lib);
-disp('Current Settings:')
-disp(['Estimated Time: ', time]);
-disp(['  X-axis: ', Pos.AxisLabels{Pos.X.Axis+1},...
-    ': Position:' num2str(Pos.X.loc),...
-    ', Lower limit:', num2str(Pos.X.lowLimit),...
-    ', Upper limit:', num2str(Pos.X.highLimit)]);
+%% Confirm Soniq Settings
+Pos = verifyPositionerSettings(lib,Tx);
 
-disp(['  Y-axis: ', Pos.AxisLabels{Pos.Y.Axis+1},...
-    ': Position:' num2str(Pos.Y.loc),...
-    ', Lower limit:', num2str(Pos.Y.lowLimit),...
-    ', Upper limit:', num2str(Pos.Y.highLimit)]);
+%% Write a readme file with details of the characterization
+writeReadme(Tx,Grid,FgParams,Hydrophone,PreAmp,saveDirectory);
 
-disp(['  Z-axis: ', Pos.AxisLabels{Pos.Z.Axis+1},...
-    ': Position:' num2str(Pos.Z.loc),...
-    ', Lower limit:', num2str(Pos.Z.lowLimit),...
-    ', Upper limit:', num2str(Pos.Z.highLimit)]);
-
-disp('Please confirm that you have set software limits to protect') 
-disp('  the hydrophone. DO NOT PROCEED without setting these limits.')
-disp('  You will be responsible for any damage.');
-confirm = input('(y/n)>','s');
-if confirm ~= 'y'
-    closeSoniq(lib);
-    error('User terminated characterization')
-end
-tic
 %% Find the center
+tic
 findCenter(lib,Tx,Grid);
-
+return
 %% XY Plane
 grid_xy = soniq2dScan(lib,[Pos.X.Axis,Pos.Y.Axis],[Grid.xStart,Grid.yStart],[Grid.xEnd,Grid.yEnd],...
     [Grid.xPoints,Grid.yPoints],{'filename',[saveDirectory,'xy.snq'],...
@@ -235,11 +223,11 @@ makeFigureBig(h)
 set(h,'position',[962    42   958   954]);
 drawnow
 
-% Test output with different voltages
+%% Test output with different voltages
 % calllib(lib,'MoveTo2DScanPeak');
 getEfficiencyCurve(lib,fg,FgParams,saveDirectory);
 
-% Generate report
+%% Generate report
 generateReport(Grid,Tx,FgParams,Hydrophone,grid_xy,grid_xz,grid_yz,[saveDirectory,'report\'])
 
 %% Close connection

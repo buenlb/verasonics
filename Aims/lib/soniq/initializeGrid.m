@@ -52,7 +52,7 @@ Pos = getPositionerSettings(lib);
 lambda = 1490000/(Tx.frequency*1e6);
 
 if Tx.focalLength <= 0
-    focus = Tx.diameter^2/(2*lambda);
+    focus = Tx.computedFocus;
 else
     focus = Tx.focalLength;
 end

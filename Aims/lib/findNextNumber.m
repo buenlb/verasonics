@@ -18,7 +18,7 @@ while isnan(str2double(curChar)) || curChar == 'i' || curChar == 'j'
     curChar = text(curIdx);
 end
 stIdx = curIdx;
-while ~isnan(str2double(curChar)) || curChar == '.'
+while ~isnan(str2double(curChar)) || curChar == '.' || curChar == 'E' || curChar == '-'
     curIdx = curIdx+1;
     curChar = text(curIdx);
 end

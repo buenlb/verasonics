@@ -2,12 +2,11 @@ function Grid = findCenter(lib,Tx,Grid)
 
 Pos = getPositionerSettings(lib);
 
-%% Find focal length (or approximate if flat Tx)
 lambda = 1490000/(Tx.frequency*1e6); % wavelength in mm
-if Tx.focalLength <= 0
-    focus = Tx.diameter^2/(2*lambda);
+if ~strcmp(Tx.cone,'none')
+    focus = Tx.coneEdge+1;
 else
-    focus = Tx.focalLength;
+    focus = (Grid.zEnd-Grid.zStart)/2+Grid.zStart; % Center of z-axis locations should be close to the focus.
 end
 
 if withinLimits(lib,Pos.Z.Axis,focus)
@@ -17,7 +16,7 @@ else
 end
 
 %% Use a rough 2-d scan to get in the right area
-centered = 1;
+centered = 0;
 count = 1;
 while ~centered
     if count > 3
@@ -27,7 +26,11 @@ while ~centered
             error('Terminated by user. Couldn''t find the center.')
         end
     end
-    soniq2dScan(lib,[Pos.X.Axis,Pos.Y.Axis],[-5,-5],[5,5],0.5*ones(1,2)*ceil(11/lambda)+1,{'parameter',Grid.parameters})
+    if Tx.frequency < 1
+        soniq2dScan(lib,[Pos.X.Axis,Pos.Y.Axis],[-10,-10],[10,10],2*ones(1,2)*ceil(11/lambda)+1,{'parameter',Grid.parameters})
+    else
+        soniq2dScan(lib,[Pos.X.Axis,Pos.Y.Axis],[-5,-5],[5,5],0.5*ones(1,2)*ceil(11/lambda)+1,{'parameter',Grid.parameters})
+    end
     
     calllib(lib,'MoveTo2DScanPeak');
 

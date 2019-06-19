@@ -5,7 +5,7 @@
 % [t, v] = readWaveform(fileName);
 % Reads waveform.aim files and outputs time and voltage in matrix form 
 
-function [time, volt, position] = readWaveform(fileName)
+function [time, volt, position,delay] = readWaveform(fileName)
 
 % find start of waveform data
 text = fileread(fileName);
@@ -18,6 +18,19 @@ position = zeros(1,5);
 for ii = 1:5
     position(ii) = findNextNumber(text,planeLoc(ii)+7);
 end
+
+% Find Scope Delay
+scopeData = regexp(text,'\[Oscilloscope\]');
+delayLoc = regexp(text, 'Delay');
+delayLoc = delayLoc(delayLoc>scopeData);
+delayLoc = delayLoc(1);
+delay = findNextNumber(text,delayLoc);
+
+divLoc = regexp(text, 'SecPerDiv');
+divLoc = divLoc(divLoc>scopeData);
+divLoc = divLoc(1);
+secPerDiv = findNextNumber(text,divLoc);
+delay = delay-secPerDiv;
 
 numHeaderLines = sum(n<m);
 

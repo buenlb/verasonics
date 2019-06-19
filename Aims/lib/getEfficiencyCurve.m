@@ -1,6 +1,6 @@
 function getEfficiencyCurve(lib,fg,FgParams,saveDirectory)
 
-voltage = FgParams.minVoltage:10:FgParams.maxVoltage;
+voltage = FgParams.minVoltage:50:FgParams.maxVoltage;
 saveLocation = [saveDirectory,'efficiencyCurve\'];
 mkdir(saveLocation);
 

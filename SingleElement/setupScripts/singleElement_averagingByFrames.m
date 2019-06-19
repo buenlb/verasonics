@@ -4,6 +4,10 @@ clear all; close all; clc;
 srcDirectory = setPaths();
 
 %%
+
+frequency = 0.5; % Frequency in MHz
+nCycles = 5; % Number of excitation cycles
+
 NA = 2;
 
 % Specify system parameters
@@ -18,7 +22,7 @@ Media.MP(1,:) = [0,0,100,1.0]; % [x, y, z, reflectivity]
 
 % Specify Trans structure array.
 Trans.name = 'Custom';
-Trans.frequency = 2.25; % not needed if using default center frequency
+Trans.frequency = frequency; % Frequency in MHz
 Trans.units = 'mm';
 Trans.lensCorrection = 1;
 Trans.Bandwidth = [1.5,3];
@@ -38,11 +42,11 @@ Resource.RcvBuffer(1).colsPerFrame = 1; % change to 256 for V256 system
 Resource.RcvBuffer(1).numFrames = 1; % minimum size is 1 frame.
 
 % Specify Transmit waveform structure.
-% TW(1).type = 'parametric';
-% TW(1).Parameters = [2.25,0.67,2,1]; % A, B, C, D
-TW(1).type = 'pulseCode';
+TW(1).type = 'parametric';
+TW(1).Parameters = [Trans.frequency,0.67,nCycles*2,1]; % A, B, C, D
+% TW(1).type = 'pulseCode';
 % TW(1).PulseCode = generateImpulse(1/(4*2.25e6));
-TW(1).PulseCode = generateImpulse(3/250e6);
+% TW(1).PulseCode = generateImpulse(3/250e6);
 
 % Specify TX structure array.
 TX(1).waveform = 1; % use 1st TW structure.

@@ -4,16 +4,17 @@ clear all; close all; clc;
 srcDirectory = setPaths();
 
 %% Set scan parameters
-[lib,axis,locs] = verasonics1dScan(4,-24,25,50);
+[lib,axis,locs] = verasonics1dScan(3,-2,3,6);
 
 %% User defined Scan Parameters
 NA = 32;
 nFrames = length(locs);
 positionerDelay = 1000; % Positioner delay in ms
 prf = 500; % Pulse repitition Frequency in Hz
-centerFrequency = 2.25; % Frequency in MHz
+centerFrequency = 1; % Frequency in MHz
 numHalfCycles = 2; % Number of half cycles to use in each pulse
 desiredDepth = 160; % Desired depth in mm
+channel = 30;
 
 %% Setup System
 % Since there are often long pauses after moving the positioner

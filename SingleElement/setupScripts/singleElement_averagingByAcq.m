@@ -4,7 +4,10 @@ clear all; close all; clc;
 srcDirectory = setPaths();
 
 %%
-NA = 128;
+frequency = 2.25; % Frequency in MHz
+nCycles = 1; % number of cycles with which to excite Tx (can integer multiples of 1/2)
+
+NA = 32;
 
 % Specify system parameters
 Resource.Parameters.numTransmit = 1; % no. of xmit chnls (V64LE,V128 or V256).
@@ -12,6 +15,7 @@ Resource.Parameters.numRcvChannels = 1; % change to 64 for Vantage 64 or 64LE
 Resource.Parameters.connector = 1; % trans. connector to use (V256).
 Resource.Parameters.speedOfSound = 1490; % speed of sound in m/sec
 Resource.Parameters.numAvg = NA;
+Resource.Parameters.ioChannel = 1;
 % Resource.Parameters.simulateMode = 1; % runs script in simulate mode
 
 % Specify media points
@@ -19,7 +23,7 @@ Media.MP(1,:) = [0,0,100,1.0]; % [x, y, z, reflectivity]
 
 % Specify Trans structure array.
 Trans.name = 'Custom';
-Trans.frequency = 2.25; % not needed if using default center frequency
+Trans.frequency = frequency; % not needed if using default center frequency
 Trans.units = 'mm';
 Trans.lensCorrection = 1;
 Trans.Bandwidth = [1.5,3];
@@ -33,7 +37,7 @@ Trans.Connector = 1;
 Trans.impedance = 50;
 Trans.maxHighVoltage = 96;
 
-TPC(1).hv = 96;
+TPC(1).hv = 5;
 
 
 % Specify Resource buffers.
@@ -44,7 +48,7 @@ Resource.RcvBuffer(1).numFrames = 1; % minimum size is 1 frame.
 
 % Specify Transmit waveform structure.
 TW(1).type = 'parametric';
-TW(1).Parameters = [2.25,0.67,2,1]; % A, B, C, D
+TW(1).Parameters = [Trans.frequency,0.67,nCycles*2,1]; % A, B, C, D
 % TW(1).type = 'pulseCode';
 % TW(1).PulseCode = generateImpulse(1/(4*2.25e6));
 % TW(1).PulseCode = generateImpulse(3/250e6);
@@ -63,7 +67,7 @@ TGC(1).Waveform = computeTGCWaveform(TGC);
 % Specify Receive structure array -
 Receive(1).Apod = 1;
 Receive(1).startDepth = 0;
-Receive(1).endDepth = 400;
+Receive(1).endDepth = 200;
 Receive(1).TGC = 1; % Use the first TGC waveform defined above
 Receive(1).mode = 0;
 Receive(1).bufnum = 1;
@@ -94,7 +98,7 @@ Event(1).recon = 0; % no reconstruction.
 Event(1).process = 0; % no processing
 Event(1).seqControl = [1,2,3];
 SeqControl(1).command = 'timeToNextAcq';
-SeqControl(1).argument = 400;
+SeqControl(1).argument = 4000;
 SeqControl(2).command = 'transferToHost';
 SeqControl(3).command = 'triggerOut';
 

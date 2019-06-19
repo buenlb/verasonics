@@ -54,5 +54,6 @@ if Tx.focalLength
     Tx.computedFocus = Tx.focalLength-x;
 else
     % Compute Fraunhofer distance assuming circular transducer
-    Tx.computedFocus = Tx.diameter^2/(4*lambda);
+    lambda = 1500e3/(Tx.frequency*1e6); % Wavelength in mm
+    Tx.computedFocus = Tx.diameter^2/(5*lambda);
 end

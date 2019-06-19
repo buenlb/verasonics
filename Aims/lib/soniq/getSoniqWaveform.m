@@ -13,14 +13,21 @@
 % @OUTPUTS
 %   wv: recorded signal in volts
 %   t: time of each sample relative to the trigger
+%   position: positioner location when waveform was acquired
+%   delay: o-scope delay
 % 
 % Taylor Webb
 % University of Utah
 
-function [wv,t] = getSoniqWaveform(lib,filename)
+function [wv,t,position,delay] = getSoniqWaveform(lib,filename)
 
 if nargin == 0
     filename = 'wv.snq';
+end
+
+% Make sure connection is open
+if ~calllib(lib,'Connected')
+    error('No active connection to Soniq!')
 end
 
 calllib(lib,'SetWaveformAutoscale',1);
@@ -28,4 +35,4 @@ calllib(lib,'DigitizeWaveform');
 
 calllib(lib,'SaveFileAs',filename);
 
-[t,wv] = readWaveform(filename);
+[t,wv,position,delay] = readWaveform(filename);

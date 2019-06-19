@@ -5,7 +5,8 @@ srcDirectory = setPaths();
 
 %%
 NA = 1;
-frequency = 2.25;
+frequency = 1;
+ioChannel = 1;
 
 % Specify system parameters
 Resource.Parameters.numTransmit = 1; % no. of xmit chnls (V64LE,V128 or V256).
@@ -13,6 +14,7 @@ Resource.Parameters.numRcvChannels = 1; % change to 64 for Vantage 64 or 64LE
 Resource.Parameters.connector = 1; % trans. connector to use (V256).
 Resource.Parameters.speedOfSound = 1490; % speed of sound in m/sec
 Resource.Parameters.numAvg = NA;
+Resource.Parameters.ioChannel = ioChannel;
 % Resource.Parameters.simulateMode = 1; % runs script in simulate mode
 
 % Specify media points
@@ -30,7 +32,7 @@ Trans.elementWidth = 24;
 Trans.ElementPos = ones(1,5);
 Trans.ElementSens = ones(101,1);
 Trans.connType = 1;
-Trans.Connector = 1;
+Trans.Connector = ioChannel;
 Trans.impedance = 50;
 Trans.maxHighVoltage = 96;
 
@@ -63,7 +65,7 @@ TGC(1).Waveform = computeTGCWaveform(TGC);
 % Specify Receive structure array -
 Receive(1).Apod = 1;
 Receive(1).startDepth = 0;
-Receive(1).endDepth = 500;
+Receive(1).endDepth = 80;
 Receive(1).TGC = 1; % Use the first TGC waveform defined above
 Receive(1).mode = 0;
 Receive(1).bufnum = 1;

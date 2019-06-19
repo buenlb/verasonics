@@ -44,7 +44,7 @@ fprintf(fid,'%s%s%s\n',', Diameter: ', num2str(Tx.diameter), 'mm');
 %% Function Generator
 fprintf(fid,'\n\n%s','\noindent\textbf{Function Generator: }');
 fprintf(fid,'%s%s','Number of cycles: ', num2str(FgParams.nCycles));
-fprintf(fid,'%s%s%s',', Input voltage for beam patterns: ', num2str(FgParams.gridVoltage), 'Vpp');
+fprintf(fid,'%s%s%s',', Input voltage for beam patterns: ', num2str(FgParams.gridVoltage), 'mVpp');
 fprintf(fid,'%s%s%s',', Burst period: ', num2str(FgParams.burstPeriod),'ms');
 
 
@@ -86,7 +86,7 @@ fprintf(fid,'%s\n','\end{figure}');
 fprintf(fid,'%s\n','\begin{figure}[h!]');
 fprintf(fid,'%s\n','\centering');
 
-fprintf(fid,'%s\n',['\subfigure[Waveform at min voltage. Positioner Locations relative to Tx: ('...
+fprintf(fid,'%s\n',['\subfigure[Waveform at ', num2str(FgParams.gridVoltage), 'mVpp. Positioner Locations relative to Tx: ('...
     , num2str(Grid.wvPosition(1),4),',',num2str(Grid.wvPosition(2),2),',',num2str(Grid.wvPosition(3),2),')]{']);
 fprintf(fid,'%s\n','	\label{fig:xy}');
 fprintf(fid,'%s\n','	\includegraphics[width=0.45\textwidth]{wv.png}');

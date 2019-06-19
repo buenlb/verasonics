@@ -20,7 +20,7 @@ vpp = vIn;
 for ii = 1:length(wvForms)
     [t,v,position] = readWaveform([folder,wvForms(ii).name]);
     vIn(ii) = findNextNumber(wvForms(ii).name,1);
-    vpp(ii) = findPeakNegativeVoltage(v,FgParams.nCycles);
+        vpp(ii) = findPeakNegativeVoltage(v,FgParams.nCycles);
     if plotWvs
         rows = ceil(sqrt(length(wvForms)));
         cols = floor(sqrt(length(wvForms)));
