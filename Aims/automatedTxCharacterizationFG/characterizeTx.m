@@ -9,23 +9,23 @@ saveDirectory = 'C:\Users\Verasonics\Box Sync\TransducerCharacterizations\HNR050
 %% User Defined Variables
 % Define the grid
 % Start and end points for x and y axis
-Grid.xStart = -2.5; 
-Grid.xEnd = 2.5;
-Grid.yStart = -2.5;
-Grid.yEnd = 2.5;
+Grid.xStart = -5; 
+Grid.xEnd = 5;
+Grid.yStart = -5;
+Grid.yEnd = 5;
 
 % length to scan along z-axis
 % Grid.zLength = 20; 
-Grid.zStart = 15;
-Grid.zEnd = 30;
+Grid.zStart = 18.8;
+Grid.zEnd = 35;
 
 % time to wait in ms after positioner moves before acquiring data
-Grid.pause = 300;
+Grid.pause = 10;
 
 % Set grid spacing. If not set these will be automatically set to lambda/4
-Grid.dx = .03;
-Grid.dy = .03;
-Grid.dz = .1;
+Grid.dx = .25;
+Grid.dy = .25;
+Grid.dz = .25;
 
 % Set the parameter to measure on the grid
 % Grid.parameters = 'Pulse Intensity Integral';
@@ -35,17 +35,17 @@ Grid.parameters = 'Negative Peak Voltage';
 Grid.recordWaveforms = 0;
 
 % Transducer Parameters
-Tx.frequency = .5; % Frequency in MHz
-Tx.diameter = 6.35; % aperture diameter in mm
+Tx.frequency = 0.5; % Frequency in MHz
+Tx.diameter = 12.7; % aperture diameter in mm
 Tx.focalLength = 25.4; % Focal length in mm. Use zero if Tx is unfocused
-Tx.serial = '1190657';
-Tx.model = 'Olympus V310';
-Tx.cone = 'none';
-Tx.coneEdge = 0;
+Tx.serial = '1410001';
+Tx.model = 'ValpeyFisher ISO.504HP';
+Tx.cone = '1in-6pt95mm';
+Tx.coneEdge = 23.7;
 
 %% Function Generator Parameters
 FgParams.amplifierModel = 'ENI A150';
-FgParams.amplifierSerial = '1305';
+FgParams.amplifierSerial = '363';
 FgParams.gridVoltage = 100; % FG voltage for full grid (mVpp)
 FgParams.maxVoltage = 500; % max FG voltage when testing Tx efficiency (mVpp)
 FgParams.minVoltage = 50; % min FG voltage when testing Tx efficiency (mVpp)
@@ -162,7 +162,7 @@ if strcmp(fg.Status, 'closed')
 end
 %%
 setFgBurstMode(fg,Tx.frequency,FgParams.gridVoltage,FgParams.burstPeriod,FgParams.nCycles);
-
+return
 %% Confirm Soniq Settings
 Pos = verifyPositionerSettings(lib,Tx);
 
@@ -172,7 +172,7 @@ writeReadme(Tx,Grid,FgParams,Hydrophone,PreAmp,saveDirectory);
 %% Find the center
 tic
 findCenter(lib,Tx,Grid);
-return
+
 %% XY Plane
 grid_xy = soniq2dScan(lib,[Pos.X.Axis,Pos.Y.Axis],[Grid.xStart,Grid.yStart],[Grid.xEnd,Grid.yEnd],...
     [Grid.xPoints,Grid.yPoints],{'filename',[saveDirectory,'xy.snq'],...
@@ -231,7 +231,6 @@ getEfficiencyCurve(lib,fg,FgParams,saveDirectory);
 generateReport(Grid,Tx,FgParams,Hydrophone,grid_xy,grid_xz,grid_yz,[saveDirectory,'report\'])
 
 %% Close connection
-toc
 
 setFgBurstMode(fg,Tx.frequency,0,FgParams.burstPeriod,1);
 closeSoniq(lib);

@@ -6,7 +6,7 @@ lambda = 1490000/(Tx.frequency*1e6); % wavelength in mm
 if ~strcmp(Tx.cone,'none')
     focus = Tx.coneEdge+1;
 else
-    focus = (Grid.zEnd-Grid.zStart)/2+Grid.zStart; % Center of z-axis locations should be close to the focus.
+    focus = Tx.computedFocus;
 end
 
 if withinLimits(lib,Pos.Z.Axis,focus)
@@ -26,7 +26,7 @@ while ~centered
             error('Terminated by user. Couldn''t find the center.')
         end
     end
-    if Tx.frequency < 1
+    if Tx.frequency <= 1
         soniq2dScan(lib,[Pos.X.Axis,Pos.Y.Axis],[-10,-10],[10,10],2*ones(1,2)*ceil(11/lambda)+1,{'parameter',Grid.parameters})
     else
         soniq2dScan(lib,[Pos.X.Axis,Pos.Y.Axis],[-5,-5],[5,5],0.5*ones(1,2)*ceil(11/lambda)+1,{'parameter',Grid.parameters})
