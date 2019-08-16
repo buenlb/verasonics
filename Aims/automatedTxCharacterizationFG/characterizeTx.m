@@ -16,8 +16,8 @@ Grid.yEnd = 5;
 
 % length to scan along z-axis
 % Grid.zLength = 20; 
-Grid.zStart = 18.8;
-Grid.zEnd = 35;
+Grid.zStart = 19.15;
+Grid.zEnd = 35.15;
 
 % time to wait in ms after positioner moves before acquiring data
 Grid.pause = 10;
@@ -40,8 +40,8 @@ Tx.diameter = 12.7; % aperture diameter in mm
 Tx.focalLength = 25.4; % Focal length in mm. Use zero if Tx is unfocused
 Tx.serial = '1410001';
 Tx.model = 'ValpeyFisher ISO.504HP';
-Tx.cone = '1in-6pt95mm';
-Tx.coneEdge = 23.7;
+Tx.cone = '1in-4pt45mm flat';
+Tx.coneEdge = 18.7;
 
 %% Function Generator Parameters
 FgParams.amplifierModel = 'ENI A150';
@@ -162,7 +162,7 @@ if strcmp(fg.Status, 'closed')
 end
 %%
 setFgBurstMode(fg,Tx.frequency,FgParams.gridVoltage,FgParams.burstPeriod,FgParams.nCycles);
-return
+
 %% Confirm Soniq Settings
 Pos = verifyPositionerSettings(lib,Tx);
 

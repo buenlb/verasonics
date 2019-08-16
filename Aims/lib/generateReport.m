@@ -62,7 +62,7 @@ ylabel('Measured PNP (Mpa)','FontSize',18)
 yyaxis('right')
 plot(vIn,vpp*1e3,'^','linewidth',3,'markersize',8)
 ylim(ylim1*cal*1e9);
-xlabel('Input Voltage (mV)','FontSize',18)
+xlabel('Input Voltage (mVpp)','FontSize',18)
 ylabel('Measured PNV (mV)','FontSize',18,'color',colorOrder(1,:))
 title('Efficiency','FontSize',18)
 makeFigureBig(h);
