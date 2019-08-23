@@ -9,6 +9,7 @@
 %       model: Model name
 %       serial: Serial number
 %       focalLength: focal length in mm (use zero if Tx is unfocused)
+%       notes: any notes pertinent to the characterization
 %   Grid: struct describing the data grid with fields
 %       xStart: beginning point along x-axis
 %       xEnd: end point along x-axis
@@ -26,6 +27,13 @@
 %       frequency: center frequency in MHz
 %       nCycles: number of cicles in pulse
 %       burstPeriod: burst period in ms
+%   Hydrophone: struct describing the hydrophone used
+%       model: model of the hydrophone
+%       serial: serial number of the hydrophone
+%       calDate: calibration date of the hydrophone
+%       rightAngleConnector: whether a right angle connector is used (boolean)
+%       notes: any notes regarding the hydrophone pertinent to acquisition
+%       calibrationFile: location of the calibration file for hydrophone
 %   saveDirectory: location to save the readme file
 % 
 % @OUTPUTS

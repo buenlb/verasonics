@@ -99,6 +99,8 @@ fprintf(fid,'%s\n','}');
 fprintf(fid,'%s\n','\caption{\label{fig:efficiency}Transducer efficiency and waveform.}');
 fprintf(fid,'%s\n','\end{figure}');
 
+%% Notes
+
 %% Footer
 fprintf(fid,'%s\n','\end{document}');
 

@@ -17,7 +17,7 @@ a=(max(v));
 b=find(abs(v)>0.05*a);
 
 if a < 1e-3
-    error('Failed to find a waveform!')
+%     error('Failed to find a waveform!')
 end
 
 tau=t(b(1));
