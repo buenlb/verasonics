@@ -5,7 +5,7 @@
 %   gImg: Grayscale image (MxN matrix)
 %   cImg: intensity image (MxN matrix). This will be converted into a true
 %       color image and overlaid on gImg
-%   handle: handle to axes on which to generate the image
+%   handle: handle to figure on which to generate the image
 %   xAx: Nx2 vector containing x-limits of image
 %   yAx: Nx2 vector containing y-limits of image
 %   threshold: Selects which values of cImg to display. Anything less than

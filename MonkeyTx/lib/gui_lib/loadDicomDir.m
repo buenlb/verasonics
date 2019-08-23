@@ -75,6 +75,9 @@ imgstack = zeros(numRows, numCols, numFiles);
 
 if ~exist('uiHandle','var')
     uiHandle = uifigure;
+    closeFigure = 1;
+else
+    closeFigure = 0;
 end
 d = uiprogressdlg(uiHandle,'Title','Loading Dicoms');
 for i = 1:numFiles
@@ -94,3 +97,7 @@ for i = 1:numFiles
     end
 end
 hdr = {hdr,hdr2};
+
+if closeFigure
+    close(uiHandle);
+end
