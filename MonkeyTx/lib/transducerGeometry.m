@@ -6,9 +6,9 @@
 %   plotGeometry: flag that turns on plots of the results
 % 
 % @OUTPUTS
-%   xE: Euclidian x location of each element
-%   yE: Euclidian y location of each element
-%   zE: Euclidian z location of each element
+%   xE: Euclidian x location of each element in m
+%   yE: Euclidian y location of each element in m
+%   zE: Euclidian z location of each element in m
 
 function [Trans,xE,yE,zE,corners] = transducerGeometry(plotGeometry)
 r = 65; % Radius of curvature
@@ -71,7 +71,7 @@ if plotGeometry
     axis('equal')
 end
 
-elementPositions = [X',Y',Z',AZ',EL'];
+elementPositions = [xE',yE',zE',AZ',EL'];
 
 %% Plot full elements
 if plotGeometry

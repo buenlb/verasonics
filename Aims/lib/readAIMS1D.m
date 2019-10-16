@@ -1,4 +1,4 @@
-function [allData,xAxis,yAxis,xName,yName,position] = readAIMS(fileName)
+function [allData,xAxis,yAxis,xName,yName,position] = readAIMS1D(fileName)
 
 % readAIMS - This code reads AIM files containing hydrophone data.
 %    [] = readAIMS(fileName, folderName, newAxis)
@@ -41,7 +41,7 @@ p_num = length(p);
 for q = 1:p_num
     
     % calculate number of header lines before data starts
-    dataHeader = ['2D Scan Data ', num2str(q-1)];
+    dataHeader = ['1D Scan Data'];
     newline = '[\n]';
     n = regexp(text, newline);
     m = regexp(text, dataHeader);
@@ -54,9 +54,12 @@ for q = 1:p_num
 
     % read file
     fid = fopen(fileName);
-    c = textscan(fid, '%f', 'Headerlines', numHeaderLines+1); % may not be 252 lines for every file...
+    c = textscan(fid, '%f', 'Headerlines', numHeaderLines+2); % may not be 252 lines for every file...
     data = c{1};
-
+    
+    x = data(1:2:end);
+    data = data(2:2:end);
+    data = reshape(data,[length(data)/2,2]);
     % calculate x axis properties
     if q == 1
         x = regexp(text, '[\n]First Axis');

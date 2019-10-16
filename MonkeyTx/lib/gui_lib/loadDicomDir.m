@@ -79,10 +79,12 @@ if ~exist('uiHandle','var')
 else
     closeFigure = 0;
 end
-d = uiprogressdlg(uiHandle,'Title','Loading Dicoms');
+d = waitbar(0,'Loading Dicoms');
 for i = 1:numFiles
-    d.Value = i/numFiles;
-    d.Message = ['File ', num2str(i), ' of ', num2str(numFiles)];
+    waitbar(i/numFiles,d,'Loading Dicoms')
+    
+    %d.Value = i/numFiles;
+    %d.Message = ['File ', num2str(i), ' of ', num2str(numFiles)];
     
     file = fullfile(dirpath, listing(i).name);
     header = dicominfo(file, 'UseDictionaryVR', true);

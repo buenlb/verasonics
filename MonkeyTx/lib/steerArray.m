@@ -13,17 +13,19 @@
 %   elements: the same elements struct that was passed in with the
 %       additional field phi set to the phase for that element
 %   phi: phase for each element relative to the first element
+%   t: delays relative to a period at the given frequency
 % 
 % Taylor Webb
 % University of Utah
 % Summer 2019
 
-function [elements,phi] = steerArray(elements,focus,frequency)
+function [elements,phi,t] = steerArray(elements,focus,frequency)
 VERBOSE = 0;
 c = 1540; % Speed of sound in m/s
 k = 2*pi*frequency/c;
 
 phi = zeros(length(elements.x),1);
+t = phi;
 
 if VERBOSE
     figure
@@ -44,6 +46,8 @@ for ii = 1:length(elements.x)
         d0 = d;
     else
         phi(ii) = (d0-d)*k;
+        t(ii) = frequency*(d0-d)/c;
     end
 end
 elements.phi = phi;
+elements.t = t;

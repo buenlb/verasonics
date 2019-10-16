@@ -36,7 +36,7 @@ if ~exist('uiHandle','var')
 else
     closeFigure = 0;
 end
-d = uiprogressdlg(uiHandle,'Title','Simulating');
+d = waitbar(0,'Simulating');
 
 if VERBOSE
     figure
@@ -52,8 +52,9 @@ end
 
 for ii = 1:length(elements.x)
     % Update Status bar
-    d.Value = ii/length(elements.x);
-    d.Message = ['Element ', num2str(ii), ' of ', num2str(length(elements.x))];
+    waitbar(ii/length(elements.x),d,['Element ', num2str(ii), ' of ', num2str(length(elements.x))]);
+    %d.Value = ii/length(elements.x);
+    %d.Message = ['Element ', num2str(ii), ' of ', num2str(length(elements.x))];
     
     % Determine distance between the current element and each location in the grid
     R = sqrt((X-elements.x(ii)).^2+(Y-elements.y(ii)).^2+(Z-elements.z(ii)).^2);

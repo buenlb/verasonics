@@ -21,7 +21,7 @@
 % Summer 2019
 
 function overlayImages(gImg,cImg,handle,xAx,yAx,threshold,window)
-C = colormap('hot');
+C = colormap(handle,'hot');
 L = size(C,1);
 
 Gs = round(interp1(linspace(min(cImg(:)),max(cImg(:)),L),1:L,cImg));
