@@ -6,7 +6,11 @@ Resource = evalin('base','Resource');
 if isempty(figHandle)
     figHandle = figure;
 end
-figure(figHandle);
+try
+    figure(figHandle);
+catch
+    figHandle = figure;
+end
 % 
 t = 1e6*(0:(Receive(1).endSample-1))/(Receive(1).ADCRate*1e6/Receive(1).decimFactor);
 

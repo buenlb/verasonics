@@ -33,18 +33,18 @@ else
 end
 
 idx = 1;
-for ii = 1:nY
-    for jj = 1:nX
-        X(idx) = x(jj);
-        Y(idx) = y(ii);
-        Z(idx) = z(jj);
+for ii = 1:nX
+    for jj = nY:-1:1
+        X(idx) = x(ii);
+        Y(idx) = y(jj);
+        Z(idx) = z(ii);
         
-        AZ(idx) = -th(jj);
+        AZ(idx) = -th(ii);
         
         % Find corners - need these to simulate beam in K-wave
-        deltaX = d/2*cos(-th(jj));
+        deltaX = d/2*cos(-th(ii));
         deltaY = d/2;
-        deltaZ = d/2*sin(-th(jj));
+        deltaZ = d/2*sin(-th(ii));
         corners{idx} = [X(idx)-deltaX,X(idx)-deltaX,X(idx)+deltaX,X(idx)+deltaX;...
                         Y(idx)-deltaY,Y(idx)+deltaY,Y(idx)+deltaY,Y(idx)-deltaY;...
                         Z(idx)+deltaZ,Z(idx)+deltaZ,Z(idx)-deltaZ,Z(idx)-deltaZ];
@@ -93,9 +93,10 @@ th = linspace(-pi/2,pi/2,101);
 directivity = cos(th);
 
 %% Set up Transducer struct
-Trans = struct('name','Macaque','frequency',f/1e6,'type',2,'units','mm',...
+Trans = struct('name','custom','frequency',f/1e6,'type',2,'units','mm',...
     'numelements',nX*nY,'ElementPos',elementPositions,'ElementSens',directivity,...
-    'connType',1,'spacing',3.2/lambda,'maxHighVoltage',10);
+    'connType',1,'spacing',3.2/lambda,'maxHighVoltage',10, 'Connector',(1:256)',...
+    'impedance',75);
 
 % Some notes:
 % - This allows the system to set the Tx BW by default. This will effect

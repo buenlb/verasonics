@@ -23,8 +23,9 @@ try
     figure(figHandle);
 catch
     figHandle = figure;
+    data = [];
 end
-
+clf;
 grid = load(Resource.Parameters.gridInfoFile);
 if isempty(data)
     data = zeros(size(grid.X));

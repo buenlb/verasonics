@@ -17,7 +17,7 @@
 % Taylor Webb
 % Fall 2019
 
-function [Trans,TW] = L74_waterTank(delays,savePath,saveName)
+function [Trans,TW] = doppler256_waterTank_HIFU(delays,savePath,saveName)
 if nargin == 1 || nargin == 2
     error('If you supply delays you must also supply a savePath and saveName!')
 end
@@ -29,9 +29,10 @@ NA = 1;
 ioChannel = 1;
 
 % Specify system parameters
-Resource.Parameters.numTransmit = 128; % no. of xmit chnls (V64LE,V128 or V256).
-Resource.Parameters.numRcvChannels = 128; % change to 64 for Vantage 64 or 64LE
+Resource.Parameters.numTransmit = 256; % no. of xmit chnls (V64LE,V128 or V256).
+Resource.Parameters.numRcvChannels = 256; % change to 64 for Vantage 64 or 64LE
 Resource.Parameters.speedOfSound = 1490; % speed of sound in m/sec
+Resource.Parameters.connector = 0; % trans. connector to use (V256).
 Resource.Parameters.numAvg = NA;
 Resource.Parameters.ioChannel = ioChannel;
 Resource.Parameters.gridInfoFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\setupScripts\gridInfo.mat';
@@ -39,14 +40,43 @@ if nargin > 1
     Resource.Parameters.saveDir = savePath;
     Resource.Parameters.saveName = saveName;
 end
-% Resource.Parameters.simulateMode = 1; % runs script in simulate mode
+
+%% Set up longer pulses
+% HIFU % The Resource.HIFU.externalHifuPwr parameter must be specified in a
+% script using TPC Profile 5 with the HIFU option, to inform the system
+% that the script intends to use the external power supply.  This is also
+% to make sure that the script was explicitly written by the user for this
+% purpose, and to prevent a script intended only for an Extended Transmit
+% system from accidentally being used on the HIFU system.
+Resource.HIFU.externalHifuPwr = 1;
+
+% HIFU % The string value assigned to the variable below is used to set the
+% port ID for the virtual serial port used to control the external HIFU
+% power supply.  The port ID was assigned by the Windows OS when it
+% installed the SW driver for the power supply; the value assigned here may
+% have to be modified to match.  To find the value to use, open the Windows
+% Device Manager and select the serial/ COM port heading.  If you have
+% installed the driver for the external power supply, and it is connected
+% to the host computer and turned on, you should see it listed along with
+% the COM port ID number assigned to it.
+Resource.HIFU.extPwrComPortID = 'COM5';
+
+Resource.HIFU.psType = 'QPX600DP'; % set to 'QPX600DP' to match supply being used
+
+TPC(5).hv = 1.6;
+TPC(5).maxHighVoltage = 20;
+TPC(5).highVoltageLimit = 20;
+TPC(5).xmitDuration = 1e7;
+
+%%
 
 % Specify media points
 Media.MP(1,:) = [0,0,100,1.0]; % [x, y, z, reflectivity]
 
 % Specify Trans structure array.
-Trans.name = 'L7-4';
-Trans = computeTrans(Trans);
+Trans = transducerGeometry(0);
+Trans.units = 'mm';
+Trans.maxHighVoltage = 20;
 frequency = Trans.frequency;
 
 % Specify Resource buffers.
@@ -57,7 +87,7 @@ Resource.RcvBuffer(1).numFrames = 1; % minimum size is 1 frame.
 
 % Specify Transmit waveform structure.
 TW(1).type = 'parametric';
-numberHalfCycles = 2;
+numberHalfCycles = 100;
 TW(1).Parameters = [frequency,0.67,numberHalfCycles,1]; % A, B, C, D
 
 if nargin < 1
@@ -71,18 +101,18 @@ end
 % Specify TX structure array.
 TX(1).waveform = 1; % use 1st TW structure.
 TX(1).focus = 0;
-TX(1).Apod = ones(1,128);
+TX(1).Apod = ones(1,256);
 TX(1).Delay = delays;
 
-TPC(1).hv = 30;
+TPC(1).hv = 1.6;
 
 % Specify TGC Waveform structure.
 TGC(1).CntrlPts = zeros(1,8);
-TGC(1).rangeMax = 250;
+TGC(1).rangeMax = 1;
 TGC(1).Waveform = computeTGCWaveform(TGC);
 
 % Specify Receive structure array -
-Receive(1).Apod = ones(1,128);
+Receive(1).Apod = ones(1,256);
 Receive(1).startDepth = 0;
 Receive(1).endDepth = 80;
 Receive(1).TGC = 1; % Use the first TGC waveform defined above
@@ -130,6 +160,19 @@ Process(4).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 
 n = 1;
 nsc = 1;
+
+Event(n).info = 'select TPC profile 5';
+Event(n).tx = 0;
+Event(n).rcv = 0;
+Event(n).recon = 0;
+Event(n).process = 0;
+Event(n).seqControl = nsc; % set TPC profile command.
+n = n+1;
+SeqControl(nsc).command = 'setTPCProfile';
+SeqControl(nsc).argument = 5;
+SeqControl(nsc).condition = 'immediate';
+nsc = nsc + 1;
+
 Event(n).info = 'Move Positioner';
 Event(n).tx = 0; % no TX structure.
 Event(n).rcv = 0; % no Rcv structure.
@@ -149,7 +192,7 @@ Event(n).recon = 0; % no reconstruction.
 Event(n).process = 0; % no processing
 Event(n).seqControl = [2,3,4];
 SeqControl(nsc).command = 'timeToNextAcq';
-SeqControl(nsc).argument = 0.1e6;
+SeqControl(nsc).argument = numberHalfCycles*2/frequency*1000;
 nsc = nsc+1;
 SeqControl(nsc).command = 'transferToHost';
 nsc = nsc+1;
@@ -207,10 +250,10 @@ Event(n).process = 0; % no processing
 Event(n).seqControl = nsc; % jump back to Event 1
 SeqControl(nsc).command = 'jump';
 SeqControl(nsc).condition = 'exitAfterJump';
-SeqControl(nsc).argument = 2;
+SeqControl(nsc).argument = 3;
 
 % Save all the structures to a .mat file.
 scriptName = mfilename('fullpath');
 svName = matFileName(scriptName);
 save(svName);
-
+keyboard

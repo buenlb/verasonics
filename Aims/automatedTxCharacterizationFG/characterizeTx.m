@@ -1,10 +1,10 @@
 close all; clearvars -except fg; clc;
 
 setPaths();
-return
+%return
 %% User Defined Variables
 saveResults = 0;
-%saveDirectory = 'C:\Users\Verasonics\Box Sync\TransducerCharacterizations\HGL0200\';
+saveDirectory = 'C:\Users\Verasonics\Box Sync\TransducerCharacterizations\HGL0200\';
 
 %% User Defined Variables
 % Define the grid
@@ -15,9 +15,9 @@ Grid.yStart = -5;
 Grid.yEnd = 5;
 
 % length to scan along z-axis
- Grid.zLength = 10; 
-% Grid.zStart = 15;
-% Grid.zEnd = 35;
+% Grid.zLength = 10; 
+ Grid.zStart = 25;
+ Grid.zEnd = 35;
 
 % time to wait in ms after positioner moves before acquiring data
 Grid.pause = 100;
@@ -36,25 +36,26 @@ Grid.recordWaveforms = 0;
 
 % Transducer Parameters
 Tx.frequency = 0.5; % Frequency in MHz
-Tx.diameter = 1.125*25.4; % aperture diameter in mm
-Tx.focalLength = 1.5*25.4; % Focal length in mm. Use zero if Tx is unfocused
-Tx.serial = '1184837';
-Tx.model = 'harisonic l8-0018-P';
-Tx.cone = 'none';
-Tx.coneEdge = 0*25.4;         % [mm]
+Tx.diameter = 0.5*25.4; % aperture diameter in mm
+Tx.focalLength = 1*25.4; % Focal length in mm. Use zero if Tx is unfocused
+Tx.serial = '1410001';
+Tx.model = 'ValpeyFisher ISO.504HP';
+Tx.cone = '1in-49deg-24.3';
+Tx.coneEdge = 24.3;         % [mm]
 
 %% Function Generator Parameters
 FgParams.amplifierModel = 'ENI A150';
 FgParams.amplifierSerial = '1305';
 FgParams.gridVoltage = 100; % FG voltage for full grid (mVpp)
-FgParams.maxVoltage = 300; % max FG voltage when testing Tx efficiency (mVpp)
+FgParams.maxVoltage = 500; % max FG voltage when testing Tx efficiency (mVpp)
 FgParams.minVoltage = 50; % min FG voltage when testing Tx efficiency (mVpp)
 FgParams.frequency = Tx.frequency; % center frequency in MHz
-FgParams.nCycles = 1; % number of cicles in pulse
+FgParams.nCycles = 20; % number of cicles in pulse
 % For long pulses use a burst period that results in 0.1% duty cycle to be
 % extra careful with hydrophone.
 FgParams.burstPeriod = 1000*FgParams.nCycles/Tx.frequency/1e3; % burst period in ms
-FgParams.ID = 'MY52600694';
+% FgParams.ID = 'MY52600694';
+FgParams.ID = 'MY52600670';
 
 % Pre-Amp Info
 PreAmp.model = 'AG-2010';

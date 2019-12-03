@@ -7,7 +7,7 @@
 %       y: y location of the elements
 %       z: z location of the elements
 %   focus: [x,y,z] location of the focal spot in meters
-%   frequency: frequency of the array in Hz
+%   frequency: frequency of the array in MHz
 % 
 % @OUTPUTS
 %   elements: the same elements struct that was passed in with the
@@ -22,6 +22,9 @@
 function [elements,phi,t] = steerArray(elements,focus,frequency)
 VERBOSE = 0;
 c = 1540; % Speed of sound in m/s
+
+frequency = frequency*1e6; % convert to Hz
+
 k = 2*pi*frequency/c;
 
 phi = zeros(length(elements.x),1);
@@ -49,5 +52,8 @@ for ii = 1:length(elements.x)
         t(ii) = frequency*(d0-d)/c;
     end
 end
+t = t-min(t);
 elements.phi = phi;
 elements.t = t;
+
+plotPhases(elements.x*1e3,elements.y*1e3,elements.z*1e3,t);

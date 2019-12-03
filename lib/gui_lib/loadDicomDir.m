@@ -52,15 +52,17 @@ dimP = hdr.PixelSpacing(2)*(0:numRows-1)' + hdr.ImagePositionPatient(2);
 % know that the slices are flush with one another and can compute the
 % positions easily. otherwise, we need to get the slice location
 % information from each DICOM
-if 1%hdr.SliceThickness == hdr.SpacingBetweenSlices;
+if ~isempty(hdr.SliceThickness)%hdr.SliceThickness == hdr.SpacingBetweenSlices;
     dimS = hdr.SliceThickness*(0:numFiles-1)' + hdr.ImagePositionPatient(3);
 else
-    dimS = zeros(numFiles, 1);
-    for i = 1:numFiles
-        file = fullfile(dirpath, listing(i).name);
-        header = dicominfo(file);
-        dimS(i) = header.SliceLocation;
-    end
+    warning('Unable to set dimS!')
+    dimS = 0;
+%     dimS = zeros(numFiles, 1);
+%     for i = 1:numFiles
+%         file = fullfile(dirpath, listing(i).name);
+%         header = dicominfo(file);
+%         dimS(i) = header.SliceLocation;
+%     end
 end
 
 

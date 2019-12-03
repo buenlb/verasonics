@@ -17,7 +17,7 @@
 % Taylor Webb
 % Fall 2019
 
-function [Trans,TW] = L74_waterTank(delays,savePath,saveName)
+function [Trans,TW] = L74_waterTank_HIFU(delays,savePath,saveName)
 if nargin == 1 || nargin == 2
     error('If you supply delays you must also supply a savePath and saveName!')
 end
@@ -41,13 +41,101 @@ if nargin > 1
 end
 % Resource.Parameters.simulateMode = 1; % runs script in simulate mode
 
-% Specify media points
-Media.MP(1,:) = [0,0,100,1.0]; % [x, y, z, reflectivity]
+%% Set up longer pulses
+% HIFU % The Resource.HIFU.externalHifuPwr parameter must be specified in a
+% script using TPC Profile 5 with the HIFU option, to inform the system
+% that the script intends to use the external power supply.  This is also
+% to make sure that the script was explicitly written by the user for this
+% purpose, and to prevent a script intended only for an Extended Transmit
+% system from accidentally being used on the HIFU system.
+Resource.HIFU.externalHifuPwr = 1;
 
-% Specify Trans structure array.
-Trans.name = 'L7-4';
+% HIFU % The string value assigned to the variable below is used to set the
+% port ID for the virtual serial port used to control the external HIFU
+% power supply.  The port ID was assigned by the Windows OS when it
+% installed the SW driver for the power supply; the value assigned here may
+% have to be modified to match.  To find the value to use, open the Windows
+% Device Manager and select the serial/ COM port heading.  If you have
+% installed the driver for the external power supply, and it is connected
+% to the host computer and turned on, you should see it listed along with
+% the COM port ID number assigned to it.
+Resource.HIFU.extPwrComPortID = 'COM5';
+
+Resource.HIFU.psType = 'QPX600DP'; % set to 'QPX600DP' to match supply being used
+
+
+% The pairing number is determinded by the following command
+% DO NOT MODIFY! If the transducer can't be recognized, the user needs to be
+% responsible for any modification of the following commands.
+% try [presence, ~, personalityId] = getConnectorInfo();    
+%     switch presence(2)
+%         case 0 % No probe is connected, expect to use fakeScanhead mode
+%             PairingNum = 7;%input('No probe is connected; please enter the pairing number used for fakeScanhead mode: ');
+%             if isempty(PairingNum)
+%                 disp('HIFUPlex exiting; no pairing number specified.')
+%                 clear
+%                 return
+%             end
+%             disp(['Pairing ',num2str(PairingNum),' will be used for fakeScanhead mode'])
+%         case 1 
+%             % Pair is determined by transducer id            
+%             Probe = char(computeTrans(num2str(personalityId(2), '%06X')));            
+%             if isequal(Probe, 'H-104')
+%                 PairingNum = 1;
+%             elseif isequal(Probe, 'H-101')
+%                 PairingNum = 2;
+%             elseif isequal(Probe, 'H-106')
+%                 PairingNum = 3;
+%             elseif isequal(Probe, 'H-313')
+%                 PairingNum = 4;
+%             elseif isequal(Probe, 'H-301')
+%                 PairingNum = 5;
+%             elseif isequal(Probe, 'H-302')
+%                 PairingNum = 6;
+%             elseif isequal(Probe, 'L7-4')
+%                 PairingNum = 7;
+%             else
+%                 fprintf(2, 'Not supported pairing! Please disconnect the transducer and redo the test.\n');
+%                 return
+%             end
+%     end
+% catch
+%     PairingNum = input('Hardware does not exist; please enter the pairing number used for simulation mode: ');
+%     if isempty(PairingNum)
+%         disp('HIFUPlex exiting; no pairing number specified.')
+%         clear
+%         return
+%     end
+%     disp(['Pairing ',num2str(PairingNum),' will be used for simulation'])
+% end
+% 
+% switch PairingNum
+%     case 1
+%         TransName = 'H-104';
+%     case 2
+%         TransName = 'H-101';
+%     case 3
+%         TransName = 'H-106';
+%     case 4
+%         TransName = 'H-313';
+%     case 5
+%         TransName = 'H-301';
+%     case 6
+%         TransName = 'H-302';
+%     case 7
+         TransName = 'L7-4';
+%     otherwise
+%         error('Incorrect pairing number!')
+% end
+
+Trans.name = TransName;
+Trans.units = 'mm';
+Trans.frequency = 2.4510; %1,1.1468, 1.9841, 2.4510, 2.5, 2.9762, 3.4722, 4.0323,4.4643
 Trans = computeTrans(Trans);
 frequency = Trans.frequency;
+
+% Specify media points
+Media.MP(1,:) = [0,0,100,1.0]; % [x, y, z, reflectivity]
 
 % Specify Resource buffers.
 Resource.RcvBuffer(1).datatype = 'int16';
@@ -56,14 +144,16 @@ Resource.RcvBuffer(1).colsPerFrame = 1; % change to 256 for V256 system
 Resource.RcvBuffer(1).numFrames = 1; % minimum size is 1 frame.
 
 % Specify Transmit waveform structure.
+%Set up Waveform
+stimdur = 100; %msec
+numberHalfCycles = round(Trans.frequency*stimdur*2000,0);
+
 TW(1).type = 'parametric';
-numberHalfCycles = 2;
 TW(1).Parameters = [frequency,0.67,numberHalfCycles,1]; % A, B, C, D
 
 if nargin < 1
     return;
 end
-
 % TW(1).type = 'pulseCode';
 % TW(1).PulseCode = generateImpulse(1/(4*2.25e6));
 % TW(1).PulseCode = generateImpulse(3/250e6);
@@ -74,7 +164,7 @@ TX(1).focus = 0;
 TX(1).Apod = ones(1,128);
 TX(1).Delay = delays;
 
-TPC(1).hv = 30;
+TPC(5).hv = 1.6;
 
 % Specify TGC Waveform structure.
 TGC(1).CntrlPts = zeros(1,8);
@@ -130,7 +220,20 @@ Process(4).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 
 n = 1;
 nsc = 1;
-Event(n).info = 'Move Positioner';
+
+Event(n).info = 'select TPC profile 5';
+Event(n).tx = 0;
+Event(n).rcv = 0;
+Event(n).recon = 0;
+Event(n).process = 0;
+Event(n).seqControl = nsc; % set TPC profile command.
+n = n+1;
+SeqControl(nsc).command = 'setTPCProfile';
+SeqControl(nsc).argument = 5;
+SeqControl(nsc).condition = 'immediate';
+nsc = nsc + 1;
+
+Event(n).info = 'Initialize Grid';
 Event(n).tx = 0; % no TX structure.
 Event(n).rcv = 0; % no Rcv structure.
 Event(n).recon = 0; % no reconstruction.
@@ -147,21 +250,22 @@ Event(n).tx = 1; % use 1st TX structure.
 Event(n).rcv = 1; % use 1st Rcv structure.
 Event(n).recon = 0; % no reconstruction.
 Event(n).process = 0; % no processing
-Event(n).seqControl = [2,3,4];
+Event(n).seqControl = [nsc,nsc+1,nsc+2];
 SeqControl(nsc).command = 'timeToNextAcq';
-SeqControl(nsc).argument = 0.1e6;
+SeqControl(nsc).argument = 1e6;
+nscTime2Aq = nsc;
 nsc = nsc+1;
 SeqControl(nsc).command = 'transferToHost';
 nsc = nsc+1;
 SeqControl(nsc).command = 'triggerOut';
+nscTrig = nsc;
 nsc = nsc+1;
 n = n+1;
 
-nsc = 4;
 for ii = 2:NA
     Event(n) = Event(2);
     Event(n).rcv = ii;
-    Event(n).seqControl = [2,4,nsc];
+    Event(n).seqControl = [nscTime2Aq,nscTrig,nsc];
      SeqControl(nsc).command = 'transferToHost';
 	   nsc = nsc + 1;
     n = n+1;
@@ -184,7 +288,6 @@ Event(n).process = 2;
 % Event(n).seqControl = [nsc]; % wait for data to be transferred
 % SeqControl(nsc).command = 'sync';
 % SeqControl(nsc).argument = 2e9;
-nsc = nsc+1;
 n = n+1;
 
 Event(n).info = 'Wait and diplay';
@@ -207,10 +310,9 @@ Event(n).process = 0; % no processing
 Event(n).seqControl = nsc; % jump back to Event 1
 SeqControl(nsc).command = 'jump';
 SeqControl(nsc).condition = 'exitAfterJump';
-SeqControl(nsc).argument = 2;
+SeqControl(nsc).argument = 3;
 
 % Save all the structures to a .mat file.
 scriptName = mfilename('fullpath');
 svName = matFileName(scriptName);
 save(svName);
-

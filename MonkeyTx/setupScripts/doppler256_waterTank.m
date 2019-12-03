@@ -1,23 +1,45 @@
-function Trans = doppler256_waterTank(delays)
-if nargin < 1
-    delays = zeros(1,256);
+% When argument are passed to L74_waterTank generates the MAT file required
+% to run VSX. If no arguments are passed then it simply initates and
+% returns the Trans struct.
+% 
+% @INPUTS
+%   delays: 1XN array of delays where N is the number of elements in the
+%       array
+%   savePath: Location to save the measured waveforms. This is passed to
+%      external functions via Resource.Paramaters.savePath
+%   saveName: Base name with which to save the measured waveforms. This is 
+%      passed to external functions via Resource.Paramaters.savePath
+% 
+% @OUTPUTS
+%   Trans: Structure representing the transducer. Contains element
+%      locations and frequency.
+% 
+% Taylor Webb
+% Fall 2019
+
+function [Trans,TW] = doppler256_waterTank(delays,savePath,saveName)
+if nargin == 1 || nargin == 2
+    error('If you supply delays you must also supply a savePath and saveName!')
 end
 %% Set up path locations
 srcDirectory = setPaths();
 
 %%
-frequency = 0.65; % Frequency in MHz
-nCycles = 1; % number of cycles with which to excite Tx (can integer multiples of 1/2)
-
-NA = 32;
+NA = 1;
+ioChannel = 1;
 
 % Specify system parameters
-Resource.Parameters.numTransmit = 1; % no. of xmit chnls (V64LE,V128 or V256).
-Resource.Parameters.numRcvChannels = 1; % change to 64 for Vantage 64 or 64LE
-Resource.Parameters.connector = 1; % trans. connector to use (V256).
+Resource.Parameters.numTransmit = 256; % no. of xmit chnls (V64LE,V128 or V256).
+Resource.Parameters.numRcvChannels = 256; % change to 64 for Vantage 64 or 64LE
 Resource.Parameters.speedOfSound = 1490; % speed of sound in m/sec
+Resource.Parameters.connector = 0; % trans. connector to use (V256).
 Resource.Parameters.numAvg = NA;
-Resource.Parameters.ioChannel = 1;
+Resource.Parameters.ioChannel = ioChannel;
+Resource.Parameters.gridInfoFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\setupScripts\gridInfo.mat';
+if nargin > 1
+    Resource.Parameters.saveDir = savePath;
+    Resource.Parameters.saveName = saveName;
+end
 % Resource.Parameters.simulateMode = 1; % runs script in simulate mode
 
 % Specify media points
@@ -26,20 +48,24 @@ Media.MP(1,:) = [0,0,100,1.0]; % [x, y, z, reflectivity]
 % Specify Trans structure array.
 Trans = transducerGeometry(0);
 Trans.units = 'mm';
-Trans.maxHighVoltage = 2;
-
-TPC(1).hv = 1.6;
-
+Trans.maxHighVoltage = 20;
+frequency = Trans.frequency;
 
 % Specify Resource buffers.
 Resource.RcvBuffer(1).datatype = 'int16';
-Resource.RcvBuffer(1).rowsPerFrame = NA*2048*4; % this allows for 1/4 maximum range
+Resource.RcvBuffer(1).rowsPerFrame = NA*4096; % this allows for 1/4 maximum range
 Resource.RcvBuffer(1).colsPerFrame = 1; % change to 256 for V256 system
 Resource.RcvBuffer(1).numFrames = 1; % minimum size is 1 frame.
 
 % Specify Transmit waveform structure.
 TW(1).type = 'parametric';
-TW(1).Parameters = [Trans.frequency,0.67,nCycles*2,1]; % A, B, C, D
+numberHalfCycles = 2;
+TW(1).Parameters = [frequency,0.67,numberHalfCycles,1]; % A, B, C, D
+
+if nargin < 1
+    return;
+end
+
 % TW(1).type = 'pulseCode';
 % TW(1).PulseCode = generateImpulse(1/(4*2.25e6));
 % TW(1).PulseCode = generateImpulse(3/250e6);
@@ -50,15 +76,17 @@ TX(1).focus = 0;
 TX(1).Apod = ones(1,256);
 TX(1).Delay = delays;
 
+TPC(1).hv = 1.6;
+
 % Specify TGC Waveform structure.
-TGC(1).CntrlPts = ones(1,8)*0;
+TGC(1).CntrlPts = zeros(1,8);
 TGC(1).rangeMax = 1;
 TGC(1).Waveform = computeTGCWaveform(TGC);
 
 % Specify Receive structure array -
-Receive(1).Apod = 1;
+Receive(1).Apod = ones(1,256);
 Receive(1).startDepth = 0;
-Receive(1).endDepth = 200;
+Receive(1).endDepth = 80;
 Receive(1).TGC = 1; % Use the first TGC waveform defined above
 Receive(1).mode = 0;
 Receive(1).bufnum = 1;
@@ -75,32 +103,67 @@ end
 
 % Specify an external processing event.
 Process(1).classname = 'External';
-Process(1).method = 'plotSingleElementAveraging';
+Process(1).method = 'getWaveform';
 Process(1).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'srcbufnum',1,...
 'srcframenum',1,...
 'dstbuffer','none'};
 
+Process(2).classname = 'External';
+Process(2).method = 'movePositionerVerasonics';
+Process(2).Parameters = {'srcbuffer','receive',... % name of buffer to process.
+'srcbufnum',1,...
+'srcframenum',1,...
+'dstbuffer','none'};
+
+Process(3).classname = 'External';
+Process(3).method = 'startGridVerasonics';
+Process(3).Parameters = {'srcbuffer','receive',... % name of buffer to process.
+'srcbufnum',1,...
+'srcframenum',1,...
+'dstbuffer','none'};
+
+Process(4).classname = 'External';
+Process(4).method = 'displayResults';
+Process(4).Parameters = {'srcbuffer','receive',... % name of buffer to process.
+'srcbufnum',1,...
+'srcframenum',1,...
+'dstbuffer','none'};
+
+n = 1;
+nsc = 1;
+Event(n).info = 'Move Positioner';
+Event(n).tx = 0; % no TX structure.
+Event(n).rcv = 0; % no Rcv structure.
+Event(n).recon = 0; % no reconstruction.
+Event(n).process = 3; 
+Event(n).seqControl = [nsc]; % wait for data to be transferred
+SeqControl(nsc).command = 'sync';
+SeqControl(nsc).argument = 2e9;
+nsc = nsc+1;
+n = n+1;
+
 % Specify sequence events.
-Event(1).info = 'Acquire RF Data.';
-Event(1).tx = 1; % use 1st TX structure.
-Event(1).rcv = 1; % use 1st Rcv structure.
-Event(1).recon = 0; % no reconstruction.
-Event(1).process = 0; % no processing
-Event(1).seqControl = [1,2,3];
-SeqControl(1).command = 'timeToNextAcq';
-SeqControl(1).argument = 4000;
-SeqControl(2).command = 'transferToHost';
-SeqControl(3).command = 'triggerOut';
-
-n = 2;
-
+Event(n).info = 'Acquire RF Data.';
+Event(n).tx = 1; % use 1st TX structure.
+Event(n).rcv = 1; % use 1st Rcv structure.
+Event(n).recon = 0; % no reconstruction.
+Event(n).process = 0; % no processing
+Event(n).seqControl = [2,3,4];
+SeqControl(nsc).command = 'timeToNextAcq';
+SeqControl(nsc).argument = 0.1e6;
+nsc = nsc+1;
+SeqControl(nsc).command = 'transferToHost';
+nsc = nsc+1;
+SeqControl(nsc).command = 'triggerOut';
+nsc = nsc+1;
+n = n+1;
 
 nsc = 4;
 for ii = 2:NA
-    Event(n) = Event(1);
+    Event(n) = Event(2);
     Event(n).rcv = ii;
-    Event(n).seqControl = [1,nsc];
+    Event(n).seqControl = [2,4,nsc];
      SeqControl(nsc).command = 'transferToHost';
 	   nsc = nsc + 1;
     n = n+1;
@@ -108,44 +171,48 @@ for ii = 2:NA
 %     n = n+1;
 end
 
-Event(n).info = 'Call external Processing function.';
+Event(n).info = 'Acquire a waveform';
 Event(n).tx = 0; % no TX structure.
 Event(n).rcv = 0; % no Rcv structure.
 Event(n).recon = 0; % no reconstruction.
-Event(n).process = 1; % no processing function
-Event(n).seqControl = [nsc,nsc+1,nsc+2]; % wait for data to be transferred
-SeqControl(nsc).command = 'waitForTransferComplete';
-SeqControl(nsc).argument = 2;
-SeqControl(nsc+1).command = 'markTransferProcessed';
-SeqControl(nsc+1).argument = 2;
-SeqControl(nsc+2).command = 'sync';
-SeqControl(nsc+2).argument = 25e6;
-nsc = nsc+3;
+Event(n).process = 1; 
 n = n+1;
 
-% Event(n).info = 'Call external Processing function.';
-% Event(n).tx = 0; % no TX structure.
-% Event(n).rcv = 0; % no Rcv structure.
-% Event(n).recon = 0; % no reconstruction.
-% Event(n).process = 1; % call processing function
-% Event(n).seqControl = [3,4,5]; % wait for data to be transferred
-% SeqControl(3).command = 'waitForTransferComplete';
-% SeqControl(3).argument = 2;
-% SeqControl(4).command = 'markTransferProcessed';
-% SeqControl(4).argument = 2;
-% SeqControl(5).command = 'sync';
-% n = n+1;
+Event(n).info = 'Move Positioner';
+Event(n).tx = 0; % no TX structure.
+Event(n).rcv = 0; % no Rcv structure.
+Event(n).recon = 0; % no reconstruction.
+Event(n).process = 2; 
+% Event(n).seqControl = [nsc]; % wait for data to be transferred
+% SeqControl(nsc).command = 'sync';
+% SeqControl(nsc).argument = 2e9;
+nsc = nsc+1;
+n = n+1;
 
-Event(n).info = 'Jump back to Event 1.';
+Event(n).info = 'Wait and diplay';
+    Event(n).tx = 0; 
+    Event(n).rcv = 0;
+    Event(n).recon = 0;
+    Event(n).process = 4;
+    Event(n).seqControl = nsc;
+        SeqControl(nsc).command = 'noop';
+        SeqControl(nsc).argument = (10*1e-3)/200e-9;
+%         SeqControl(nsc).condition = 'Hw&Sw';
+        nsc = nsc+1;
+    n = n+1;
+    
+Event(n).info = 'Jump back to Event 2.';
 Event(n).tx = 0; % no TX structure.
 Event(n).rcv = 0; % no Rcv structure.
 Event(n).recon = 0; % no reconstruction.
 Event(n).process = 0; % no processing
 Event(n).seqControl = nsc; % jump back to Event 1
 SeqControl(nsc).command = 'jump';
-SeqControl(nsc).argument = 1;
+SeqControl(nsc).condition = 'exitAfterJump';
+SeqControl(nsc).argument = 2;
 
 % Save all the structures to a .mat file.
 scriptName = mfilename('fullpath');
 svName = matFileName(scriptName);
 save(svName);
+
