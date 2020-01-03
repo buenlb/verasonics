@@ -17,7 +17,7 @@ Resource.Parameters.numAvg = NA;
 Resource.Parameters.ioChannel = ioChannel;
 Resource.Parameters.saveDir = 'C:\Users\Verasonics\Desktop\Taylor\Data\exVivo180Scans\20191121\tmp';
 Resource.Parameters.saveName = 'test';
-Resource.Parameters.angles = linspace(-39,39,157);
+Resource.Parameters.angles = linspace(-2,2,5);
 % Resource.Parameters.simulateMode = 1; % runs script in simulate mode
 
 % Specify media points

@@ -1,5 +1,5 @@
 function plotPhases(xTx,yTx,zTx,delays)
-
+delays = delays-min(delays);
 h = figure;
 hold on
 for ii = 1:length(xTx)

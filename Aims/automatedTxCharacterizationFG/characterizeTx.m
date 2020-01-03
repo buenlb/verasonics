@@ -1,6 +1,6 @@
 close all; clearvars -except fg; clc;
 
-setPaths();
+setPaths(); 
 %return
 %% User Defined Variables
 saveResults = 0;
@@ -16,8 +16,8 @@ Grid.yEnd = 5;
 
 % length to scan along z-axis
 % Grid.zLength = 10; 
- Grid.zStart = 25;
- Grid.zEnd = 35;
+ Grid.zStart = 3.4;
+ Grid.zEnd = 30;
 
 % time to wait in ms after positioner moves before acquiring data
 Grid.pause = 100;
@@ -32,16 +32,16 @@ Grid.dz = .2;
 Grid.parameters = 'Negative Peak Voltage';
 
 % Determine wether or not to record waveforms at each individual location.
-Grid.recordWaveforms = 0;
+Grid.recordWaveforms = 1;
 
 % Transducer Parameters
-Tx.frequency = 0.5; % Frequency in MHz
-Tx.diameter = 0.5*25.4; % aperture diameter in mm
-Tx.focalLength = 1*25.4; % Focal length in mm. Use zero if Tx is unfocused
-Tx.serial = '1410001';
-Tx.model = 'ValpeyFisher ISO.504HP';
-Tx.cone = '1in-49deg-24.3';
-Tx.coneEdge = 24.3;         % [mm]
+Tx.frequency = 0.65; % Frequency in MHz
+Tx.diameter = 6; % aperture diameter in mm
+Tx.focalLength = 0; % Focal length in mm. Use zero if Tx is unfocused
+Tx.serial = '007';
+Tx.model = 'Custom 34 On Corner 3';
+Tx.cone = 'none';
+Tx.coneEdge = 0;         % [mm]
 
 %% Function Generator Parameters
 FgParams.amplifierModel = 'ENI A150';
@@ -58,15 +58,15 @@ FgParams.burstPeriod = 1000*FgParams.nCycles/Tx.frequency/1e3; % burst period in
 FgParams.ID = 'MY52600670';
 
 % Pre-Amp Info
-PreAmp.model = 'AG-2010';
-PreAmp.serial = '1199';
+PreAmp.model = 'AH-2010';
+PreAmp.serial = '0961';
 PreAmp.calDate = '29-Jan-2019';
 
 % Hydrophone Info
 Hydrophone.model = 'HGL0200';
 Hydrophone.serial = '1782';
 Hydrophone.calDate = '29-Jan-2019';
-Hydrophone.rightAngleConnector = 'false';
+Hydrophone.rightAngleConnector = 'true';
 if strcmp(Hydrophone.model,'HGL0200')
     if strcmp(PreAmp.model,'none')
         if Tx.frequency > 1 || Tx.frequency > 20
@@ -146,8 +146,8 @@ lib = loadSoniqLibrary();
 openSoniq(lib);
 
 % Error check Tx Struct and compute effective focal length
-Tx = initializeTx(Tx);
-%Tx.computedFocus = 1.0*25.4; %% manually set for unfocused transducer
+% Tx = initializeTx(Tx);
+Tx.computedFocus = 3.9; %% manually set for unfocused transducer
 
 % Set up grid values. This just fills in defaults for any empty fields
 Grid = initializeGrid(lib,Grid,Tx);
@@ -162,7 +162,7 @@ setTxParams(lib,Tx,FgParams);
 if FgParams.nCycles > 50
     windowLength = 2*FgParams.nCycles/FgParams.frequency;
 else
-    windowLength = 8*FgParams.nCycles/FgParams.frequency;
+    windowLength = 180; %50*FgParams.nCycles/FgParams.frequency;
 end
 timeBase = windowLength/10;
 setOscopeParameters(lib,{'timeBase',timeBase,'averages',Grid.averages});
@@ -201,7 +201,7 @@ writeReadme(Tx,Grid,FgParams,Hydrophone,PreAmp,saveDirectory);
 
 %% Find the center
 tic
-findCenter(lib,Tx,Grid);
+%findCenter(lib,Tx,Grid);
 %return
 %% XY Plane
 grid_xy = soniq2dScan(lib,[Pos.X.Axis,Pos.Y.Axis],[Grid.xStart,Grid.yStart],[Grid.xEnd,Grid.yEnd],...
@@ -254,7 +254,7 @@ set(h,'position',[962    42   958   954]);
 drawnow
 
 %% Test output with different voltages
-% calllib(lib,'MoveTo2DScanPeak');
+calllib(lib,'MoveTo2DScanPeak');
 getEfficiencyCurve(lib,fg,FgParams,saveDirectory);
 
 %% Generate report

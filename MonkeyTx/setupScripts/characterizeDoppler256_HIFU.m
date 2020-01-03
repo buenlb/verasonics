@@ -1,12 +1,11 @@
 clear all; close all; clc;
 
-HIFU =0;
 %% Set up path locations
 srcDirectory = setPaths();
 
 %%
 frequency = 0.65; % Frequency in MHz
-nCycles = 10*frequency*1e6; % number of cycles with which to excite Tx (can integer multiples of 1/2)
+nCycles = 2; % number of cycles with which to excite Tx (can integer multiples of 1/2)
 % nCycles = 5;
 ioChannel = 229;
 NA = 1;
@@ -43,8 +42,8 @@ Resource.HIFU.extPwrComPortID = 'COM5';
 Resource.HIFU.psType = 'QPX600DP'; % set to 'QPX600DP' to match supply being used
 
 TPC(5).hv = 1.6;
-TPC(5).maxHighVoltage = 20;
-TPC(5).highVoltageLimit = 20;
+TPC(5).maxHighVoltage = 10;
+TPC(5).highVoltageLimit = 10;
 TPC(5).xmitDuration = 1e7;
 %%
 
@@ -54,8 +53,8 @@ Media.MP(1,:) = [0,0,100,1.0]; % [x, y, z, reflectivity]
 % Specify Trans structure array.
 Trans = transducerGeometry(0);
 Trans.units = 'mm';
-Trans.maxHighVoltage = 40;
-Trans.impedance = 75;
+Trans.maxHighVoltage = 10;
+% Trans.impedance = 75;
 
 % Specify Resource buffers.
 Resource.RcvBuffer(1).datatype = 'int16';
@@ -83,7 +82,7 @@ elements.x = xTx*1e-3;
 elements.y = yTx*1e-3;
 elements.z = zTx*1e-3;
             
-elements = steerArray(elements,[0,8,51]*1e-3,frequency);
+elements = steerArray(elements,[10,-5,55]*1e-3,frequency);
 delays = [elements.t]';
 % delays = zeros(size(delays));
 TX(1).Delay = delays;
@@ -141,7 +140,7 @@ Event(n).recon = 0; % no reconstruction.
 Event(n).process = 0; % no processing
 Event(n).seqControl = [nsc,nsc+1];
 SeqControl(nsc).command = 'timeToNextAcq';
-desiredWaitTime = nCycles/frequency*100; % Gives 1% duty
+desiredWaitTime = nCycles/(frequency)*100; % Gives 1% duty
 if desiredWaitTime>4.18e6
     desiredWaitTime = 4.18e6;
     warning(['1% Duty Cycle Unachievable. Actual DC: ', num2str((nCycles/frequency)/desiredWaitTime*100,2),'%'])
@@ -201,15 +200,15 @@ end
 % SeqControl(5).command = 'sync';
 % n = n+1;
 
-% Event(n).info = 'Jump back to Event 1.';
-% Event(n).tx = 0; % no TX structure.
-% Event(n).rcv = 0; % no Rcv structure.
-% Event(n).recon = 0; % no reconstruction.
-% Event(n).process = 0; % no processing
-% Event(n).seqControl = nsc; % jump back to Event 1
-% SeqControl(nsc).command = 'jump';
-% SeqControl(nsc).condition = 'exitAfterJump';
-% SeqControl(nsc).argument = 2;
+Event(n).info = 'Jump back to Event 1.';
+Event(n).tx = 0; % no TX structure.
+Event(n).rcv = 0; % no Rcv structure.
+Event(n).recon = 0; % no reconstruction.
+Event(n).process = 0; % no processing
+Event(n).seqControl = nsc; % jump back to Event 1
+SeqControl(nsc).command = 'jump';
+SeqControl(nsc).condition = 'exitAfterJump';
+SeqControl(nsc).argument = 2;
 
 % Save all the structures to a .mat file.
 scriptName = mfilename('fullpath');

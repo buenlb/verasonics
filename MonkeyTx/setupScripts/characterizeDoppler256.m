@@ -1,4 +1,4 @@
-clear all; close all; clc;
+clear all; clc;
 
 HIFU =0;
 %% Set up path locations
@@ -56,7 +56,7 @@ elements.x = xTx*1e-3;
 elements.y = yTx*1e-3;
 elements.z = zTx*1e-3;
             
-elements = steerArray(elements,[13,4,50]*1e-3,frequency);
+elements = steerArray(elements,[10,-5,55]*1e-3,frequency);
 delays = [elements.t]';
 
 plotPhases(xTx,yTx,zTx,delays);

@@ -7,7 +7,7 @@ srcDirectory = setPaths();
 frequency = 2.25; % Frequency in MHz
 nCycles = 1; % number of cycles with which to excite Tx (can integer multiples of 1/2)
 
-NA = 32;
+NA = 1;
 
 % Specify system parameters
 Resource.Parameters.numTransmit = 1; % no. of xmit chnls (V64LE,V128 or V256).
