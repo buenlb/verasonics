@@ -37,12 +37,11 @@ function [allData,xAxis,yAxis,xName,yName,position] = readAIMS(fileName)
 text = fileread(fileName);
 p = regexp(text, 'Parameter');
 p_num = length(p);
-
 % for every parameter
 for q = 1:p_num
     
     % calculate number of header lines before data starts
-    dataHeader = ['2D Scan Data ' num2str(q-1)];
+    dataHeader = ['2D Scan Data ', num2str(q-1)];
     newline = '[\n]';
     n = regexp(text, newline);
     m = regexp(text, dataHeader);

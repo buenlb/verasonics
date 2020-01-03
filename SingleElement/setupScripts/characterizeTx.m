@@ -5,12 +5,12 @@ srcDirectory = setPaths();
 
 %%
 NA = 1;
-frequency = 1;
-ioChannel = 1;
+frequency = 2.25;
+ioChannel = 97;
 
 % Specify system parameters
-Resource.Parameters.numTransmit = 1; % no. of xmit chnls (V64LE,V128 or V256).
-Resource.Parameters.numRcvChannels = 1; % change to 64 for Vantage 64 or 64LE
+Resource.Parameters.numTransmit = 128; % no. of xmit chnls (V64LE,V128 or V256).
+Resource.Parameters.numRcvChannels = 128; % change to 64 for Vantage 64 or 64LE
 Resource.Parameters.connector = 1; % trans. connector to use (V256).
 Resource.Parameters.speedOfSound = 1490; % speed of sound in m/sec
 Resource.Parameters.numAvg = NA;
@@ -27,14 +27,14 @@ Trans.units = 'mm';
 Trans.lensCorrection = 1;
 Trans.Bandwidth = [1.5,3];
 Trans.type = 0;
-Trans.numelements = 1;
+Trans.numelements = 128;
 Trans.elementWidth = 24;
-Trans.ElementPos = ones(1,5);
+Trans.ElementPos = ones(128,5);
 Trans.ElementSens = ones(101,1);
 Trans.connType = 1;
-Trans.Connector = ioChannel;
+Trans.Connector = (1:128)';
 Trans.impedance = 50;
-Trans.maxHighVoltage = 96;
+Trans.maxHighVoltage = 75;
 
 
 % Specify Resource buffers.
@@ -45,7 +45,7 @@ Resource.RcvBuffer(1).numFrames = 1; % minimum size is 1 frame.
 
 % Specify Transmit waveform structure.
 TW(1).type = 'parametric';
-numberHalfCycles = 2;
+numberHalfCycles = 500;
 TW(1).Parameters = [frequency,0.67,numberHalfCycles,1]; % A, B, C, D
 % TW(1).type = 'pulseCode';
 % TW(1).PulseCode = generateImpulse(1/(4*2.25e6));
@@ -54,8 +54,9 @@ TW(1).Parameters = [frequency,0.67,numberHalfCycles,1]; % A, B, C, D
 % Specify TX structure array.
 TX(1).waveform = 1; % use 1st TW structure.
 TX(1).focus = 0;
-TX(1).Apod = 1;
-TX(1).Delay = 0;
+TX(1).Apod = zeros(1,128);
+TX(1).Apod(ioChannel) = 1;
+TX(1).Delay = zeros(1,128);
 
 % Specify TGC Waveform structure.
 TGC(1).CntrlPts = zeros(1,8);
@@ -63,7 +64,8 @@ TGC(1).rangeMax = 250;
 TGC(1).Waveform = computeTGCWaveform(TGC);
 
 % Specify Receive structure array -
-Receive(1).Apod = 1;
+Receive(1).Apod = zeros(1,128);
+Receive(1).Apod(ioChannel) = 1;
 Receive(1).startDepth = 0;
 Receive(1).endDepth = 80;
 Receive(1).TGC = 1; % Use the first TGC waveform defined above
@@ -74,6 +76,8 @@ Receive(1).acqNum = 1;
 Receive(1).sampleMode = 'NS200BW';
 Receive(1).LowPassCoef = [];
 Receive(1).InputFilter = [];
+
+TPC(1).hv = 5;
 
 for n = 2:NA
     Receive(n) = Receive(1);

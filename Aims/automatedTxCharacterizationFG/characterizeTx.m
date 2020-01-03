@@ -1,31 +1,30 @@
 close all; clearvars -except fg; clc;
 
-setPaths();
-
+setPaths(); 
+%return
 %% User Defined Variables
 saveResults = 0;
-saveDirectory = 'C:\Users\Verasonics\Box Sync\TransducerCharacterizations\HNR0500\';
+saveDirectory = 'C:\Users\Verasonics\Box Sync\TransducerCharacterizations\HGL0200\';
 
 % Define the grid
-% Start and end points for x and y axis                                [mm]
-Grid.xStart     = -10; 
-Grid.xEnd       = 10;
-Grid.yStart     = -10;
-Grid.yEnd       = 10;
+% Start and end points for x and y axis
+Grid.xStart = -5; 
+Grid.xEnd = 5;
+Grid.yStart = -5;
+Grid.yEnd = 5;
 
-% length to scan along z-axis                                          [mm]
-Grid.zLength    = 20; 
-%Grid.zStart    = 5;
-%Grid.zEnd      = 35;
+% length to scan along z-axis
+% Grid.zLength = 10; 
+ Grid.zStart = 3.4;
+ Grid.zEnd = 30;
 
-% time to wait in ms after positioner moves before acquiring data      [ms]
-Grid.pause = 10;
+% time to wait in ms after positioner moves before acquiring data
+Grid.pause = 100;
 
 % Set grid spacing. If not set these will be automatically set to lambda/4
-%                                                                      [mm]
-Grid.dx = .25;
-Grid.dy = .25;
-Grid.dz = .25;
+Grid.dx = .2;
+Grid.dy = .2;
+Grid.dz = .2;
 
 % Set the parameter to measure on the grid
 % Grid.parameters = 'Pulse Intensity Integral';
@@ -55,20 +54,50 @@ FgParams.maxVoltage = 500; % max FG voltage for Tx efficiency        [mVpp]
 FgParams.minVoltage = 50;  % min FG voltage for Tx efficiency        [mVpp]
 FgParams.frequency = Tx.frequency; % center frequency                 [MHz]
 FgParams.nCycles = 100; % number of cicles in pulse
+
 % For long pulses use a burst period that results in 0.1% duty cycle to be
 % extra careful with hydrophone.
 FgParams.burstPeriod = 1000*FgParams.nCycles/Tx.frequency/1e3; % burst period in ms
+% FgParams.ID = 'MY52600694';
+FgParams.ID = 'MY52600670';
 
 % Pre-Amp Info
-PreAmp.model = 'None';
-PreAmp.serial = 'None';
-PreAmp.calDate = 'None';
+PreAmp.model = 'AH-2010';
+PreAmp.serial = '0961';
+PreAmp.calDate = '29-Jan-2019';
 
 % Hydrophone Info
-Hydrophone.model = 'HNR0500';
-Hydrophone.serial = '1546';
-Hydrophone.calDate = '18-Aug-2008';
+Hydrophone.model = 'HGL0200';
+Hydrophone.serial = '1782';
+Hydrophone.calDate = '29-Jan-2019';
 Hydrophone.rightAngleConnector = 'true';
+if strcmp(Hydrophone.model,'HGL0200')
+    if strcmp(PreAmp.model,'none')
+        if Tx.frequency > 1 || Tx.frequency > 20
+            error('Must have a Pre-Amp with this frequency.');
+        else
+            warning('You say you are not using a Pre-Amp.  Double check.');
+            Hydrophone.calibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\aims\Calibrations\HGL0200 - 03-Sep-2019\HGL0200-1782_xxxxxx-xxxx-xx_xx_20190129.txt';
+        end
+    else
+        warning('Check if the 50-Ohm Load Impedance is connected!!!!');
+        if      Tx.frequency < 0.25
+            error('No calibration exists for this frequency.');
+        elseif  Tx.frequency < 1
+            Hydrophone.calibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\aims\Calibrations\HGL0200 - 03-Sep-2019\HGL0200-1782_AG2010-1199-20_xx_20190129.txt';
+        elseif  Tx.frequency < 20
+            Hydrophone.calibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\aims\Calibrations\HGL0200 - 03-Sep-2019\HGL0200-1782_AG-2010-1199-20_xx_OndaCombineCal_20190129.txt';
+        elseif  Tx.frequency < 40
+            Hydrophone.calibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\aims\Calibrations\HGL0200 - 03-Sep-2019\HGL0200-1782_AG2010-1199-20_xx_20190129_20-40.txt';
+        else
+            error('No calibration exists for this frequency.');
+        end
+    end
+end
+
+Hydrophone.caibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\aims\Calibrations\HGL0200 - 03-Sep-2019\HGL0200-1782_AG2010-1199-20_xx_20190129.txt';
+saveDirectory = ['C:\Users\Verasonics\Box Sync\TransducerCharacterizations\',Hydrophone.model,'\'];
+
 % Calibration file for 0.25-1 MHz
 % Hydrophone.calibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\Aims\Calibrations\Combined\HGL0200-1782_AG2010-1199-20_xx_20190129.txt';
 % Calibration file for 1-20 MHz with connector
@@ -80,7 +109,7 @@ Hydrophone.rightAngleConnector = 'true';
 % Calibration file for Navid's hydrophone open circuit
 % Hydrophone.calibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\Aims\Calibrations\HGL1000 Calibration\HGL1000-1745_xxxxxx-xxxx-xx_xx_20180622.txt';
 % Calibration file for Doug's Hydrophone
-Hydrophone.calibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\Aims\Calibrations\HNR0500_1546\readFromPaper.txt';
+% Hydrophone.calibrationFile = 'C:\Users\Verasonics\Desktop\Taylor\Code\Aims\Calibrations\HNR0500_1546\readFromPaper.txt';
 
 Hydrophone.notes    = '';
 %% Run findCalibration so that the user is notified right away if the
@@ -140,7 +169,7 @@ setTxParams(lib,Tx,FgParams);
 if FgParams.nCycles > 50
     windowLength = 2*FgParams.nCycles/FgParams.frequency;
 else
-    windowLength = 8*FgParams.nCycles/FgParams.frequency;
+    windowLength = 180; %50*FgParams.nCycles/FgParams.frequency;
 end
 timeBase = windowLength/10;
 setOscopeParameters(lib,{'timeBase',timeBase,'averages',Grid.averages});
@@ -163,7 +192,7 @@ disp(['Estimated Time: ', time])
 
 %% Prep function generator
 if ~exist('fg','var')
-  fg = establishKeysightConnection('USB0::0x0957::0x2A07::MY52600670::0::INSTR');
+  fg = establishKeysightConnection(['USB0::0x0957::0x2A07::',FgParams.ID,'::0::INSTR']);
 end
 if strcmp(fg.Status, 'closed')
     fopen(fg);
@@ -232,7 +261,7 @@ set(h,'position',[962    42   958   954]);
 drawnow
 
 %% Test output with different voltages
-% calllib(lib,'MoveTo2DScanPeak');
+calllib(lib,'MoveTo2DScanPeak');
 getEfficiencyCurve(lib,fg,FgParams,saveDirectory);
 
 %% Generate report

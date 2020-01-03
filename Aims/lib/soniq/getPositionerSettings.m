@@ -21,6 +21,8 @@ function Pos = getPositionerSettings(lib)
 Pos.X.Axis = calllib(lib,'GetOrientationXAxis');
 Pos.Y.Axis = calllib(lib,'GetOrientationYAxis');
 Pos.Z.Axis = calllib(lib,'GetOrientationZAxis');
+Pos.PHI.Axis = 3;
+Pos.THETA.Axis = 4;
 
 Pos.X.lowLimit = calllib(lib,'GetPositionerLowLimit',Pos.X.Axis);
 Pos.X.highLimit = calllib(lib,'GetPositionerHighLimit',Pos.X.Axis);

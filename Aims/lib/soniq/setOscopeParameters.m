@@ -19,6 +19,19 @@ for ii = 1:length(parameters)/2
         case 'nSamples'
             ns = parameters{ii*2};
             calllib(lib,'SetScopePoints',ns);
+        case 'delay'
+            delay = parameters{ii*2};
+            calllib(lib,'SetScopeDelay',delay);
+        case 'distanceTracking'
+            dt = parameters{ii*2};
+            if dt
+                calllib(lib,'SetDistanceTrackingEnabled',1)
+            else
+                calllib(lib,'SetDistanceTrackingEnabled',0)
+            end
+        case 'distanceTrackingOffset'
+            offset = parameters{ii*2};
+            calllib(lib,'SetDistanceTrackingOffset',offset);            
         otherwise
             error([parameters{ii*2-1} ' is not a valid option.'])
     end
