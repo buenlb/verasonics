@@ -35,10 +35,17 @@ template = template(615:745);
 
 brokenElements = brokenElementsDoppler1();
 
+% Threshold for cross correlation. If the cross correlation never exceeds
+% this threshold within the range where the skull could be then the delay
+% will be set to zero, suggesting there may be no coupling for that
+% particular element.
+threshold = 150; 
+
 distanceFromTx = zeros(size(xTx));
 xSk = zeros(size(xTx));
 ySk = xSk;
 zSk = xSk;
+transientPower = xSk;
 elLabel = cell(size(xTx));
 h = figure;
 subplot(211)
@@ -46,6 +53,7 @@ hold on;
 for ii = 1:length(xTx)
     if ismember(ii,brokenElements)
         distanceFromTx(ii) = nan;
+        transientPower(ii) = nan;
         continue
     end
     disp(['Element ', num2str(ii), ' of 256'])
@@ -57,23 +65,25 @@ for ii = 1:length(xTx)
 %     
     transSig(t*0.5*1.492>20) = 0; 
     s = s-transSig;
-%     s(d<10) = 0;
-    
+    transientPower(ii) = sum(abs(s(s<5).^2));
     [xProjection,zProjection] = signalLocation(Trans.ElementPos(ii,:));
     
     filtered = xcorr(s,template(end:-1:1));
     filtered = filtered(length(s):end);
     [~,idx] = max(filtered);
-    
-    if d(idx) < 5 % This is likely an artifact of the transients at the beginning of the signal, look for other peaks
-        [pks,locs] = findpeaks(filtered);
-        mxPk = max(pks);
-        newPkLocs = find(pks.'>1/10*mxPk & d(locs) > 5);
-        if ~isempty(newPkLocs)
-            [~,idx] = max(filtered(locs(newPkLocs)));
-            idx = locs(idx);
-        end
+    if filtered(idx)*max(s)/max(filtered) < threshold
+        idx = 1;
     end
+    
+%     if d(idx) < 5 % This is likely an artifact of the transients at the beginning of the signal, look for other peaks
+%         [pks,locs] = findpeaks(filtered);
+%         mxPk = max(pks);
+%         newPkLocs = find(pks.'>1/10*mxPk & d(locs) > 5);
+%         if ~isempty(newPkLocs)
+%             [~,idx] = max(filtered(locs(newPkLocs)));
+%             idx = locs(idx);
+%         end
+%     end
     
     xSk(ii) = xTx(ii)+xProjection*d(idx);
     ySk(ii) = yTx(ii);
@@ -101,6 +111,7 @@ makeFigureBig(h);
 
 %% Plot the distance for each element in 2D
 % plotPhases2D(distanceFromTx);
+delays = zeros(8,32);
 for ii = 1:length(distanceFromTx)
     x = ceil(ii/8);
     if mod(ii,8)
@@ -109,13 +120,31 @@ for ii = 1:length(distanceFromTx)
         y = 8;
     end
     delays(y,x) = distanceFromTx(ii);
+    tPower(y,x) = transientPower(ii);
 end
 hDistance = figure;
+subplot(211)
 imagesc([1,32],[1,8],delays,'AlphaData',double(~isnan(delays)))
 ax = gca;
+ax.CLim = [7,15];
 ax.XTick = [1,32];
 ax.XTickLabel = {'8','256'};
 ax.YTick = [1,8];
+title('Distance from Tx')
+colorbar
+axis('equal')
+axis('tight')
+makeFigureBig(hDistance)
+
+subplot(212)
+imagesc([1,32],[1,8],tPower,'AlphaData',double(~isnan(tPower)))
+ax = gca;
+% ax.CLim = [0,15];
+ax.XTick = [1,32];
+ax.XTickLabel = {'8','256'};
+ax.YTick = [1,8];
+title('Transient Power')
+colorbar
 axis('equal')
 axis('tight')
 makeFigureBig(hDistance)
