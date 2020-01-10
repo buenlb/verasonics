@@ -3,7 +3,7 @@ delays = delays-min(delays);
 h = figure;
 hold on
 for ii = 1:length(xTx)
-    cm = colormap('jet'); % returns the current color map
+    cm = colormap('hot'); % returns the current color map
     colorID = max(1, sum(delays(ii)/max(abs(delays)) > [0:1/length(cm(:,1)):1]));
 
     myColor = cm(colorID, :); % returns your color

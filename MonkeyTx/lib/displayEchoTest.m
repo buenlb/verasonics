@@ -1,3 +1,23 @@
+% Displays the results of an echo test. This is a test done by firing a
+% short burst from each element of the 256 element doppler array and
+% listening to the echo. This code displays the location of the first echo
+% as an approximation of the location of the skull. It uses signals
+% recorded in pure water to eliminate transients and assumes a pencil beam
+% from each element
+% 
+% @INPUTS
+%   RcvData: RcvData Cell array returned by VSX
+%   Trans: Trans structure created by the script defining the VSX run.
+%   Receive: Receive structure created by the script defining the VSX run.
+% 
+% @OUTPUTS
+%   None but two plots showing the estimated geometry of the skull are
+%       created.
+% 
+% Taylor Webb
+% University of Utah
+% January 2020
+
 function displayEchoTest(RcvData,Trans,Receive)
 
 RcvData = double(RcvData{1});
@@ -7,24 +27,22 @@ yTx = Trans.ElementPos(:,2);
 zTx = Trans.ElementPos(:,3);
 
 t = 1e6*(0:(Receive(1).endSample-1))/(Receive(1).ADCRate*1e6/Receive(1).decimFactor);
-
-%% Show an image
 d = 0.5*1.5*t; % Half because round trip and assuming 1.5 mm/usec velocity
-dt = t(2)-t(1);
-dx = 1.5*dt;
-x = min(xTx):dx:max(xTx);
-y = unique(yTx);
-z = min(zTx):dx:d(end);
-
-[X,Y,Z] = ndgrid(x,y,z);
-img = zeros(size(X));
-avging = zeros(size(X));
 
 transients = load('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\transientMeasurements.mat');
 template = double(transients.RcvData{1}(Receive(124).startSample:Receive(124).endSample,124));
 template = template(615:745);
 
-for ii = 1:256
+
+distanceFromTx = zeros(size(xTx));
+xSk = zeros(size(xTx));
+ySk = xSk;
+zSk = xSk;
+elLabel = cell(size(xTx));
+h = figure;
+subplot(211)
+hold on;
+for ii = 1:length(xTx)
     disp(['Element ', num2str(ii), ' of 256'])
     elLabel{ii} = num2str(ii);
     s = RcvData(:,ii);
@@ -34,7 +52,7 @@ for ii = 1:256
 %     
     transSig(t*0.5*1.492>20) = 0; 
     s = s-transSig;
-    s(d<10) = 0;
+%     s(d<10) = 0;
     
     [xProjection,zProjection] = signalLocation(Trans.ElementPos(ii,:));
     
@@ -48,55 +66,24 @@ for ii = 1:256
     xSk(ii) = xTx(ii)+xProjection*d(idx);
     ySk(ii) = yTx(ii);
     zSk(ii) = zTx(ii)+zProjection*d(idx);
-%     for jj = 1:length(d)
-%         [~,idx] = min(abs(X(:)-(xProjection*d(jj)+xTx(ii))).^2+abs(Z(:)-(zProjection*d(jj)+zTx(ii))).^2+abs(Y(:)-yTx(ii)).^2);
-%    
-%         img(idx) = img(idx)+s(jj);
-%         avging(idx) = avging(idx)+1;
-%     end
+
+    cMap = colormap('hot');
+    maxDistance = 15; % maximum distance for purpose of colormap in mm
+    distanceFromTx(ii) = sqrt((xSk(ii)-xTx(ii))^2+(ySk(ii)-yTx(ii))^2+(zSk(ii)-zTx(ii))^2);
+    cIdx = round((distanceFromTx(ii)/maxDistance)*size(cMap,1));
+    
+    if cIdx>size(cMap,1)
+        cIdx = size(cMap,1);
+    end
+    
+    plot3(xSk(ii),ySk(ii),zSk(ii),'o','Color',cMap(cIdx,:))
 end
-figure
-plot3(xSk,ySk,zSk,'o')
+axis('equal')
+subplot(212)
+plot3(xSk,ySk,zSk,'.')
 text(xSk,ySk,zSk,elLabel)
 axis('equal')
-keyboard
-% img(boolean(avging)) = img(boolean(avging))./avging(boolean(avging));
-% %%
-% wdw = [1,4];
-% h = figure;
-% subplot(241)
-% imshow(squeeze(img(:,1,:))',wdw);
-% 
-% subplot(242)
-% imshow(squeeze(img(:,2,:))',wdw);
-% 
-% subplot(243)
-% imshow(squeeze(img(:,3,:))',wdw);
-% 
-% subplot(244)
-% imshow(squeeze(img(:,4,:))',wdw);
-% 
-% subplot(245)
-% imshow(squeeze(img(:,5,:))',wdw);
-% 
-% subplot(246)
-% imshow(squeeze(img(:,6,:))',wdw);
-% 
-% subplot(247)
-% imshow(squeeze(img(:,7,:))',wdw);
-% 
-% subplot(248)
-% imshow(squeeze(img(:,8,:))',wdw);
-% keyboard
-%% Plot the power on each element
-p = zeros(1,256);
-for ii = 1:256
-    s = RcvData(:,ii);
-    s = s(Receive(ii).startSample:Receive(ii).endSample);
-    s = log10(abs(hilbert(s)));
-    % Get rid of transients
-    s(d<20) = 0;
-    p(ii) = (sum(s));
-end
+makeFigureBig(h);
 
-plotPhases(xTx,yTx,zTx,p);
+%% Plot the distance for each element in 2D
+plotPhases2D(distanceFromTx);
