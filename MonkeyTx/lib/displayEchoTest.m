@@ -33,6 +33,7 @@ transients = load('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\l
 template = double(transients.RcvData{1}(Receive(124).startSample:Receive(124).endSample,124));
 template = template(615:745);
 
+brokenElements = brokenElementsDoppler1();
 
 distanceFromTx = zeros(size(xTx));
 xSk = zeros(size(xTx));
@@ -43,6 +44,10 @@ h = figure;
 subplot(211)
 hold on;
 for ii = 1:length(xTx)
+    if ismember(ii,brokenElements)
+        distanceFromTx(ii) = nan;
+        continue
+    end
     disp(['Element ', num2str(ii), ' of 256'])
     elLabel{ii} = num2str(ii);
     s = RcvData(:,ii);
@@ -56,12 +61,19 @@ for ii = 1:length(xTx)
     
     [xProjection,zProjection] = signalLocation(Trans.ElementPos(ii,:));
     
-    [~,idx] = max(xcorr(s,template(end:-1:1)));
-    idx = idx - length(s);
-
-    if idx < 0
-        continue
-    end    
+    filtered = xcorr(s,template(end:-1:1));
+    filtered = filtered(length(s):end);
+    [~,idx] = max(filtered);
+    
+    if d(idx) < 5 % This is likely an artifact of the transients at the beginning of the signal, look for other peaks
+        [pks,locs] = findpeaks(filtered);
+        mxPk = max(pks);
+        newPkLocs = find(pks.'>1/10*mxPk & d(locs) > 5);
+        if ~isempty(newPkLocs)
+            [~,idx] = max(filtered(locs(newPkLocs)));
+            idx = locs(idx);
+        end
+    end
     
     xSk(ii) = xTx(ii)+xProjection*d(idx);
     ySk(ii) = yTx(ii);
@@ -74,6 +86,8 @@ for ii = 1:length(xTx)
     
     if cIdx>size(cMap,1)
         cIdx = size(cMap,1);
+    elseif cIdx == 0
+        cIdx = 1;
     end
     
     plot3(xSk(ii),ySk(ii),zSk(ii),'o','Color',cMap(cIdx,:))
@@ -86,4 +100,78 @@ axis('equal')
 makeFigureBig(h);
 
 %% Plot the distance for each element in 2D
-plotPhases2D(distanceFromTx);
+% plotPhases2D(distanceFromTx);
+for ii = 1:length(distanceFromTx)
+    x = ceil(ii/8);
+    if mod(ii,8)
+        y = mod(ii,8);
+    else
+        y = 8;
+    end
+    delays(y,x) = distanceFromTx(ii);
+end
+hDistance = figure;
+imagesc([1,32],[1,8],delays,'AlphaData',double(~isnan(delays)))
+ax = gca;
+ax.XTick = [1,32];
+ax.XTickLabel = {'8','256'};
+ax.YTick = [1,8];
+axis('equal')
+axis('tight')
+makeFigureBig(hDistance)
+
+%% Allow the user to look at individual elements
+h = figure;
+while 1
+    disp('Select an element to see the signal from that element.')
+    disp('Use <ctrl>+c or close the figure to quit.')
+    figure(hDistance);
+    set(hDistance,'position',[962    42   958   954])
+    [x,y] = ginput(1);
+    
+    elementNo = (round(x)-1)*8+round(y);
+    
+    disp(['Estimated Distance From Element:', num2str(distanceFromTx(elementNo))])
+
+    s = RcvData(:,elementNo);
+    s = s(Receive(elementNo).startSample:Receive(elementNo).endSample);
+    transSig = double(transients.RcvData{1}(Receive(elementNo).startSample:Receive(elementNo).endSample,elementNo));
+    transSig(t*0.5*1.492>20) = 0; 
+    sNormalized = s-transSig;
+    
+    sEnv = abs(hilbert(s));
+    sNormalizedEnv = abs(hilbert(sNormalized));
+    
+    sEnv = 20*log10(sEnv/max(sEnv));
+    sNormalizedEnv = 20*log10(sNormalizedEnv/max(sNormalizedEnv));
+    
+    figure(h);
+    clf;
+    subplot(411);
+    plot(d,s);
+    ylabel('V')
+    title(['Raw Signal (Estimated Distance: ', num2str(distanceFromTx(elementNo)), ')'])
+    makeFigureBig(h)
+    
+    subplot(412)
+    plot(d,sEnv);
+    title('Envelope')
+    ylabel('dB')
+    makeFigureBig(h)
+    
+    filtered = (xcorr(sNormalized,template(end:-1:1))).';
+    filtered = filtered*max(sNormalized)/max(filtered(length(s):end));
+    subplot(413);
+    plot(d,sNormalized,'-',d,filtered(length(s):end),'--');
+    title('Raw Signal After Subtracting Transients')
+    makeFigureBig(h)
+    
+    subplot(414)
+    plot(d,sNormalizedEnv)
+    ylabel('dB')
+    xlabel('distance (mm)')
+    title('Envelope after subtraction')
+    makeFigureBig(h)
+    set(h,'position',[2    42   958   954]);
+    drawnow
+end
