@@ -18,7 +18,7 @@
 % University of Utah
 % January 2020
 
-function displayEchoTest(RcvData,Trans,Receive)
+function unconnected = displayEchoTest(RcvData,Trans,Receive)
 
 RcvData = double(RcvData{1});
 
@@ -29,7 +29,7 @@ zTx = Trans.ElementPos(:,3);
 t = 1e6*(0:(Receive(1).endSample-1))/(Receive(1).ADCRate*1e6/Receive(1).decimFactor);
 d = 0.5*1.5*t; % Half because round trip and assuming 1.5 mm/usec velocity
 
-transients = load('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\transientMeasurements.mat');
+transients = load('C:\Users\Verasonics\Desktop\Taylor\Data\Coupling\20200114\transientsGel_15mm_2.mat');
 template = double(transients.RcvData{1}(Receive(124).startSample:Receive(124).endSample,124));
 template = template(615:745);
 
@@ -39,7 +39,7 @@ brokenElements = brokenElementsDoppler1();
 % this threshold within the range where the skull could be then the delay
 % will be set to zero, suggesting there may be no coupling for that
 % particular element.
-threshold = 150; 
+threshold = 15; 
 
 distanceFromTx = zeros(size(xTx));
 xSk = zeros(size(xTx));
@@ -122,6 +122,9 @@ for ii = 1:length(distanceFromTx)
     delays(y,x) = distanceFromTx(ii);
     tPower(y,x) = transientPower(ii);
 end
+
+unconnected = find(transientPower>1e8);
+
 hDistance = figure;
 subplot(211)
 imagesc([1,32],[1,8],delays,'AlphaData',double(~isnan(delays)))
@@ -156,7 +159,11 @@ while 1
     disp('Use <ctrl>+c or close the figure to quit.')
     figure(hDistance);
     set(hDistance,'position',[962    42   958   954])
-    [x,y] = ginput(1);
+    try
+        [x,y] = ginput(1);
+    catch
+        return
+    end
     
     elementNo = (round(x)-1)*8+round(y);
     

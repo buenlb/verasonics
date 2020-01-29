@@ -8,6 +8,8 @@
 %       z: z location of the elements
 %   focus: [x,y,z] location of the focal spot in meters
 %   frequency: frequency of the array in MHz
+%   plotPhaseResults: flag determining whether or not to show the phases overlaid
+%      on the array
 % 
 % @OUTPUTS
 %   elements: the same elements struct that was passed in with the
@@ -19,9 +21,9 @@
 % University of Utah
 % Summer 2019
 
-function [elements,phi,t] = steerArray(elements,focus,frequency)
+function [elements,phi,t] = steerArray(elements,focus,frequency,plotPhaseResults)
 VERBOSE = 0;
-c = 1540; % Speed of sound in m/s
+c = 1490; % Speed of sound in m/s
 
 frequency = frequency*1e6; % convert to Hz
 
@@ -29,6 +31,10 @@ k = 2*pi*frequency/c;
 
 phi = zeros(length(elements.x),1);
 t = phi;
+
+if nargin < 4
+    plotPhaseResults = 1;
+end
 
 if VERBOSE
     figure
@@ -56,4 +62,6 @@ t = t-min(t);
 elements.phi = phi;
 elements.t = t;
 
-plotPhases(elements.x*1e3,elements.y*1e3,elements.z*1e3,t);
+if plotPhaseResults
+    plotPhases(elements.x*1e3,elements.y*1e3,elements.z*1e3,t);
+end

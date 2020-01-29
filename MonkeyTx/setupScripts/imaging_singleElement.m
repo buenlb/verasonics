@@ -27,7 +27,7 @@ Media.MP(1,:) = [0,0,100,1.0]; % [x, y, z, reflectivity]
 % Specify Trans structure array.
 Trans = transducerGeometry(0);
 Trans.units = 'mm';
-Trans.maxHighVoltage = 1.6;
+Trans.maxHighVoltage = 10;
 % Trans.frequency = 0.65*3;
 
 TPC(1).hv = 1.6;

@@ -1,6 +1,7 @@
 function rotateSkull(RData)
 
 Resource = evalin('base','Resource');
+Receive = evalin('base','Receive');
 
 lib = 'soniq';
 pos = getPositionerSettings(lib);
@@ -8,6 +9,9 @@ pos = getPositionerSettings(lib);
 angles = Resource.Parameters.angles;
 
 idx = find(abs(pos.THETA.loc - angles) < 1e-6);
+
+save([Resource.Parameters.saveDir, Resource.Parameters.saveName, 'angle', num2str(idx),'.mat'],...
+    'RData','Resource','Receive')
 
 if idx == length(angles)
     disp('Attempting to close VSX')

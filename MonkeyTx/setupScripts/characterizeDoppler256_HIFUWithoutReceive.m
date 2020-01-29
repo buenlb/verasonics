@@ -84,7 +84,7 @@ elements.x = xTx*1e-3;
 elements.y = yTx*1e-3;
 elements.z = zTx*1e-3;
             
-elements = steerArray(elements,[5,-2.5,60]*1e-3,frequency);
+elements = steerArray(elements,[2,2.5,50]*1e-3,frequency);
 delays = [elements.t]';
 % delays = zeros(size(delays));
 TX(1).Delay = delays;
@@ -93,24 +93,6 @@ TX(1).Delay = delays;
 TGC(1).CntrlPts = ones(1,8)*0;
 TGC(1).rangeMax = 1;
 TGC(1).Waveform = computeTGCWaveform(TGC);
-
-% Specify Receive structure array -
-Receive(1).Apod = ones(1,256);
-Receive(1).startDepth = 0;
-Receive(1).endDepth = 200;
-Receive(1).TGC = 1; % Use the first TGC waveform defined above
-Receive(1).mode = 0;
-Receive(1).bufnum = 1;
-Receive(1).framenum = 1;
-Receive(1).acqNum = 1;
-Receive(1).sampleMode = 'NS200BW';
-Receive(1).LowPassCoef = [];
-Receive(1).InputFilter = [];
-
-for n = 2:NA
-    Receive(n) = Receive(1);
-    Receive(n).acqNum = n;
-end
 
 % Specify an external processing event.
 Process(1).classname = 'External';
@@ -137,80 +119,14 @@ nsc = nsc + 1;
 % Specify sequence events.
 Event(n).info = 'Acquire RF Data.';
 Event(n).tx = 1; % use 1st TX structure.
-Event(n).rcv = 1; % use 1st Rcv structure.
+Event(n).rcv = 0; % use 1st Rcv structure.
 Event(n).recon = 0; % no reconstruction.
 Event(n).process = 0; % no processing
-Event(n).seqControl = [nsc,nsc+1];
-SeqControl(nsc).command = 'timeToNextAcq';
-desiredWaitTime = 1e6; 
-if desiredWaitTime>4.18e6
-    desiredWaitTime = 4.18e6;
-    warning(['1% Duty Cycle Unachievable. Actual DC: ', num2str((nCycles/frequency)/desiredWaitTime*100,2),'%'])
-end
-SeqControl(nsc).argument = desiredWaitTime;
-
-nscTime2Aq = nsc;
-nsc = nsc + 1;
+Event(n).seqControl = [nsc];
 SeqControl(nsc).command = 'triggerOut';
 nscTrig = nsc;
 nsc = nsc + 1;
 n = n+1;
-
-for ii = 2:NA
-    Event(n) = Event(1);
-    Event(n).tx = 1;
-    Event(n).rcv = ii;
-    Event(n).seqControl = [nscTime2Aq,nscTrig,nsc];
-     SeqControl(nsc).command = 'transferToHost';
-	   nsc = nsc + 1;
-    n = n+1;
-end
-
-% Event(n).info = 'Call external Processing function.';
-% Event(n).tx = 0; % no TX structure.
-% Event(n).rcv = 0; % no Rcv structure.
-% Event(n).recon = 0; % no reconstruction.
-% Event(n).process = 1; % no processing function
-% Event(n).seqControl = [nsc,nsc+1,nsc+2]; % wait for data to be transferred
-% SeqControl(nsc).command = 'waitForTransferComplete';
-% if NA > 1
-%     SeqControl(nsc).argument = nsc-1;
-% else
-%     SeqControl(nsc).argument = nsc-2;
-% end
-% SeqControl(nsc+1).command = 'markTransferProcessed';
-% if NA > 1
-%     SeqControl(nsc+1).argument = nsc-1;
-% else
-%     SeqControl(nsc+1).argument = nsc-2;
-% end
-% SeqControl(nsc+2).command = 'sync';
-% SeqControl(nsc+2).argument = 25e6;
-% nsc = nsc+3;
-% n = n+1;
-
-% Event(n).info = 'Call external Processing function.';
-% Event(n).tx = 0; % no TX structure.
-% Event(n).rcv = 0; % no Rcv structure.
-% Event(n).recon = 0; % no reconstruction.
-% Event(n).process = 1; % call processing function
-% Event(n).seqControl = [3,4,5]; % wait for data to be transferred
-% SeqControl(3).command = 'waitForTransferComplete';
-% SeqControl(3).argument = 2;
-% SeqControl(4).command = 'markTransferProcessed';
-% SeqControl(4).argument = 2;
-% SeqControl(5).command = 'sync';
-% n = n+1;
-% 
-% Event(n).info = 'Jump back to Event 1.';
-% Event(n).tx = 0; % no TX structure.
-% Event(n).rcv = 0; % no Rcv structure.
-% Event(n).recon = 0; % no reconstruction.
-% Event(n).process = 0; % no processing
-% Event(n).seqControl = nsc; % jump back to Event 1
-% SeqControl(nsc).command = 'jump';
-% SeqControl(nsc).condition = 'exitAfterJump';
-% SeqControl(nsc).argument = 2;
 
 % Save all the structures to a .mat file.
 scriptName = mfilename('fullpath');

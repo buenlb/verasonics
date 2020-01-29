@@ -12,6 +12,5 @@ end
 pos = getPositionerSettings(lib);
 
 angles = Resource.Parameters.angles;
-
 movePositionerAbs(lib,pos.THETA.Axis,angles(1));
 return

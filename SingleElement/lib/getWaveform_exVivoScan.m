@@ -32,8 +32,9 @@ pos = getPositionerSettings(lib);
 angles = Resource.Parameters.angles;
 
 idx = find(abs(pos.THETA.loc - angles) < 1e-6);
-
+fname = 'C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\SingleElement\lib\OscopeParams.txt';
+calllib(lib,'LoadScopeSettings',fname);
 getSoniqWaveform(lib,[Resource.Parameters.saveDir, Resource.Parameters.saveName, num2str(idx),'.snq']);
-disp('HERE!')
 
+disp(['HERE!, idx=', num2str(idx)])
 return

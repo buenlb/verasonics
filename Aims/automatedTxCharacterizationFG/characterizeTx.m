@@ -14,9 +14,9 @@ Grid.yStart = -5;
 Grid.yEnd = 5;
 
 % length to scan along z-axis
-% Grid.zLength = 10; 
- Grid.zStart = 3.4;
- Grid.zEnd = 30;
+ Grid.zLength = 10; 
+% Grid.zStart = 3.4;
+% Grid.zEnd = 30;
 
 % time to wait in ms after positioner moves before acquiring data
 Grid.pause = 100;
@@ -34,17 +34,17 @@ Grid.parameters = 'Negative Peak Voltage';
 Grid.recordWaveforms = 0; %                                       [boolean]
 
 % Transducer Parameters
-Tx.frequency = 5.0; % Frequency in MHz
+Tx.frequency = 1.0; % Frequency in MHz
 Tx.diameter = 0.5*25.4; % aperture diameter                            [mm]
-Tx.focalLength = 0*25.4; % Focal length (use 0 if Tx is unfocused)     [mm]
-Tx.serial = '61235';
-Tx.model = 'technisonic ISL-0504-GP';
+Tx.focalLength = 0.8*25.4; % Focal length (use 0 if Tx is unfocused)     [mm]
+Tx.serial = '1184837';
+Tx.model = 'OLYMPUS V303';
 Tx.cone = 'none'; % none if no cone is present
 Tx.coneEdge = 0; % zero if no cone is present                          [mm]
 Tx.notes = '';
 
 % optional field to set the starting x-y plane to a set distance.  Overwritten if transducer has a focus (i.e. Tx.focalLength is non-zero)
-Tx.computedFocus = 25.4; 
+%Tx.computedFocus = 25.4; 
 
 % Function Generator Parameters
 FgParams.amplifierModel = 'ENI A150';
@@ -169,7 +169,7 @@ setTxParams(lib,Tx,FgParams);
 if FgParams.nCycles > 50
     windowLength = 2*FgParams.nCycles/FgParams.frequency;
 else
-    windowLength = 180; %50*FgParams.nCycles/FgParams.frequency;
+    windowLength = 8*FgParams.nCycles/FgParams.frequency;
 end
 timeBase = windowLength/10;
 setOscopeParameters(lib,{'timeBase',timeBase,'averages',Grid.averages});
