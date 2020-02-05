@@ -19,8 +19,7 @@ if ~isSoniqConnected(lib)
     openSoniq(lib);
 end
 
-Resource = evalin('base','Resource');
-
+Resource = evalin('base','Resource'); 
 % keyboard
 
 if Resource.Parameters.saveDir(end) ~= '\' && Resource.Parameters.saveDir(end) ~= '/'
@@ -34,7 +33,7 @@ angles = Resource.Parameters.angles;
 idx = find(abs(pos.THETA.loc - angles) < 1e-6);
 fname = 'C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\SingleElement\lib\OscopeParams.txt';
 calllib(lib,'LoadScopeSettings',fname);
-getSoniqWaveform(lib,[Resource.Parameters.saveDir, Resource.Parameters.saveName, num2str(idx),'.snq']);
+getSoniqWaveform(lib,[Resource.Parameters.saveDir, Resource.Parameters.saveName, '_hData', num2str(idx),'.snq']);
 
 disp(['HERE!, idx=', num2str(idx)])
 return

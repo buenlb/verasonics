@@ -14,12 +14,12 @@ Grid.yStart = -5;
 Grid.yEnd = 5;
 
 % length to scan along z-axis
- Grid.zLength = 10; 
-% Grid.zStart = 3.4;
-% Grid.zEnd = 30;
+%  Grid.zLength = 10; 
+Grid.zStart = 7.5;
+Grid.zEnd = 30;
 
 % time to wait in ms after positioner moves before acquiring data
-Grid.pause = 100;
+Grid.pause = 200;
 
 % Set grid spacing. If not set these will be automatically set to lambda/4
 Grid.dx = .2;
@@ -34,11 +34,11 @@ Grid.parameters = 'Negative Peak Voltage';
 Grid.recordWaveforms = 0; %                                       [boolean]
 
 % Transducer Parameters
-Tx.frequency = 1.0; % Frequency in MHz
-Tx.diameter = 0.5*25.4; % aperture diameter                            [mm]
-Tx.focalLength = 0.8*25.4; % Focal length (use 0 if Tx is unfocused)     [mm]
-Tx.serial = '1184837';
-Tx.model = 'OLYMPUS V303';
+Tx.frequency = 0.65; % Frequency in MHz
+Tx.diameter = 6; % aperture diameter                            [mm]
+Tx.focalLength = 0; % Focal length (use 0 if Tx is unfocused)     [mm]
+Tx.serial = '003';
+Tx.model = 'MatchingLayer2';
 Tx.cone = 'none'; % none if no cone is present
 Tx.coneEdge = 0; % zero if no cone is present                          [mm]
 Tx.notes = '';
@@ -50,10 +50,10 @@ Tx.notes = '';
 FgParams.amplifierModel = 'ENI A150';
 FgParams.amplifierSerial = '363';
 FgParams.gridVoltage = 100; % FG voltage for full grid               [mVpp]
-FgParams.maxVoltage = 500; % max FG voltage for Tx efficiency        [mVpp]
+FgParams.maxVoltage = 600; % max FG voltage for Tx efficiency        [mVpp]
 FgParams.minVoltage = 50;  % min FG voltage for Tx efficiency        [mVpp]
 FgParams.frequency = Tx.frequency; % center frequency                 [MHz]
-FgParams.nCycles = 100; % number of cicles in pulse
+FgParams.nCycles = 4; % number of cicles in pulse
 
 % For long pulses use a burst period that results in 0.1% duty cycle to be
 % extra careful with hydrophone.
@@ -152,9 +152,9 @@ openSoniq(lib);
 
 % Error check Tx Struct and compute effective focal length
 Tx = initializeTx(Tx);
-% if Tx.focalLength == 0
-%     Tx.computedFocus = 24;
-% end
+if Tx.focalLength == 0
+    Tx.computedFocus = 3.9;
+end
 
 % Set up grid values. This just fills in defaults for any empty fields
 Grid = initializeGrid(lib,Grid,Tx);
@@ -208,7 +208,7 @@ writeReadme(Tx,Grid,FgParams,Hydrophone,PreAmp,saveDirectory);
 
 %% Find the center
 tic
-findCenter(lib,Tx,Grid);
+% findCenter(lib,Tx,Grid);
 
 %% XY Plane
 grid_xy = soniq2dScan(lib,[Pos.X.Axis,Pos.Y.Axis],[Grid.xStart,Grid.yStart],[Grid.xEnd,Grid.yEnd],...

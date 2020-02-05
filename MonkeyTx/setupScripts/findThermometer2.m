@@ -1,6 +1,10 @@
-clear all; close all; clc;
+%% Parameters
+f = 0.5;
 
-HIFU =0;
+xFoci = -20:0.5:20;
+yFoci = -15:1:15;
+zFoci = 20:1:70;
+
 %% Set up path locations
 srcDirectory = setPaths();
 
@@ -19,6 +23,11 @@ Resource.Parameters.numAvg = NA;
 Resource.Parameters.ioChannel = ioChannel;
 Resource.Parameters.saveDir = 'C:\Users\Verasonics\Desktop\Taylor\Code\findElementNumbers\recordings_take2\'; 
 Resource.Parameters.saveName = 'pt3_';
+Resource.Parameters.xFoci = xFoci;
+Resource.Parameters.yFoci = yFoci;
+Resource.Parameters.zFoci = zFoci;
+
+
 % Resource.Parameters.simulateMode = 1; % runs script in simulate mode
 
 % Specify media points
@@ -39,11 +48,6 @@ Process(1).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'srcbufnum',1,...
 'srcframenum',1,...
 'dstbuffer','none'};
-
-% yFoci = (-10:5:10)+2.5;
-yFoci = -5:2:5;
-xFoci = (-15:2:15)-5;
-zFoci = 30:3:60;
 
 % Specify Resource buffers.
 Resource.RcvBuffer(1).datatype = 'int16';
@@ -70,31 +74,18 @@ TX(1).Apod = ones(1,256);
 % 
 % nonZeroChannels = 1:2:255;
 
+xTx = Trans.ElementPos(:,1);
+yTx = Trans.ElementPos(:,2);
+zTx = Trans.ElementPos(:,3);
 
-Resource.Parameters.xFoci = xFoci;
-Resource.Parameters.yFoci = yFoci;
-Resource.Parameters.zFoci = zFoci;
+elements.x = xTx*1e-3;
+elements.y = yTx*1e-3;
+elements.z = zTx*1e-3;
 
-idx = 1;
-for hh = 1:length(yFoci)
-    for ii = 1:length(xFoci)
-        for jj = 1:length(zFoci)
-            xTx = Trans.ElementPos(:,1);
-            yTx = Trans.ElementPos(:,2);
-            zTx = Trans.ElementPos(:,3);
-
-            elements.x = xTx*1e-3;
-            elements.y = yTx*1e-3;
-            elements.z = zTx*1e-3;
-
-            elements = steerArray(elements,[xFoci(ii),yFoci(hh),zFoci(jj)]*1e-3,Trans.frequency,0);
-            delays = [elements.t]';
-            TX(idx) = TX(1);
-            TX(idx).Delay = delays;
-            idx = idx+1;
-        end
-    end
-end
+elements = steerArray(elements,[xFoci(1),yFoci(1),zFoci(1)]*1e-3,Trans.frequency,0);
+delays = [elements.t]';
+TX(idx) = TX(1);
+TX(idx).Delay = delays;
 
 elements = selectElementBlocks(5);
 
@@ -118,11 +109,6 @@ Receive(1).decimSampleRate = 20*Trans.frequency;
 Receive(1).LowPassCoef = [];
 Receive(1).InputFilter = [];
 
-for n = 1:length(xFoci)*length(zFoci)*length(yFoci)
-    Receive(n) = Receive(1);
-    Receive(n).acqNum = n;
-end
-
 n = 1;
 nsc = 1;
 
@@ -136,43 +122,12 @@ Event(n).seqControl = [nsc,nsc+1,nsc+2];
 SeqControl(nsc).command = 'timeToNextAcq';
     SeqControl(nsc).argument = 1e4;
     nscTime2Aq = nsc;
-    
-nsc = nsc + 1;
-SeqControl(nsc).command = 'transferToHost';
-nsc = nsc + 1;
-SeqControl(nsc).command = 'triggerOut';
-nscTrig = nsc;
-nsc = nsc + 1;
+    nsc = nsc + 1;
+    SeqControl(nsc).command = 'transferToHost';
+    nsc = nsc + 1;
+    SeqControl(nsc).command = 'triggerOut';
+    nscTrig = nsc;
+    nsc = nsc + 1;
 n = n+1;
-for ii = 2:length(xFoci)*length(zFoci)*length(yFoci)
-    Event(n) = Event(1);
-    Event(n).rcv = ii;
-    Event(n).tx = ii;
-    Event(n).seqControl = [nscTime2Aq,nscTrig,nsc,nsc+1];
-     SeqControl(nsc).command = 'transferToHost';
-       nsc = nsc + 1;
-   SeqControl(nsc).command = 'sync';
-       nsc = nsc+1;
-    n = n+1;
-end
 
-
-
-% Event(n).info = 'Call external Processing function.';
-% Event(n).tx = 0; % no TX structure.
-% Event(n).rcv = 0; % no Rcv structure.
-% Event(n).recon = 0; % no reconstruction.
-% Event(n).process = 1; % call processing function
-% Event(n).seqControl = [nsc,nsc+1,nsc+2]; % wait for data to be transferred
-% SeqControl(nsc).command = 'waitForTransferComplete';
-% SeqControl(nsc).argument = 2;
-% SeqControl(nsc+1).command = 'markTransferProcessed';
-% SeqControl(nsc+1).argument = 2;
-% SeqControl(nsc+2).command = 'sync';
-% n = n+1;
-% nsc = nsc+3;
-
-% Save all the structures to a .mat file.
-scriptName = mfilename('fullpath');
-svName = matFileName(scriptName);
-save(svName);
+Event(n).info = 'Process Data';

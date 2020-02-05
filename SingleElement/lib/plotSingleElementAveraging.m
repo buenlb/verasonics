@@ -16,6 +16,7 @@ end
 t = 1e6*(0:(Receive(1).endSample-1))/(Receive(1).ADCRate*1e6/Receive(1).decimFactor);
 d = t*1492*1e-3/2;
 accum = zeros(size(Receive(1).startSample:Receive(1).endSample));
+keyboard
 for ii = 1:length(Receive)
     accum = double(RData(Receive(ii).startSample:Receive(ii).endSample,Resource.Parameters.ioChannel))'+accum;
 end

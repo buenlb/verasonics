@@ -3,22 +3,36 @@ clear all; close all; clc;
 %% Set up path locations
 srcDirectory = setPaths();
 
-%%
-NA = 32;
-frequency = 2.25;
-ioChannel = 97;
+%% User Defined Variables
+NA = 32; % Desired number of averages
+frequency = 2.25; % Center frequency of the transducer in MHz
+samplingRate = 50; % Sampling rate of the pulse/echo data in MHz (max: 50)
+saveDir = 'C:\Users\Verasonics\Desktop\Taylor\Data\exVivo180Scans\20200205\test\'; % Name of the directory in which to save results
+saveName = 'noSkull'; % Base name to use when saving files. 
+angles = linspace(-95,-94,2); % Vector specifying the angles to use.
 
-% Specify system parameters
+%% Specify system parameters
+ioChannel = 97;
 Resource.Parameters.numTransmit = 1; % no. of xmit chnls (V64LE,V128 or V256).
 Resource.Parameters.numRcvChannels = 1; % change to 64 for Vantage 64 or 64LE
 Resource.Parameters.connector = 1; % trans. connector to use (V256).
 Resource.Parameters.speedOfSound = 1490; % speed of sound in m/sec
 Resource.Parameters.numAvg = NA;
 Resource.Parameters.ioChannel = ioChannel;
-Resource.Parameters.saveDir = 'C:\Users\Verasonics\Desktop\Taylor\Data\exVivo180Scans\20200115\tmp\';
-Resource.Parameters.saveName = 'noSkull';
-Resource.Parameters.angles = linspace(-95,-94,2);
+Resource.Parameters.saveDir = saveDir;
+Resource.Parameters.saveName = saveName;
+Resource.Parameters.angles = angles;
 % Resource.Parameters.simulateMode = 1; % runs script in simulate mode
+
+% Create Dir if it doesn't exist
+if isempty(ls(Resource.Parameters.saveDir))
+    create = input('Directory doesn''t exist, creat it? (0/1) >>');
+    if create
+        mkdir(Resource.Parameters.saveDir)
+    else
+        error('Directory Doesn''t Exist')
+    end
+end
 
 % Specify media points
 Media.MP(1,:) = [0,0,100,1.0]; % [x, y, z, reflectivity]
@@ -42,7 +56,8 @@ Trans.maxHighVoltage = 96;
 
 % Specify Resource buffers.
 Resource.RcvBuffer(1).datatype = 'int16';
-Resource.RcvBuffer(1).rowsPerFrame = NA*4096*2; % this allows for 1/4 maximum range
+% Resource.RcvBuffer(1).rowsPerFrame = NA*4096*2; % this allows for 1/4 maximum range
+Resource.RcvBuffer(1).rowsPerFrame = ceil(4*700*NA*samplingRate/frequency); % this allows for 1/4 maximum range
 Resource.RcvBuffer(1).colsPerFrame = 1; % change to 256 for V256 system
 Resource.RcvBuffer(1).numFrames = 1; % minimum size is 1 frame.
 
@@ -86,7 +101,8 @@ Receive(1).mode = 0;
 Receive(1).bufnum = 1;
 Receive(1).framenum = 1;
 Receive(1).acqNum = 1;
-Receive(1).sampleMode = 'NS200BW';
+Receive(1).sampleMode = 'custom';
+Receive(1).decimSampleRate = samplingRate;
 Receive(1).LowPassCoef = [];
 Receive(1).InputFilter = [];
 
@@ -104,29 +120,18 @@ Process(1).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'dstbuffer','none'};
 
 Process(2).classname = 'External';
-Process(2).method = 'plotSingleElementAveraging';
+Process(2).method = 'rotateSkull';
 Process(2).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'srcbufnum',1,...
 'srcframenum',1,...
 'dstbuffer','none'};
 
 Process(3).classname = 'External';
-Process(3).method = 'rotateSkull';
+Process(3).method = 'initializeSkullRotation';
 Process(3).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'srcbufnum',1,...
 'srcframenum',1,...
 'dstbuffer','none'};
-
-Process(4).classname = 'External';
-Process(4).method = 'initializeSkullRotation';
-Process(4).Parameters = {'srcbuffer','receive',... % name of buffer to process.
-'srcbufnum',1,...
-'srcframenum',1,...
-'dstbuffer','none'};
-
-Process(5).classname = 'External';
-Process(5).method = 'softwarePause';
-Process(5).Parameters = {};
 
 %% Initial event to make sure triggers are being received
 % Specify sequence events.
@@ -137,7 +142,7 @@ Event(n).info = 'Move to initial position.';
 Event(n).tx = 0; % use 1st TX structure.
 Event(n).rcv = 0; % use 1st Rcv structure.
 Event(n).recon = 0; % no reconstruction.
-Event(n).process = 4; % no processing
+Event(n).process = 3; % no processing
 Event(n).seqControl = 0;
 n = n+1;
 
@@ -187,11 +192,13 @@ Event(n).tx = 0; % no TX structure.
 Event(n).rcv = 0; % no Rcv structure.
 Event(n).recon = 0; % no reconstruction.
 Event(n).process = 1; 
-Event(n).seqControl = 0;
+Event(n).seqControl = nsc;
+    SeqControl(nsc).command = 'waitForTransferComplete';
+    SeqControl(nsc).argument = nsc-1;
+    nsc = nsc+1;
 n = n+1;
 
 %% Send the 2nd waveform to hydrophone and also listen to echo
-for ii = 1:1
 Event(n) = Event(2);
 Event(n).info = 'Hydrophone Measurement Transmit.';
 Event(n).rcv = 0;
@@ -205,27 +212,15 @@ Event(n).seqControl = [nscTrig];
 % SeqControl(timeToNextAcqContinuous).command = 'timeToNextAcq';
 % SeqControl(timeToNextAcqContinuous).argument = 0.1e6;
 n = n+1;
-end
 
 %% Rotate Skull
 Event(n) = Event(2);
 Event(n).info = 'Rotate the skull';
 Event(n).rcv = 0;
 Event(n).tx = 0;
-Event(n).process = 3;
+Event(n).process = 2;
 Event(n).seqControl = 0;
 n = n+1;    
-% 
-% Event(n).info = 'Make software wait until all the echoes are acquired';
-% Event(n).tx = 0; % no TX structure.
-% Event(n).rcv = 0; % no Rcv structure.
-% Event(n).recon = 0; % no reconstruction.
-% Event(n).process = 0; 
-% Event(n).seqControl = nsc;
-% SeqControl(nsc).command = 'sync';
-% SeqControl(nsc).argument = 2e6;
-% nsc = nsc+1;
-% n = n+1;
     
 %% Go back to the beginning
 Event(n).info = 'Jump back to Event 1.';

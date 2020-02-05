@@ -16,7 +16,7 @@ CH2 Inverted	FALSE
 CH2 BWLimited	FALSE
 Use Offset	FALSE
 SecPerDiv	2E-5
-Delay	0E-5
+Delay	90E-6
 Average	FALSE
 Median	FALSE
 Averages	1

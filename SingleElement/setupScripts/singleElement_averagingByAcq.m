@@ -15,7 +15,7 @@ Resource.Parameters.numRcvChannels = 1; % change to 64 for Vantage 64 or 64LE
 Resource.Parameters.connector = 1; % trans. connector to use (V256).
 Resource.Parameters.speedOfSound = 1490; % speed of sound in m/sec
 Resource.Parameters.numAvg = NA;
-Resource.Parameters.ioChannel = 1;
+Resource.Parameters.ioChannel = 97;
 % Resource.Parameters.simulateMode = 1; % runs script in simulate mode
 
 % Specify media points
