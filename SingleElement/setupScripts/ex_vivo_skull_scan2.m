@@ -10,6 +10,7 @@ samplingRate = 50; % Sampling rate of the pulse/echo data in MHz (max: 50)
 saveDir = 'C:\Users\Verasonics\Desktop\Taylor\Data\exVivo180Scans\20200205\test\'; % Name of the directory in which to save results
 saveName = 'noSkull'; % Base name to use when saving files. 
 angles = linspace(-95,-94,2); % Vector specifying the angles to use.
+excitations = [0,1,2,500]; % Vector specifying transmits. The number is the number of half cycles with which the system will be excited. 0 half cycles results in an impulse.
 
 %% Specify system parameters
 ioChannel = 97;
@@ -22,9 +23,11 @@ Resource.Parameters.ioChannel = ioChannel;
 Resource.Parameters.saveDir = saveDir;
 Resource.Parameters.saveName = saveName;
 Resource.Parameters.angles = angles;
-Resource.Parameters.logFileName = [saveDir,saveName,'logFile.mat'];
-
-nTransmits = 2;
+Resource.Parameters.excitations = excitations;
+Resource.Parameters.curExcitation = 2;
+Resource.Parameters.logFileName = 'C:\Users\Verasonics\Desktop\Taylor\Data\exVivo180Scans\20200205\test\logFile.mat';
+Resource.Parameters.firstAngle = 1;
+nTransmits = length(excitations);
 
 header = struct('averages',NA,'frequency',frequency,'samplingRate',samplingRate,...
     'saveName',saveName,'angles',angles,'nTransmits',nTransmits,...
@@ -78,13 +81,13 @@ Resource.RcvBuffer(1).colsPerFrame = 1; % change to 256 for V256 system
 Resource.RcvBuffer(1).numFrames = 1; % minimum size is 1 frame.
 
 %% Specify Transmit waveform structure.
-TW(1).type = 'parametric';
-numberHalfCycles = 2;
-TW(1).Parameters = [frequency,0.67,numberHalfCycles,1]; % A, B, C, D
-
-TW(2).type = 'parametric';
-numberHalfCycles = 500;
-TW(2).Parameters = [frequency,0.67,numberHalfCycles,1]; % A, B, C, D
+if excitations(1) > 0
+    TW(1).type = 'parametric';
+    TW(1).Parameters = [frequency,0.67,excitations(1),1]; % A, B, C, D
+else
+    TW(1).type = 'pulseCode';
+    TW(1).PulseCode = generateImpulse(1/18e6);
+end
 
 %% Specify TX structure array.
 TX(1).waveform = 1; % use 1st TW structure.
@@ -92,13 +95,6 @@ TX(1).focus = 0;
 TX(1).Apod = zeros(1,128);
 TX(1).Apod(Resource.Parameters.ioChannel) = 1;
 TX(1).Delay = zeros(1,128);
-
-% Specify TX structure array.
-TX(2).waveform = 2; % use 1st TW structure.
-TX(2).focus = 0;
-TX(2).Apod = zeros(1,128);
-TX(2).Apod(Resource.Parameters.ioChannel) = 1;
-TX(2).Delay = zeros(1,128);
 
 TPC(1).hv = 10;
 
@@ -117,8 +113,9 @@ Receive(1).mode = 0;
 Receive(1).bufnum = 1;
 Receive(1).framenum = 1;
 Receive(1).acqNum = 1;
-Receive(1).sampleMode = 'custom';
-Receive(1).decimSampleRate = samplingRate;
+% Receive(1).sampleMode = 'custom';
+% Receive(1).decimSampleRate = samplingRate;
+Receive(1).sampleMode = 'NS200BW';
 Receive(1).LowPassCoef = [];
 Receive(1).InputFilter = [];
 
@@ -156,6 +153,13 @@ Process(4).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'srcframenum',1,...
 'dstbuffer','none'};
 
+Process(5).classname = 'External';
+Process(5).method = 'setExcitation_exVivoScan';
+Process(5).Parameters = {'srcbuffer','receive',... % name of buffer to process.
+'srcbufnum',1,...
+'srcframenum',1,...
+'dstbuffer','none'};
+
 %% Initial event to make sure triggers are being received
 % Specify sequence events.
 n = 1;
@@ -169,19 +173,6 @@ Event(n).process = 3; % no processing
 Event(n).seqControl = 0;
 n = n+1;
 
-%% Make sure enough time has passed for the move to complete
-Event(n).info = 'Wait';
-Event(n).tx = 0; 
-Event(n).rcv = 0;
-Event(n).recon = 0;
-Event(n).process = 0;
-Event(n).seqControl = nsc;
-    SeqControl(nsc).command = 'noop';
-    SeqControl(nsc).argument = (5)/200e-9;
-    SeqControl(nsc).condition = 'Hw&Sw';
-    nsc = nsc+1;
-n = n+1;
-
 %% Acquire echoes (with all averages)
 for ii = 1:NA
     Event(n).info = 'Hydrophone';
@@ -192,14 +183,25 @@ for ii = 1:NA
     if ii > 1
         Event(n).seqControl = [nsc,nsc+1];
             SeqControl(nsc).command = 'waitForTransferComplete';
-                SeqControl(nsc).argument = nsc-2;
+                SeqControl(nsc).argument = nsc-1;
                 nsc = nsc+1;
             SeqControl(nsc).command = 'markTransferProcessed';
-                SeqControl(nsc).argument = nsc-3;
+                SeqControl(nsc).argument = nsc-2;
                 nsc = nsc+1;
     else
-        Event(n).seqControl(nsc) = 0;
+        Event(n).seqControl = 0;
     end
+    n = n+1;
+    
+    Event(n).info = 'Wait';
+    Event(n).tx = 0; 
+    Event(n).rcv = 0;
+    Event(n).recon = 0;
+    Event(n).process = 0;
+    Event(n).seqControl = nsc;
+        SeqControl(nsc).command = 'noop';
+        SeqControl(nsc).argument = (1)/200e-9;
+        nsc = nsc+1;
     n = n+1;
     
     Event(n).info = 'Transmit 1';
@@ -224,19 +226,6 @@ for ii = 1:NA
                nsc = nsc + 1;
     end
     n = n+1;
-    
-    % Make sure enough time has passed for the move to complete
-    Event(n).info = 'Wait';
-    Event(n).tx = 0; 
-    Event(n).rcv = 0;
-    Event(n).recon = 0;
-    Event(n).process = 0;
-    Event(n).seqControl = nsc;
-        SeqControl(nsc).command = 'noop';
-        SeqControl(nsc).argument = (0.1)/200e-9;
-        SeqControl(nsc).condition = 'Hw&Sw';
-        nsc = nsc+1;
-    n = n+1;
 end
 %% Save data from transmit 1
 Event(n).info = 'Save RF Data';
@@ -244,92 +233,37 @@ Event(n).rcv = 0;
 Event(n).tx = 0;
 Event(n).recon = 0; % no reconstruction.
 Event(n).process = 4;
-Event(n).seqControl = [nsc,nsc+1];
+Event(n).seqControl = [nsc,nsc+1,nsc+2];
     SeqControl(nsc).command = 'waitForTransferComplete';
-        SeqControl(nsc).argument = nsc-2;
+        SeqControl(nsc).argument = nsc-1;
         nsc = nsc+1;
     SeqControl(nsc).command = 'markTransferProcessed';
-        SeqControl(nsc).argument = nsc-3;
-        nsc = nsc+1;
-n = n+1;    
-
-%% Acquire a long waveform with the hydrophone and Tx
-for ii = 1:NA
-    Event(n).info = 'Hydrophone';
-    Event(n).tx = 0; % no TX structure.
-    Event(n).rcv = 0; % no Rcv structure.
-    Event(n).recon = 0; % no reconstruction.
-    Event(n).process = 1;
-    if ii > 1
-        Event(n).seqControl = [nsc,nsc+1];
-            SeqControl(nsc).command = 'waitForTransferComplete';
-                SeqControl(nsc).argument = nsc-2;
-                nsc = nsc+1;
-            SeqControl(nsc).command = 'markTransferProcessed';
-                SeqControl(nsc).argument = nsc-3;
-                nsc = nsc+1;
-    else
-        Event(n).seqControl = 0;
-    end
-    n = n+1;
-
-    % Send the 2nd waveform to hydrophone and also listen to echo
-    Event(n) = Event(2);
-    Event(n).info = 'Transmit 2.';
-    Event(n).rcv = ii;
-    Event(n).tx = 2;
-    Event(n).process = 0;
-    if ii == 1
-        nscTime2AqLong = nsc;
-        SeqControl(nsc).command = 'timeToNextAcq';
-        SeqControl(nsc).argument = 1.2e3;
-        nsc = nsc+1;
-    end
-    Event(n).seqControl = [nscTime2AqLong,nscTrig,nsc];    
-        SeqControl(nsc).command = 'transferToHost';
-           nsc = nsc + 1;
-    n = n+1;
-    
-    % Make sure enough time has passed for the move to complete
-    Event(n).info = 'Wait';
-    Event(n).tx = 0; 
-    Event(n).rcv = 0;
-    Event(n).recon = 0;
-    Event(n).process = 0;
-    Event(n).seqControl = nsc;
-        SeqControl(nsc).command = 'noop';
-        SeqControl(nsc).argument = (0.1)/200e-9;
-        SeqControl(nsc).condition = 'Hw&Sw';
-        nsc = nsc+1;
-    n = n+1;
-end
-%% Save data from transmit 2
-Event(n).info = 'Save RF Data';
-Event(n).rcv = 0;
-Event(n).tx = 0;
-Event(n).recon = 0; % no reconstruction.
-Event(n).process = 4;
-Event(n).seqControl = [nsc,nsc+1];
-    SeqControl(nsc).command = 'waitForTransferComplete';
         SeqControl(nsc).argument = nsc-2;
         nsc = nsc+1;
-    SeqControl(nsc).command = 'markTransferProcessed';
-        SeqControl(nsc).argument = nsc-3;
-        nsc = nsc+1;
 n = n+1;    
 
-%% Rotate Skull
-Event(n).info = 'Rotate the skull';
-Event(n).rcv = 0;
-Event(n).tx = 0;
+Event(n).info = 'Set Excitation';
+Event(n).tx = 0; % use 1st TX structure.
+Event(n).rcv = 0; % use 1st Rcv structure.
 Event(n).recon = 0; % no reconstruction.
-Event(n).process = 2;
-Event(n).seqControl = nsc;
-    SeqControl(nsc).command = 'sync';
-n = n+1;    
-    
+Event(n).process = 5; % no processing
+Event(n).seqControl = 0;
+n = n+1;
+
+%% Make sure enough time has passed for the move to complete
+Event(n).info = 'Wait';
+Event(n).tx = 0; 
+Event(n).rcv = 0;
+Event(n).recon = 0;
+Event(n).process = 0;
+Event(n).seqControl = [nsc];
+    SeqControl(nsc).command = 'noop';
+        SeqControl(nsc).argument = (1)/200e-9;
+        nsc = nsc+1;
+n = n+1;
+
 %% Go back to the beginning
-Event(n).info = 'Jump back to Event 1.';
+Event(n).info = 'Jump back to Event 2.';
 Event(n).tx = 0; % no TX structure.
 Event(n).rcv = 0; % no Rcv structure.
 Event(n).recon = 0; % no reconstruction.
@@ -337,7 +271,7 @@ Event(n).process = 0; % no processing
 Event(n).seqControl = nsc; % jump back to Event 1
 SeqControl(nsc).command = 'jump';
 SeqControl(nsc).condition = 'exitAfterJump';
-SeqControl(nsc).argument = 2;
+SeqControl(nsc).argument = 1;
 
 % Save all the structures to a .mat file.
 scriptName = mfilename('fullpath');

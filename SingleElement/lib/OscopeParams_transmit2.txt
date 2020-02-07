@@ -1,0 +1,57 @@
+[Oscilloscope]
+Manufacturer	Pico Technology
+Model	5244A
+Serial	FW908/007
+CH1 VperDiv	0.002
+CH1 Coupling	0
+CH1 Offset	0
+CH1 Probe	1
+CH1 Inverted	FALSE
+CH1 BWLimited	FALSE
+CH2 VperDiv	0.1
+CH2 Coupling	3
+CH2 Offset	0
+CH2 Probe	1
+CH2 Inverted	FALSE
+CH2 BWLimited	FALSE
+Use Offset	FALSE
+SecPerDiv	2E-5
+Delay	90E-6
+Average	FALSE
+Median	FALSE
+Averages	1
+Use Correlation	TRUE
+Points	6250
+TriggerSource	0
+TriggerMode	0
+TriggerSlope	FALSE
+TriggerCoupling	1
+TriggerLevel	0.25
+RemoteAveraging	FALSE
+ShowWFWindow	TRUE
+WFSource	1
+Reference	0
+Acq. Type	Normal
+TriggerType	Edge
+TriggerHoldoff	0
+TriggerQualifier	Less Than
+TriggerLessThanTime	0
+TriggerGreaterThanTime	0
+IdleTime	0
+NthEdge	0
+Resolution	8
+WF Time Out	10
+YDivs	10
+
+[Medium]
+Temperature	25
+Velocity	1496.69
+
+[Orientation]
+Round Trip	FALSE
+
+[Distance Tracking]
+Enabled	FALSE
+Delay Offset	-3
+Use Diagonal	FALSE
+

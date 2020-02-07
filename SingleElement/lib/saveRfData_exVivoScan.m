@@ -8,33 +8,32 @@
 % Taylor Webb
 % Fall 2019
 
-function getWaveform_exVivoScan(RData) %#ok<*INUSD>
-if ~exist('isSoniqConnected.m','file')
-    addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\Aims\lib\soniq');
-    addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\Aims\lib')
-end
-
-lib = 'soniq';
-if ~isSoniqConnected(lib)
-    openSoniq(lib);
-end
-
+function saveRfData_exVivoScan(RData)
 Resource = evalin('base','Resource'); 
+Trans = evalin('base','Trans'); 
+Receive = evalin('base','Receive'); 
 
 %% Determine where we are in the code - how should this be saved?
 % header.transmits complete is a vector whose length is based on the number
 % of transmits. Each entry in the vector tells the system how many averages
-% have been recorded for each waveform.
-hd = load(Resource.Parameters.logFileName);
-header = hd.header;
+% have been recorded for each waveform. The RF data from the Verasonics
+% system is saved when the full number of averages for a transmit has been
+% achieved.
+load(Resource.Parameters.logFileName);
 for ii = 1:length(header.transmitsComplete)
-    if header.transmitsComplete(ii) == Resource.Parameters.numAvg
-        continue
-    else
-        header.transmitsComplete(ii) = header.transmitsComplete(ii)+1;
-        avgIdx = header.transmitsComplete(ii);
-        transmitIdx = ii;    
+    % Check if this is the last transmit for the current angle - if it is,
+    % reset the counter
+    if ii == length(header.transmitsComplete) && header.transmitsComplete(ii) == Resource.Parameters.numAvg
+        header.transmitsComplete = zeros(size(header.transmitsComplete));
+        transmitIdx = length(header.transmitsComplete);
         break;
+    elseif header.transmitsComplete(ii+1) == Resource.Parameters.numAvg
+        continue;
+    elseif header.transmitsComplete(ii) == Resource.Parameters.numAvg
+        transmitIdx = ii;
+        break;
+    else
+        error('Trying to save RF data but averages are not complete.')
     end
 end
 save(Resource.Parameters.logFileName,'header');
@@ -53,15 +52,10 @@ angleIdx = find(abs(pos.THETA.loc - angles) < 1e-6);
 % Create a save name based on the transmit, average, and angle number of
 % the current file.
 saveName = [Resource.Parameters.saveDir, Resource.Parameters.saveName,...
-    '_hData_transmitNo', num2str(transmitIdx), '_averageNo', num2str(avgIdx),...
-    '_angleNo', num2str(angleIdx), '.snq'];
-
-% Load the relevant O-scope settings
-fname = ['C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\SingleElement\lib\OscopeParams_transmit',...
-    num2str(transmitIdx), '.txt'];
-calllib(lib,'LoadScopeSettings',fname);
+    '_TxData_transmitNo', num2str(transmitIdx),...
+    '_angleNo', num2str(angleIdx), '.mat'];
 
 % Acquire the waveform
-disp(['    Acquiring wave from transmit ', num2str(transmitIdx), ' and average ', num2str(avgIdx)]);
-getSoniqWaveform(lib,saveName);
-return
+save(saveName, 'RData','Resource','Trans','Receive');
+
+disp(['  Transmit ', num2str(transmitIdx), ' is complete.']);

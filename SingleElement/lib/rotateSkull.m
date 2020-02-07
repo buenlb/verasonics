@@ -1,5 +1,4 @@
 function rotateSkull(RData)
-
 Resource = evalin('base','Resource');
 Receive = evalin('base','Receive');
 

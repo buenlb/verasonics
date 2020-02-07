@@ -45,7 +45,7 @@ Resource.RcvBuffer(1).numFrames = 1; % minimum size is 1 frame.
 
 % Specify Transmit waveform structure.
 TW(1).type = 'parametric';
-numberHalfCycles = 500;
+numberHalfCycles = 2;
 TW(1).Parameters = [frequency,0.67,numberHalfCycles,1]; % A, B, C, D
 % TW(1).type = 'pulseCode';
 % TW(1).PulseCode = generateImpulse(1/(4*2.25e6));
@@ -67,7 +67,7 @@ TGC(1).Waveform = computeTGCWaveform(TGC);
 Receive(1).Apod = zeros(1,128);
 Receive(1).Apod(ioChannel) = 1;
 Receive(1).startDepth = 0;
-Receive(1).endDepth = 80;
+Receive(1).endDepth = 500;
 Receive(1).TGC = 1; % Use the first TGC waveform defined above
 Receive(1).mode = 0;
 Receive(1).bufnum = 1;
