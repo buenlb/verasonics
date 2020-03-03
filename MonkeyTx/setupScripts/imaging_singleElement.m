@@ -27,10 +27,10 @@ Media.MP(1,:) = [0,0,100,1.0]; % [x, y, z, reflectivity]
 % Specify Trans structure array.
 Trans = transducerGeometry(0);
 Trans.units = 'mm';
-Trans.maxHighVoltage = 10;
+Trans.maxHighVoltage = 56;
 % Trans.frequency = 0.65*3;
 
-TPC(1).hv = 1.6;
+TPC(1).hv = 56;
 
 
 % Specify Resource buffers.
@@ -40,10 +40,10 @@ Resource.RcvBuffer(1).colsPerFrame = 1; % change to 256 for V256 system
 Resource.RcvBuffer(1).numFrames = 1; % minimum size is 1 frame.
 
 % Specify Transmit waveform structure.
-TW(1).type = 'parametric';
-TW(1).Parameters = [Trans.frequency,0.67,nCycles*2,1]; % A, B, C, D
-% TW(1).type = 'pulseCode';
-% TW(1).PulseCode = generateImpulse(1/(4*2.25e6));
+% TW(1).type = 'parametric';
+% TW(1).Parameters = [Trans.frequency,0.67,nCycles*2,1]; % A, B, C, D
+TW(1).type = 'pulseCode';
+TW(1).PulseCode = generateImpulse(1/(8*Trans.frequency*1e6));
 % TW(1).PulseCode = generateImpulse(3/250e6);
 
 % Specify TX structure array.
@@ -67,7 +67,7 @@ for ii = 1:256
 end
 
 % Specify TGC Waveform structure.
-TGC(1).CntrlPts = ones(1,8)*0;
+TGC(1).CntrlPts = ones(1,8)*511;
 TGC(1).rangeMax = 1;
 TGC(1).Waveform = computeTGCWaveform(TGC);
 
@@ -94,7 +94,7 @@ end
 % Specify an external processing event.
 % Specify an external processing event.
 Process(1).classname = 'External';
-Process(1).method = 'dispUltrasoundImage';
+Process(1).method = 'closeVSX';
 Process(1).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'srcbufnum',1,...
 'srcframenum',1,...
@@ -136,18 +136,21 @@ end
 
 
 
-% Event(n).info = 'Call external Processing function.';
-% Event(n).tx = 0; % no TX structure.
-% Event(n).rcv = 0; % no Rcv structure.
-% Event(n).recon = 0; % no reconstruction.
-% Event(n).process = 1; % call processing function
-% Event(n).seqControl = [3,4,5]; % wait for data to be transferred
-% SeqControl(3).command = 'waitForTransferComplete';
-% SeqControl(3).argument = 2;
-% SeqControl(4).command = 'markTransferProcessed';
-% SeqControl(4).argument = 2;
-% SeqControl(5).command = 'sync';
-% n = n+1;
+Event(n).info = 'Call external Processing function.';
+Event(n).tx = 0; % no TX structure.
+Event(n).rcv = 0; % no Rcv structure.
+Event(n).recon = 0; % no reconstruction.
+Event(n).process = 1; % call processing function
+Event(n).seqControl = [nsc, nsc+1, nsc+2]; % wait for data to be transferred
+    SeqControl(nsc).command = 'waitForTransferComplete';
+        SeqControl(nsc).argument = 2;
+        nsc = nsc+1;
+    SeqControl(nsc).command = 'markTransferProcessed';
+        SeqControl(nsc).argument = 2;
+        nsc = nsc+1;
+    SeqControl(nsc).command = 'sync';
+        nsc = nsc+1;
+n = n+1;
 
 % Save all the structures to a .mat file.
 scriptName = mfilename('fullpath');

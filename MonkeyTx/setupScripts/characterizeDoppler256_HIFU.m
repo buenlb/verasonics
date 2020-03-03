@@ -5,7 +5,7 @@ srcDirectory = setPaths();
 
 %%
 frequency = 0.65; % Frequency in MHz
-nCycles = 10*frequency*1e6; % number of cycles with which to excite Tx (can integer multiples of 1/2)
+nCycles = 5*frequency*1e6; % number of cycles with which to excite Tx (can integer multiples of 1/2)
 % nCycles = 5;
 ioChannel = 229;
 NA = 1;
@@ -84,7 +84,7 @@ elements.x = xTx*1e-3;
 elements.y = yTx*1e-3;
 elements.z = zTx*1e-3;
             
-elements = steerArray(elements,[-10,-5,45]*1e-3,frequency);
+elements = steerArray(elements,[2,-1,46]*1e-3,frequency);
 delays = [elements.t]';
 % delays = zeros(size(delays));
 TX(1).Delay = delays;

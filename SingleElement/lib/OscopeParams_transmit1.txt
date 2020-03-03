@@ -15,8 +15,8 @@ CH2 Probe	1
 CH2 Inverted	FALSE
 CH2 BWLimited	FALSE
 Use Offset	FALSE
-SecPerDiv	2E-5
-Delay	90E-6
+SecPerDiv	2E-6
+Delay	110E-6
 Average	FALSE
 Median	FALSE
 Averages	1
@@ -24,7 +24,7 @@ Use Correlation	TRUE
 Points	6250
 TriggerSource	0
 TriggerMode	0
-TriggerSlope	FALSE
+TriggerSlope	TRUE
 TriggerCoupling	1
 TriggerLevel	0.25
 RemoteAveraging	FALSE

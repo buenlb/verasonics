@@ -52,13 +52,19 @@ angleIdx = find(abs(pos.THETA.loc - angles) < 1e-6);
 
 % Create a save name based on the transmit, average, and angle number of
 % the current file.
-saveName = [Resource.Parameters.saveDir, Resource.Parameters.saveName,...
-    '_hData_transmitNo', num2str(transmitIdx), '_averageNo', num2str(avgIdx),...
-    '_angleNo', num2str(angleIdx), '.snq'];
+newSaveDir = [Resource.Parameters.saveDir, 'Angle', num2str(angleIdx,'%03d'), '\Transmit', num2str(transmitIdx), '\'];
+if ~exist(newSaveDir, 'dir')
+    mkdir(newSaveDir);
+end
+saveName = [newSaveDir,Resource.Parameters.saveName,'_hData_averageNo',num2str(avgIdx),'.snq'];
 
 % Load the relevant O-scope settings
-fname = ['C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\SingleElement\lib\OscopeParams_transmit',...
-    num2str(transmitIdx), '.txt'];
+fname = Resource.Parameters.scopeParamFile{transmitIdx};
+%['C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\SingleElement\lib\OscopeParams_transmit',...
+%   num2str(transmitIdx), '.txt'];
+if ~exist(fname,'file')
+    keyboard
+end
 calllib(lib,'LoadScopeSettings',fname);
 
 % Acquire the waveform

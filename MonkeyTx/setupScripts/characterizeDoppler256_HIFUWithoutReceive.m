@@ -84,7 +84,7 @@ elements.x = xTx*1e-3;
 elements.y = yTx*1e-3;
 elements.z = zTx*1e-3;
             
-elements = steerArray(elements,[2,2.5,50]*1e-3,frequency);
+elements = steerArray(elements,[2.25,-0.5,47]*1e-3,frequency);
 delays = [elements.t]';
 % delays = zeros(size(delays));
 TX(1).Delay = delays;

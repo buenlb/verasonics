@@ -1,5 +1,4 @@
 function displayResults_focalImage(RData)
-tic
 persistent figHandle;
 if isempty(figHandle)
     figHandle = figure;
@@ -15,7 +14,13 @@ Trans = evalin('base','Trans');
 Receive = evalin('base','Receive');
 
 %% Determine which focus the system is on
-curIdx = Resource.Parameters.curIdx
+curIdx = Resource.Parameters.curIdx;
+if curIdx > 1
+    t = toc;
+    disp(['Time since last tic: ', num2str(round(t))]);
+else
+    tic
+end
 x = Resource.Parameters.x;
 y = Resource.Parameters.y;
 z = Resource.Parameters.z;
@@ -38,6 +43,7 @@ elements.x = xTx*1e-3;
 elements.y = yTx*1e-3;
 elements.z = zTx*1e-3;
 
+idx = 1;
 for ii = 1:length(x)
     for jj = 1:length(y)
         elements = steerArray(elements,[x(ii),y(jj),z(curIdx)]*1e-3,Trans.frequency,0);
@@ -45,7 +51,6 @@ for ii = 1:length(x)
 
         %Delay and sum signals from each element
         curTotal = zeros(length(Receive(1).startSample:Receive(1).endSample),1);
-        keyboard
         for kk = 1:length(delays)
             curS = RData(Receive(idx).startSample:Receive(idx).endSample,kk);
             curS = circshift(curS,[round(delays(kk)/(650e-3*dt)),1]);
@@ -59,6 +64,7 @@ for ii = 1:length(x)
         % Determine voxel brightness
         curTotal = abs(hilbert(curTotal));
         img(ii,jj,curIdx) = max(curTotal(d>effectiveFocalDistance & d<effectiveFocalDistance+7));
+        idx = idx+1;
     end
 end
 Resource.Parameters.img = img;
@@ -94,4 +100,3 @@ end
 if curIdx == length(x)
     save(Resource.Parameters.imageSaveName,'img','x','y','z','t');
 end
-toc

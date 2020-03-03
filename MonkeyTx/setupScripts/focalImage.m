@@ -24,12 +24,12 @@
 clear all; close all; clc; %#ok<CLALL>
 
 %% User Defined Variables
-x = -15:1:15;
-y = -6:2:0;
-z = 50:1:70;
+x = 0:0.25:3;
+y = -1:0.5:0;
+z = 45:0.25:50;
 frequency = 0.65; 
 nCycles = 5;
-initialV = 1.6;
+initialV = 5;
 imageSaveName = 'C:\Users\Verasonics\Desktop\Taylor\Data\FocalImages\20200205\testImage1.mat';
 
 %% Set up path locations
@@ -86,7 +86,7 @@ end
 
 % Initial voltage
 TPC(1).hv = initialV;
-TPC(1).highVoltageLimit = 9;
+TPC(1).highVoltageLimit = 8;
 
 %% Receive
 % Buffers
@@ -150,9 +150,21 @@ for ii = 1:length(x)*length(y)
     Event(n).rcv = ii;
     Event(n).recon = 0;
     Event(n).process = 0;
-    Event(n).seqControl = [nscTime2Aq,nscTrig,nsc];
-        SeqControl(nsc).command = 'transferToHost';
-            nsc = nsc + 1;
+    if ii > 1
+        Event(n).seqControl = [nscTime2Aq,nscTrig,nsc,nsc+1,nsc+2];
+            SeqControl(nsc).command = 'waitForTransferComplete';
+                SeqControl(nsc).argument = nsc-1;
+                nsc = nsc+1;
+            SeqControl(nsc).command = 'markTransferProcessed';
+                SeqControl(nsc).argument = nsc-2;
+                nsc = nsc+1;
+            SeqControl(nsc).command = 'transferToHost';
+                nsc = nsc + 1;
+    else
+        Event(n).seqControl = [nscTime2Aq,nscTrig,nsc];
+            SeqControl(nsc).command = 'transferToHost';
+                nsc = nsc + 1;
+    end
     n = n+1;
 end
 
@@ -161,7 +173,7 @@ Event(n).tx = 0;
 Event(n).rcv = 0; 
 Event(n).recon = 0;
 Event(n).process = 2;
-Event(n).seqControl = nsc; % wait for data to be transferred
+Event(n).seqControl = 0; % wait for data to be transferred
 SeqControl(nsc).command = 'waitForTransferComplete';
     SeqControl(nsc).argument = nsc-1;
     nsc = nsc+1;
@@ -172,7 +184,7 @@ Event(n).tx = 0; % use 1st TX structure.
 Event(n).rcv = 0; % use 1st Rcv structure.
 Event(n).recon = 0; % no reconstruction.
 Event(n).process = 1; % no processing
-Event(n).seqControl = nsc;
+Event(n).seqControl = 0;
     SeqControl(nsc).command = 'markTransferProcessed';
     SeqControl(nsc).argument = nsc-2;
     nsc = nsc+1;
@@ -183,10 +195,13 @@ Event(n).tx = 0; % no TX structure.
 Event(n).rcv = 0; % no Rcv structure.
 Event(n).recon = 0; % no reconstruction.
 Event(n).process = 0; % no processing
-Event(n).seqControl = nsc; % jump back to Event 1
+Event(n).seqControl = [nsc, nsc+1]; % jump back to Event 1
     SeqControl(nsc).command = 'jump';
-    SeqControl(nsc).condition = 'exitAfterJump';
-    SeqControl(nsc).argument = 1;
+        SeqControl(nsc).condition = 'exitAfterJump';
+        SeqControl(nsc).argument = 1;
+        nsc = nsc+1;
+    SeqControl(nsc).command = 'sync';
+        nsc = nsc+1;
 n = n+1;
 
 %% Save Results

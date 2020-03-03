@@ -1,5 +1,4 @@
 function setDelays_focalImage(RData) %#ok<INUSD>
-tic
 %% Get relevant structures from the base of the stack
 Resource = evalin('base','Resource');
 Trans = evalin('base','Trans');
@@ -46,4 +45,6 @@ Control = evalin('base','Control');
 Control.Command = 'update&Run';
 Control.Parameters = {'TX'};
 assignin('base','Control', Control);
-toc
+
+t = toc;
+disp(['Assigned Phases, elapsed time', num2str(round(t))])

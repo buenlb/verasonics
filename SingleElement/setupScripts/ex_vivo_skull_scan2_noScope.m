@@ -4,14 +4,19 @@ clear all; close all; clc;
 srcDirectory = setPaths();
 
 %% User Defined Variables
-NA = 2; % Desired number of averages
-frequency = 2.25; % Center frequency of the transducer in MHz
+NA = 64; % Desired number of averages
+frequency = 0.5; % Center frequency of the transducer in MHz
 samplingRate = 50; % Sampling rate of the pulse/echo data in MHz (max: 50)
-% saveDir = 'C:\Users\Verasonics\Desktop\Taylor\Data\exVivo180Scans\20200212\skull13841_2.25MHz_withSolderDots\'; % Name of the directory in which to save results
-saveDir = 'C:\Users\Verasonics\Desktop\Taylor\Data\exVivo180Scans\20200212\testNoScope\'; % Name of the directory in which to save results
+saveDir = 'C:\Users\Verasonics\Desktop\Taylor\Data\exVivo180Scans\20200218\Experiments\noskull_0.5MHz\'; % Name of the directory in which to save results
+% saveDir = 'C:\Users\Verasonics\Desktop\Taylor\Data\exVivo180Scans\20200213\changeVoltageTest2\'; % Name of the directory in which to save results
 saveName = 'skull'; % Base name to use when saving files. 
-angles = 44.1:0.1:44.2; % Vector specifying the angles to use.
-excitations = [0,1,2,500]; % Vector specifying transmits. The number is the number of half cycles with which the system will be excited. 0 half cycles results in an impulse.
+%angles = -21:3:126; % Vector specifying the angles to use.
+angles = 0; % Vector specifying the angles to use.
+% excitations = [0,0,1,1,2,2,100,100]; % Vector specifying transmits. The number is the number of half cycles with which the system will be excited. 0 half cycles results in an impulse.
+excitations = [0,0,1,1,2,2,100,100]; % Vector specifying transmits. The number is the number of half cycles with which the system will be excited. 0 half cycles results in an impulse.
+%excitationVoltages = [32, 96, 32, 96, 32, 96, 32, 96];
+excitationVoltages = [32, 75, 32, 75, 32, 75, 32, 75];
+%excitationVoltages = [16, 32, 16, 32, 16, 32, 16, 32];
 
 %% Specify system parameters
 ioChannel = 126;
@@ -25,14 +30,20 @@ Resource.Parameters.saveDir = saveDir;
 Resource.Parameters.saveName = saveName;
 Resource.Parameters.angles = angles;
 Resource.Parameters.excitations = excitations;
-Resource.Parameters.curExcitation = 2;
+Resource.Parameters.curExcitation = 1;
 Resource.Parameters.logFileName = [saveDir,'logFile.mat'];
+Resource.Parameters.excitationVoltages = excitationVoltages;
 Resource.Parameters.scopeParamFile = {'C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\SingleElement\lib\OscopeParams_transmit1.txt',...
     'C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\SingleElement\lib\OscopeParams_transmit1.txt',...
     'C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\SingleElement\lib\OscopeParams_transmit1.txt',...
     'C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\SingleElement\lib\OscopeParams_transmit2.txt'};
 Resource.Parameters.firstAngle = 1;
 nTransmits = length(excitations);
+
+% Error checking
+if length(excitations) ~= length(excitationVoltages)
+    error('Excitations and Excitation Voltages must be the same length!')
+end
 
 header = struct('averages',NA,'frequency',frequency,'samplingRate',samplingRate,...
     'saveName',saveName,'angles',angles,'nTransmits',nTransmits,...
@@ -77,7 +88,8 @@ Trans.ElementSens = ones(101,1);
 Trans.connType = 1;
 Trans.Connector = (1:128)';
 Trans.impedance = 50;
-Trans.maxHighVoltage = 1.6;
+%Trans.maxHighVoltage = 96;
+Trans.maxHighVoltage = min(max(excitationVoltages), 96);
 
 
 % Specify Resource buffers.
@@ -105,7 +117,8 @@ TX(1).Apod = zeros(1,128);
 TX(1).Apod(Resource.Parameters.ioChannel) = 1;
 TX(1).Delay = zeros(1,128);
 
-TPC(1).hv = 96;
+TPC(1).hv = excitationVoltages(1);
+% TPC(2).hv = 96;
 
 %% Specify TGC Waveform structure.
 TGC(1).CntrlPts = zeros(1,8);
@@ -116,7 +129,7 @@ TGC(1).Waveform = computeTGCWaveform(TGC);
 Receive(1).Apod = zeros(1,128);
 Receive(1).Apod([Resource.Parameters.ioChannel,24]) = 1;
 Receive(1).startDepth = 0;
-Receive(1).endDepth = 500;
+Receive(1).endDepth = 500 * frequency/2.25;
 Receive(1).TGC = 1; % Use the first TGC waveform defined above
 Receive(1).mode = 0;
 Receive(1).bufnum = 1;
@@ -132,6 +145,8 @@ for n = 2:NA
     Receive(n) = Receive(1);
     Receive(n).acqNum = n;
 end
+
+RcvProfile.LnaGain = 15;
 
 %% External Processing
 Process(1).classname = 'External';
@@ -156,14 +171,14 @@ Process(3).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'dstbuffer','none'};
 
 Process(4).classname = 'External';
-Process(4).method = 'saveRfData_exVivoScan';
+Process(4).method = 'saveRfDataNoScope_exVivoScan';
 Process(4).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'srcbufnum',1,...
 'srcframenum',1,...
 'dstbuffer','none'};
 
 Process(5).classname = 'External';
-Process(5).method = 'setExcitation_exVivoScan';
+Process(5).method = 'setExcitationNoScope_exVivoScan';
 Process(5).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'srcbufnum',1,...
 'srcframenum',1,...
@@ -184,34 +199,34 @@ n = n+1;
 
 %% Acquire echoes (with all averages)
 for ii = 1:NA
-    Event(n).info = 'Hydrophone';
-    Event(n).tx = 0; % no TX structure.
-    Event(n).rcv = 0; % no Rcv structure.
-    Event(n).recon = 0; % no reconstruction.
-    Event(n).process = 1; 
-    if ii > 1
-        Event(n).seqControl = [nsc,nsc+1];
-            SeqControl(nsc).command = 'waitForTransferComplete';
-                SeqControl(nsc).argument = nsc-1;
-                nsc = nsc+1;
-            SeqControl(nsc).command = 'markTransferProcessed';
-                SeqControl(nsc).argument = nsc-2;
-                nsc = nsc+1;
-    else
-        Event(n).seqControl = 0;
-    end
-    n = n+1;
-    
-    Event(n).info = 'Wait';
-    Event(n).tx = 0; 
-    Event(n).rcv = 0;
-    Event(n).recon = 0;
-    Event(n).process = 0;
-    Event(n).seqControl = nsc;
-        SeqControl(nsc).command = 'noop';
-        SeqControl(nsc).argument = (1)/200e-9;
-        nsc = nsc+1;
-    n = n+1;
+%     Event(n).info = 'Hydrophone';
+%     Event(n).tx = 0; % no TX structure.
+%     Event(n).rcv = 0; % no Rcv structure.
+%     Event(n).recon = 0; % no reconstruction.
+%     Event(n).process = 1; 
+%     if ii > 1
+%         Event(n).seqControl = [nsc,nsc+1];
+%             SeqControl(nsc).command = 'waitForTransferComplete';
+%                 SeqControl(nsc).argument = nsc-1;
+%                 nsc = nsc+1;
+%             SeqControl(nsc).command = 'markTransferProcessed';
+%                 SeqControl(nsc).argument = nsc-2;
+%                 nsc = nsc+1;
+%     else
+%         Event(n).seqControl = 0;
+%     end
+%     n = n+1;
+%     
+%     Event(n).info = 'Wait';
+%     Event(n).tx = 0; 
+%     Event(n).rcv = 0;
+%     Event(n).recon = 0;
+%     Event(n).process = 0;
+%     Event(n).seqControl = nsc;
+%         SeqControl(nsc).command = 'noop';
+%         SeqControl(nsc).argument = (1)/200e-9;
+%         nsc = nsc+1;
+%     n = n+1;
     
     Event(n).info = 'Transmit 1';
     Event(n).rcv = ii;
@@ -221,7 +236,7 @@ for ii = 1:NA
     if ii == 1
         Event(n).seqControl = [nsc,nsc+1,nsc+2];
             SeqControl(nsc).command = 'timeToNextAcq';
-            SeqControl(nsc).argument = 1e3;
+            SeqControl(nsc).argument = 0.5e3;
                 nscTime2Aq = nsc;
                 nsc = nsc+1;
             SeqControl(nsc).command = 'triggerOut';
@@ -242,7 +257,7 @@ Event(n).rcv = 0;
 Event(n).tx = 0;
 Event(n).recon = 0; % no reconstruction.
 Event(n).process = 4;
-Event(n).seqControl = [nsc,nsc+1,nsc+2];
+Event(n).seqControl = [nsc,nsc+1];
     SeqControl(nsc).command = 'waitForTransferComplete';
         SeqControl(nsc).argument = nsc-1;
         nsc = nsc+1;
@@ -255,8 +270,23 @@ Event(n).info = 'Set Excitation';
 Event(n).tx = 0; % use 1st TX structure.
 Event(n).rcv = 0; % use 1st Rcv structure.
 Event(n).recon = 0; % no reconstruction.
-Event(n).process = 5; % no processing
-Event(n).seqControl = 0;
+Event(n).process = 5; 
+Event(n).seqControl = nsc;
+   SeqControl(nsc).command = 'noop';
+        SeqControl(nsc).argument = (1)/200e-9;
+        nsc = nsc+1;
+n = n+1;
+
+Event(n).info = 'Changing TPC';
+Event(n).tx = 0;
+Event(n).rcv = 0; % use 1st Rcv structure.
+Event(n).recon = 0; % no reconstruction.
+Event(n).process = 0; % no processing
+Event(n).seqControl = nsc;
+    SeqControl(nsc).command = 'setTPCProfile';
+        SeqControl(nsc).condition = 'immediate';
+        SeqControl(nsc).argument = 1;
+        nsc = nsc+1;
 n = n+1;
 
 %% Make sure enough time has passed for the move to complete
@@ -267,7 +297,7 @@ Event(n).recon = 0;
 Event(n).process = 0;
 Event(n).seqControl = [nsc];
     SeqControl(nsc).command = 'noop';
-        SeqControl(nsc).argument = (5)/200e-9;
+        SeqControl(nsc).argument = (2)/200e-9;
         nsc = nsc+1;
 n = n+1;
 

@@ -8,35 +8,13 @@
 % Taylor Webb
 % Fall 2019
 
-function saveRfData_exVivoScan(RData)
+function saveRfDataNoScope_exVivoScan(RData)
 Resource = evalin('base','Resource'); 
 Trans = evalin('base','Trans'); 
 Receive = evalin('base','Receive'); 
 
 %% Determine where we are in the code - how should this be saved?
-% header.transmits complete is a vector whose length is based on the number
-% of transmits. Each entry in the vector tells the system how many averages
-% have been recorded for each waveform. The RF data from the Verasonics
-% system is saved when the full number of averages for a transmit has been
-% achieved.
-load(Resource.Parameters.logFileName);
-for ii = 1:length(header.transmitsComplete)
-    % Check if this is the last transmit for the current angle - if it is,
-    % reset the counter
-    if ii == length(header.transmitsComplete) && header.transmitsComplete(ii) == Resource.Parameters.numAvg
-        header.transmitsComplete = zeros(size(header.transmitsComplete));
-        transmitIdx = length(header.transmitsComplete);
-        break;
-    elseif header.transmitsComplete(ii+1) == Resource.Parameters.numAvg
-        continue;
-    elseif header.transmitsComplete(ii) == Resource.Parameters.numAvg
-        transmitIdx = ii;
-        break;
-    else
-        error('Trying to save RF data but averages are not complete.')
-    end
-end
-save(Resource.Parameters.logFileName,'header');
+transmitIdx = Resource.Parameters.curExcitation;
 
 % Add a slash if necessary to the end of the path
 if Resource.Parameters.saveDir(end) ~= '\' && Resource.Parameters.saveDir(end) ~= '/'
