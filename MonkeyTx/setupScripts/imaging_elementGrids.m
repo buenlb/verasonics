@@ -12,12 +12,13 @@
 clear all; close all; clc;
 %% Set up path locations
 srcDirectory = setPaths();
+addpath([srcDirectory,'lib\griddedImage']); % Adds library functions specific to this script
 
 %% User Defined Variables
 frequency = 0.65; % Frequency in MHz
-nCycles = 1/2; % number of cycles with which to excite Tx (can integer multiples of 1/2)
-focalSpotsXY = -12.5:5:12.5;
-focalSpotsZ = 30:5:40;
+nCycles = 1/2; % number of cycles with which to excite Tx (can integer multiples of 1/2). If zero an impulse (1/8 of the period) will be used.
+focalSpotsXY = -12.5:5:12.5; % The x,y locations relative to the center of the grid that should be scanned by each grid.
+focalSpotsZ = 30:5:40; % The z locations relative to the center of the grid that should be scanned by each grid.
 
 %% Specify system parameters
 Resource.Parameters.numTransmit = 256; % no. of xmit chnls (V64LE,V128 or V256).
@@ -46,11 +47,13 @@ Resource.RcvBuffer(1).colsPerFrame = 256; % change to 256 for V256 system
 Resource.RcvBuffer(1).numFrames = 1; % minimum size is 1 frame.
 
 %% Specify Transmit waveform structure
-TW(1).type = 'parametric';
-TW(1).Parameters = [Trans.frequency,0.67,nCycles*2,1]; % A, B, C, D
-% TW(1).type = 'pulseCode';
-% TW(1).PulseCode = generateImpulse(1/(4*2.25e6));
-% TW(1).PulseCode = generateImpulse(3/250e6);
+if nCycles
+    TW(1).type = 'parametric';
+    TW(1).Parameters = [Trans.frequency,0.67,nCycles*2,1]; % A, B, C, D
+else
+    TW(1).type = 'pulseCode';
+    TW(1).PulseCode = generateImpulse(1/(8*frequency*1e6));
+end
 
 % Specify TX structure array.
 TX(1).waveform = 1; % use 1st TW structure.
@@ -60,9 +63,9 @@ delays = zeros(1,256);
 TX(1).Delay = delays;
 
 idx = 1;
-for jj = 1:length(focalSpotsXY)
-    for kk = 1:length(focalSpotsXY)
-        for ll = 1:length(focalSpotsZ)
+for ii = 1:length(focalSpotsXY)
+    for jj = 1:length(focalSpotsXY)
+        for kk = 1:length(focalSpotsZ)
             TX(idx) = TX(1);
             TX(idx).Apod = zeros(1,256);
             TX(idx).Apod(blocks{1}) = 1;
@@ -76,7 +79,7 @@ for jj = 1:length(focalSpotsXY)
             elements.z = zTx*1e-3;
 
             elements = steerArray(elements,...
-                [focalSpotsXY(jj),focalSpotsXY(kk),focalSpotsZ(ll)]*1e-3,...
+                [focalSpotsXY(ii),focalSpotsXY(jj),focalSpotsZ(kk)]*1e-3,...
                 frequency,0);
 
             delays(blocks{1}) = [elements.t]';
@@ -120,10 +123,20 @@ Process(1).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'srcframenum',1,...
 'dstbuffer','none'};
 
+% Specify an external processing event.
+% Specify an external processing event.
+Process(2).classname = 'External';
+Process(2).method = 'processImage_elementGrids';
+Process(2).Parameters = {'srcbuffer','receive',... % name of buffer to process.
+'srcbufnum',1,...
+'srcframenum',1,...
+'dstbuffer','none'};
+
 %% Specify sequence events.
 n = 1;
 nsc = 1;
 
+% Acquire Data
 Event(n).info = 'Acquire RF Data.';
 Event(n).tx = 1; % use 1st TX structure.
 Event(n).rcv = 1; % use 1st Rcv structure.
@@ -133,13 +146,14 @@ Event(n).seqControl = [nsc,nsc+1,nsc+2];
 SeqControl(nsc).command = 'timeToNextAcq';
     SeqControl(nsc).argument = 1e4;
     nscTime2Aq = nsc;
-nsc = nsc + 1;
+    nsc = nsc + 1;
 SeqControl(nsc).command = 'transferToHost';
-nsc = nsc + 1;
+    nsc = nsc + 1;
 SeqControl(nsc).command = 'triggerOut';
-nscTrig = nsc;
-nsc = nsc + 1;
+    nscTrig = nsc;
+    nsc = nsc + 1;
 n = n+1;
+
 for ii = 2:length(TX)
     Event(n) = Event(1);
     Event(n).rcv = ii;
@@ -149,8 +163,6 @@ for ii = 2:length(TX)
        nsc = nsc + 1;
     n = n+1;
 end
-
-
 
 % Event(n).info = 'Call external Processing function.';
 % Event(n).tx = 0; % no TX structure.

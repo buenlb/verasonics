@@ -3,7 +3,7 @@
 % be less han 3 cycles of the 250 MHz clock.
 % 
 % @INPUTS
-%   duration: Desired duration of impulse function
+%   duration: Desired duration of impulse function in seconds
 % 
 % @OUTPUTS
 %   pc: Pulse Code matrix with values assigned according to the structure 
