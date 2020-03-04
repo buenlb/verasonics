@@ -7,19 +7,19 @@ saveResults = 0;
 saveDirectory = 'C:\Users\Verasonics\Box Sync\TransducerCharacterizations\HGL0200\';
 
 % Define the grid
-% Start and end points for x and y axis
-Grid.xStart = -5; 
-Grid.xEnd = 5;
-Grid.yStart = -5;
-Grid.yEnd = 5;
+% Start and end points for x and y axis [mm]
+Grid.xStart = -2.5; 
+Grid.xEnd = 2.5;
+Grid.yStart = -2.5;
+Grid.yEnd = 2.5;
 
-% length to scan along z-axis
-%  Grid.zLength = 10; 
-Grid.zStart = 7.5;
-Grid.zEnd = 30;
+% length to scan along z-axis [mm]
+%  Grid.zLength = 10; % zLength is total distance in the z-axis, with center at focus
+Grid.zStart = 8;
+Grid.zEnd = 8.2;
 
 % time to wait in ms after positioner moves before acquiring data
-Grid.pause = 200;
+Grid.pause = 100;
 
 % Set grid spacing. If not set these will be automatically set to lambda/4
 Grid.dx = .2;
@@ -37,8 +37,8 @@ Grid.recordWaveforms = 0; %                                       [boolean]
 Tx.frequency = 0.65; % Frequency in MHz
 Tx.diameter = 6; % aperture diameter                            [mm]
 Tx.focalLength = 0; % Focal length (use 0 if Tx is unfocused)     [mm]
-Tx.serial = '003';
-Tx.model = 'MatchingLayer2';
+Tx.serial = '013';
+Tx.model = 'MatchingLayerSmallerMoldSmallAmp2';
 Tx.cone = 'none'; % none if no cone is present
 Tx.coneEdge = 0; % zero if no cone is present                          [mm]
 Tx.notes = '';
@@ -53,7 +53,7 @@ FgParams.gridVoltage = 100; % FG voltage for full grid               [mVpp]
 FgParams.maxVoltage = 600; % max FG voltage for Tx efficiency        [mVpp]
 FgParams.minVoltage = 50;  % min FG voltage for Tx efficiency        [mVpp]
 FgParams.frequency = Tx.frequency; % center frequency                 [MHz]
-FgParams.nCycles = 4; % number of cicles in pulse
+FgParams.nCycles = 8; % number of cycles in pulse
 
 % For long pulses use a burst period that results in 0.1% duty cycle to be
 % extra careful with hydrophone.
@@ -168,6 +168,8 @@ setTxParams(lib,Tx,FgParams);
 % measure 0.99 of the peak voltage.
 if FgParams.nCycles > 50
     windowLength = 2*FgParams.nCycles/FgParams.frequency;
+elseif FgParams.nCycles == 1
+    windowLength = 100*FgParams.nCycles/FgParams.frequency;
 else
     windowLength = 8*FgParams.nCycles/FgParams.frequency;
 end

@@ -1,6 +1,10 @@
-function plotPhases(xTx,yTx,zTx,delays)
+function plotPhases(xTx,yTx,zTx,delays,h)
 delays = delays-min(delays);
-h = figure;
+if ~exist('h','var')
+    h = figure;
+end
+figure(h);
+clf;
 hold on
 for ii = 1:length(xTx)
     cm = colormap('hot'); % returns the current color map

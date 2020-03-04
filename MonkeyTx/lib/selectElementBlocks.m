@@ -23,8 +23,8 @@ blockIdx = 1;
 if mod(n,2)
     for ii = 1:32-(n-1)
         for jj = 1:8-(n-1)
-            xEl = ii+2;
-            yEl = jj+2;
+            xEl = ii+floor(n/2);
+            yEl = jj+floor(n/2);
             centerEl(blockIdx) = yEl+8*(xEl-1);
             curBlock = zeros(n^2,1);
             curY = (yEl-floor(n/2)):(yEl+floor(n/2));

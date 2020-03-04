@@ -13,12 +13,15 @@
 % 
 % @OUTPUTS
 %   img: a 3D bMode image.
+%   xa: x axis of 3D image
+%   ya: y axis of 3D image
+%   za: z axis of 3D image
 % 
 % Taylor Webb
 % University of Utah
 % March 2020
 
-function img = singleElementBModeImage(RcvData,Receive,distOfInterest)
+function [img,xa,ya,za] = singleElementBModeImage(RcvData,Receive,distOfInterest)
 % Set up time/distance vectors corresponding to data
 t = 1e6*(0:(Receive(1).endSample-1))/(Receive(1).ADCRate*1e6/Receive(1).decimFactor);
 d = t*1.492/2;
@@ -76,10 +79,12 @@ sArray = sArray./nElements;
 
 %% Display results
 h = figure;
-imagesc(za,xa,squeeze(sArray(:,ceil(length(ya)/2),:)),[0,3])
+imshow(squeeze(sArray(:,ceil(length(ya)/2),:)),[0,3],'xdata',za,'ydata',xa)
 colorbar
 axis('equal')
 axis('tight')
+ax = gca;
+ax.Visible = 'on';
 set(h,'position',[1          41        1920        1083]);
 xlabel('z (mm)')
 ylabel('x (mm)')

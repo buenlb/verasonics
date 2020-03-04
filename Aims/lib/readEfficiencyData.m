@@ -14,7 +14,7 @@ if plotWvs
 end
 
 wvForms = dir([folder,fileBase,'*']);
-
+v1 = [];
 vIn = zeros(size(wvForms));
 vpp = vIn;
 for ii = 1:length(wvForms)
@@ -35,7 +35,7 @@ for ii = 1:length(wvForms)
         title(['FV Voltage: ', num2str(vIn(ii))])
     end
         
-    
+   
     if ii == 1
         v1 = v;
     end
