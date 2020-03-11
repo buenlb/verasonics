@@ -27,6 +27,6 @@ ZA = ZE*cos(theta)-XE*sin(theta);
 % You have to be careful with this translation since the axes are no longer
 % in the plane of the matrix indices. Thus, simply adding a constant shifts
 % along the original array axis and not the element axis.
-XA = XA+(elementPos(1)*cos(theta)+elementPos(3)*sin(theta));
+XA = XA+(elementPos(1));
 YA = YE+elementPos(2);
-ZA = ZA+(elementPos(3)*cos(theta)-elementPos(1)*sin(theta));
+ZA = ZA+(elementPos(3));

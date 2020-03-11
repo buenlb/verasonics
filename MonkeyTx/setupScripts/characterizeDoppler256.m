@@ -6,6 +6,7 @@ srcDirectory = setPaths();
 
 %%
 frequency = 0.65; % Frequency in MHz
+focus = [0,0,65]; % Focal location in mm. x is the long axis of the array, y is the short axis, and z is depth
 nCycles = 5; % number of cycles with which to excite Tx (can integer multiples of 1/2)
 ioChannel = 8;
 NA = 1;
@@ -59,7 +60,7 @@ elements.x = xTx*1e-3;
 elements.y = yTx*1e-3;
 elements.z = zTx*1e-3;
             
-elements = steerArray(elements,[0,0,65]*1e-3,frequency);
+elements = steerArray(elements,focus*1e-3,frequency);
 delays = [elements.t]';
 % delays = zeros(size([elements.t]'));
 
@@ -108,11 +109,11 @@ if HIFU
     Event(n).recon = 0;
     Event(n).process = 0;
     Event(n).seqControl = nsc; % set TPC profile command.
-    n = n+1;
+        n = n+1;
     SeqControl(nsc).command = 'setTPCProfile';
-    SeqControl(nsc).argument = 5;
-    SeqControl(nsc).condition = 'immediate';
-    nsc = nsc + 1;
+        SeqControl(nsc).argument = 5;
+        SeqControl(nsc).condition = 'immediate';
+        nsc = nsc + 1;
 end
 
 % Specify sequence events.

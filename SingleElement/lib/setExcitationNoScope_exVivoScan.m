@@ -44,6 +44,12 @@ else
     TW(1).Parameters = [Trans.frequency,0.67,nCycles,1]; % A, B, C, D
     disp(['Setting Excitation with ', num2str(nCycles/2), ' cycles.'])
 end
+if nCycles >= 3 %chirps
+    TW(1).type = 'pulseCode';
+    TW(1).PulseCode = generateChirp(Trans.frequency*1e6, nCycles);    
+    disp(['Excitation with a chirp of ', num2str(nCycles), ' segments.']);    
+end
+
 TPC(1).hv = Resource.Parameters.excitationVoltages(curIdx);
 disp(['Setting HV to ', num2str(Resource.Parameters.excitationVoltages(curIdx))]);
 Resource.Parameters.curExcitation = curIdx;

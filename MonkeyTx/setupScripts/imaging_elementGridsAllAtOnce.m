@@ -21,7 +21,7 @@ focalSpotsX = -2:1:2; % The x,y locations relative to the center of the grid tha
 focalSpotsY = -7:7:7;
 focalSpotsZ = 20:5:40; % The z locations relative to the center of the grid that should be scanned by each grid.
 gridSize = 3; % Array will be divided into grids that are gridSize elements X gridSize elements
-saveDir = 'C:\Users\Verasonics\Desktop\Taylor\Data\Coupling\GridOfElements\20200311\test1\'; % Where raw data will be stored
+saveDir = 'C:\Users\Verasonics\Desktop\Taylor\Data\Coupling\GridOfElements\20200305\test2\'; % Where raw data will be stored
 
 %% Specify system parameters
 Resource.Parameters.numTransmit = 256; % no. of xmit chnls (V64LE,V128 or V256).
@@ -73,7 +73,7 @@ TPC(1).hv = 10;
 
 %% Specify Resource buffers.
 Resource.RcvBuffer(1).datatype = 'int16';
-Resource.RcvBuffer(1).rowsPerFrame = length(focalSpotsX)*length(focalSpotsY)*length(focalSpotsZ)*1700; % this allows for 1/4 maximum range
+Resource.RcvBuffer(1).rowsPerFrame = length(focalSpotsX)^2*length(focalSpotsY)*length(focalSpotsZ)*2048*4; % this allows for 1/4 maximum range
 Resource.RcvBuffer(1).colsPerFrame = 256; % change to 256 for V256 system
 Resource.RcvBuffer(1).numFrames = 1; % minimum size is 1 frame.
 
@@ -86,54 +86,15 @@ else
     TW(1).PulseCode = generateImpulse(1/(8*frequency*1e6));
 end
 
-% Specify TX structure array.
-TX(1).waveform = 1; % use 1st TW structure.
-TX(1).focus = 0;
-TX(1).Apod = zeros(1,256);
-delays = zeros(1,256);
-TX(1).Delay = delays;
-
-idx = 1;
-for ii = 1:length(focalSpotsX)
-    for jj = 1:length(focalSpotsY)
-        for kk = 1:length(focalSpotsZ)
-            TX(idx) = TX(1);
-            TX(idx).Apod = zeros(1,256);
-            TX(idx).Apod(blocks{1}) = 1;
-
-            xTx = Trans.ElementPos(blocks{1},1);
-            yTx = Trans.ElementPos(blocks{1},2);
-            zTx = Trans.ElementPos(blocks{1},3);
-
-            elements.x = xTx*1e-3;
-            elements.y = yTx*1e-3;
-            elements.z = zTx*1e-3;
-            
-            centerElementPos = Trans.ElementPos(blocks{1}(ceil(gridSize^2/2)),:);
-            [xa,ya,za] = element2arrayCoords(focalSpotsX(ii),...
-                focalSpotsY(jj),focalSpotsZ(kk), centerElementPos);
-            
-            elements = steerArray(elements,...
-                [xa,ya,za]*1e-3,...
-                frequency,0);
-
-            delays(blocks{1}) = [elements.t]';
-            TX(idx).Delay = delays;
-
-            idx = idx+1;
-        end
-    end
-end
-
 %% Specify TGC Waveform structure.
 TGC(1).CntrlPts = ones(1,8)*0;
 TGC(1).rangeMax = 1;
 TGC(1).Waveform = computeTGCWaveform(TGC);
 
 %% Specify Receive structure array -
-Receive(1).Apod = zeros(1,256);
+Receive(1).Apod = ones(1,256);
 Receive(1).startDepth = 0;
-Receive(1).endDepth = 40;
+Receive(1).endDepth = 30;
 Receive(1).TGC = 1; % Use the first TGC waveform defined above
 Receive(1).mode = 0;
 Receive(1).bufnum = 1;
@@ -146,7 +107,6 @@ Receive(1).InputFilter = [];
 
 for ii = 1:length(focalSpotsX)*length(focalSpotsY)*length(focalSpotsZ)
     Receive(ii) = Receive(1);
-    Receive(ii).Apod(blocks{1}) = 1;
     Receive(ii).acqNum = ii;
 end
 
@@ -171,79 +131,102 @@ Process(2).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 %% Specify sequence events.
 n = 1;
 nsc = 1;
+idx = 1;
+for hh = 1:length(blocks)
+    
+    % Specify TX structure array.
+    TX(1).waveform = 1; % use 1st TW structure.
+    TX(1).focus = 0;
+    TX(1).Apod = zeros(1,256);
+    delays = zeros(1,256);
+    TX(1).Delay = delays;
+    rcIdx = 1;
+    Resource.Parameters.curGridIdx = hh;
+    for ii = 1:length(focalSpotsX)
+        for jj = 1:length(focalSpotsY)
+            for kk = 1:length(focalSpotsZ)
+                TX(idx) = TX(1);
+                TX(idx).Apod = zeros(1,256);
+                TX(idx).Apod(blocks{hh}) = 1;
 
-% Acquire Data
-Event(n).info = 'Acquire RF Data.';
-Event(n).tx = 1; % use 1st TX structure.
-Event(n).rcv = 1; % use 1st Rcv structure.
-Event(n).recon = 0; % no reconstruction.
-Event(n).process = 0; % no processing
-Event(n).seqControl = [nsc,nsc+1,nsc+2];
-SeqControl(nsc).command = 'timeToNextAcq';
-    SeqControl(nsc).argument = 1e4;
-    nscTime2Aq = nsc;
-    nsc = nsc + 1;
-SeqControl(nsc).command = 'transferToHost';
-    nsc = nsc + 1;
-SeqControl(nsc).command = 'triggerOut';
-    nscTrig = nsc;
-    nsc = nsc + 1;
-n = n+1;
+                xTx = Trans.ElementPos(blocks{1},1);
+                yTx = Trans.ElementPos(blocks{1},2);
+                zTx = Trans.ElementPos(blocks{1},3);
 
-for ii = 2:length(TX)
-    if ii == length(TX)
-        Event(n) = Event(1);
-        Event(n).rcv = ii;
-        Event(n).tx = ii;
-        Event(n).seqControl = [nscTrig,nsc];
-         SeqControl(nsc).command = 'transferToHost';
-           nsc = nsc + 1;
-        n = n+1;
-    else
-        Event(n) = Event(1);
-        Event(n).rcv = ii;
-        Event(n).tx = ii;
-        Event(n).seqControl = [nscTime2Aq,nscTrig,nsc];
-         SeqControl(nsc).command = 'transferToHost';
-           nsc = nsc + 1;
-        n = n+1;
+                elements.x = xTx*1e-3;
+                elements.y = yTx*1e-3;
+                elements.z = zTx*1e-3;
+
+                centerElementPos = Trans.ElementPos(blocks{1}(ceil(gridSize^2/2)),:);
+                [xa,ya,za] = element2arrayCoords(focalSpotsX(ii),...
+                    focalSpotsY(jj),focalSpotsZ(kk), centerElementPos);
+
+                elements = steerArray(elements,...
+                    [xa,ya,za]*1e-3,...
+                    frequency,0);
+
+                delays(blocks{1}) = [elements.t]';
+                TX(idx).Delay = delays;
+                
+                % Acquire Data
+                Event(n).info = 'Acquire RF Data.';
+                Event(n).tx = idx; % use 1st TX structure.
+                Event(n).rcv = rcIdx; % use 1st Rcv structure.
+                Event(n).recon = 0; % no reconstruction.
+                Event(n).process = 0; % no processing
+                Event(n).seqControl = [nsc,nsc+1,nsc+2];
+                SeqControl(nsc).command = 'timeToNextAcq';
+                    SeqControl(nsc).argument = 1e4;
+                    nscTime2Aq = nsc;
+                    nsc = nsc + 1;
+                SeqControl(nsc).command = 'transferToHost';
+                    nsc = nsc + 1;
+                SeqControl(nsc).command = 'triggerOut';
+                    nscTrig = nsc;
+                    nsc = nsc + 1;
+                n = n+1;
+                
+                idx = idx+1;
+                rcIdx = rcIdx+1;
+                
+            end
+        end
     end
+
+    Event(n).info = 'Process Image';
+    Event(n).tx = 0; % no TX structure.
+    Event(n).rcv = 0; % no Rcv structure.
+    Event(n).recon = 0; % no reconstruction.
+    Event(n).process = 2; % call processing function
+    Event(n).seqControl = [nsc,nsc+1]; % wait for data to be transferred
+        SeqControl(nsc).command = 'waitForTransferComplete';
+        SeqControl(nsc).argument = nsc-2;
+        nsc = nsc+1;
+    SeqControl(nsc).command = 'markTransferProcessed';
+        SeqControl(nsc).argument = nsc-3;
+        nsc = nsc+1;
+    n = n+1;
 end
-
-Event(n).info = 'Process Image';
-Event(n).tx = 0; % no TX structure.
-Event(n).rcv = 0; % no Rcv structure.
-Event(n).recon = 0; % no reconstruction.
-Event(n).process = 2; % call processing function
-Event(n).seqControl = [nsc,nsc+1]; % wait for data to be transferred
-    SeqControl(nsc).command = 'waitForTransferComplete';
-    SeqControl(nsc).argument = nsc-1;
-    nsc = nsc+1;
-SeqControl(nsc).command = 'markTransferProcessed';
-    SeqControl(nsc).argument = nsc-2;
-    nsc = nsc+1;
-n = n+1;
-
-Event(n).info = 'Update TX';
-Event(n).tx = 0; % no TX structure.
-Event(n).rcv = 0; % no Rcv structure.
-Event(n).recon = 0; % no reconstruction.
-Event(n).process = 1; % call processing function
-Event(n).seqControl = 0; % wait for data to be transferred
-%   SeqControl(nsc).command = 'sync';
-%   nsc = nsc+1;
-n = n+1;
-
-Event(n).info = 'Jump back to first event.';
-Event(n).tx = 0; % no TX structure.
-Event(n).rcv = 0; % no Rcv structure.
-Event(n).recon = 0; % no reconstruction.
-Event(n).process = 0; % call processing function
-Event(n).seqControl = nsc; % wait for data to be transferred
-    SeqControl(nsc).command = 'jump';
-    SeqControl(nsc).condition = 'exitAfterJump';
-    SeqControl(nsc).argument = 1;
-n = n+1;
+%     Event(n).info = 'Update TX';
+%     Event(n).tx = 0; % no TX structure.
+%     Event(n).rcv = 0; % no Rcv structure.
+%     Event(n).recon = 0; % no reconstruction.
+%     Event(n).process = 1; % call processing function
+%     Event(n).seqControl = nsc; % wait for data to be transferred
+%       SeqControl(nsc).command = 'sync';
+%       nsc = nsc+1;
+%     n = n+1;
+% 
+% Event(n).info = 'Jump back to first event.';
+% Event(n).tx = 0; % no TX structure.
+% Event(n).rcv = 0; % no Rcv structure.
+% Event(n).recon = 0; % no reconstruction.
+% Event(n).process = 0; % call processing function
+% Event(n).seqControl = nsc; % wait for data to be transferred
+%     SeqControl(nsc).command = 'jump';
+%     SeqControl(nsc).condition = 'exitAfterJump';
+%     SeqControl(nsc).argument = 1;
+% n = n+1;
 
 % Save all the structures to a .mat file.
 scriptName = mfilename('fullpath');
