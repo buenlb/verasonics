@@ -10,6 +10,7 @@
 %       distOfInterest(1) and distOfInterest(2) is displayed. Distances are
 %       computed by assuming a speed of sound in water of 1492 m/s.
 %       distOfInterest should be given in mm.
+%   plotResult: If plotResult is true the resulting image is displayed.
 % 
 % @OUTPUTS
 %   img: a 3D bMode image.
@@ -21,7 +22,11 @@
 % University of Utah
 % March 2020
 
-function [img,xa,ya,za] = singleElementBModeImage(RcvData,Receive,distOfInterest)
+function [sArray,xa,ya,za] = griddedElementBModeImage(RcvData,Receive,distOfInterest,plotResult)
+if ~exist('plotResult','var')
+    plotResult = 0;
+end
+
 % Set up time/distance vectors corresponding to data
 t = 1e6*(0:(Receive(1).endSample-1))/(Receive(1).ADCRate*1e6/Receive(1).decimFactor);
 d = t*1.492/2;
@@ -37,29 +42,42 @@ end
 
 % Set up the element coordinate system
 elWidth = 5;
-dx = 1/3;
+dx = 2;
 xe = -elWidth/2:dx:elWidth/2;
 ye = xe;
 ze = d;
 [Ye,Xe,Ze] = meshgrid(ye,xe,ze);
 
 % Set up the array coordinate system
-xa = -156/2:dx:156/2;
+xa = -80/2:dx:80/2;
 ya = -56/2:dx:56/2;
-za = 0:dx:70;
+za = 10:dx:60;
 [Ya,Xa,Za] = meshgrid(ya,xa,za);
 
+% Set up grids
+gridSize = 3;
+blocks = selectElementBlocks(gridSize);
+
 %% Interpolate data from element coordinate system to array coordinates
-elements = transducerGeometry(0);   
+elements = transducerGeometry(0);
 sArray = zeros(size(Xa));
 nElements = sArray;
-for ii = 1:size(elements.ElementPos,1)
-    disp(['Element ', num2str(ii), ' of ', num2str(size(elements.ElementPos,1))])
-    [Xar,Yar,Zar] = array2elementCoords(Xa,Ya,Za,elements.ElementPos(ii,:));
+for ii = 1:length(blocks)
+    disp(['Block ', num2str(ii), ' of ', num2str(length(blocks))])
+    centerElement = elements.ElementPos(blocks{ii}(ceil(gridSize/2)),:);
+    [Xar,Yar,Zar] = array2elementCoords(Xa,Ya,Za,centerElement);
     
-    s = RcvData{1}(Receive(ii).startSample:Receive(ii).endSample,ii);
-    s = log10(abs(hilbert(s)));
-    s(d<distOfInterest(1) | d>distOfInterest(2)) = 0;
+    sTot = zeros(size(Receive(ii).startSample:Receive(ii).endSample))';
+    for jj = 1:length(blocks{ii})
+        s = RcvData (Receive(ii).startSample:Receive(ii).endSample,blocks{ii}(jj));
+        s = (abs(hilbert(s)));
+        s(d<distOfInterest(1) | d>distOfInterest(2)) = 0;
+        sTot = sTot+s;
+    end
+    if max(s) == 0
+        keyboard
+    end
+    s = sTot;
 
     sExpanded = zeros(size(Xe));
     for jj = 1:length(xe)
@@ -78,17 +96,23 @@ end
 sArray = sArray./nElements;
 
 %% Display results
-h = figure;
-imshow(squeeze(sArray(:,ceil(length(ya)/2),:)),[0,3],'xdata',za,'ydata',xa)
-colorbar
-axis('equal')
-axis('tight')
-ax = gca;
-ax.Visible = 'on';
-set(h,'position',[1          41        1920        1083]);
-xlabel('z (mm)')
-ylabel('x (mm)')
-title('Received signal (a.u.)')
-makeFigureBig(h)
+if plotResult
+    h = figure;
+    yFrames = unique(elements.ElementPos(:,2));
+    rows = floor(sqrt(length(yFrames)));
+    cols = ceil(sqrt(length(yFrames)));
+    if rows*cols < length(yFrames)
+        cols = cols+1;
+    end
 
-img = sArray;
+    for ii = 1:rows*cols
+        subplot(rows,cols,ii)
+        [~,yIdx] = min(abs(ya-yFrames(ii)));
+        imshow(squeeze(sArray(:,yIdx,:)),[0,max(sArray(:))],'xdata',za,'ydata',xa);
+        title(['y=',num2str(ya(yIdx))]);
+        colorbar
+        drawnow
+    end
+    set(h,'position',[1          41        1920        1083]);
+    drawnow
+end

@@ -98,7 +98,7 @@ TGC(1).Waveform = computeTGCWaveform(TGC);
 % Specify Receive structure array -
 Receive(1).Apod = ones(1,256);
 Receive(1).startDepth = 0;
-Receive(1).endDepth = 40;
+Receive(1).endDepth = 30;
 Receive(1).TGC = 1; % Use the first TGC waveform defined above
 Receive(1).mode = 0;
 Receive(1).bufnum = 1;

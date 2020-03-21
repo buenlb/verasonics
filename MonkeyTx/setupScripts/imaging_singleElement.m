@@ -1,9 +1,8 @@
 clear all; close all; clc;
 
-HIFU =0;
 %% Set up path locations
 srcDirectory = setPaths();
-
+addpath([srcDirectory,'lib\placementVerification']); % Adds library functions specific to this script
 %%
 % frequency = 0.65*3; % Frequency in MHz
 nCycles = 1; % number of cycles with which to excite Tx (can integer multiples of 1/2)
@@ -17,8 +16,8 @@ Resource.Parameters.connector = 0; % trans. connector to use (V256).
 Resource.Parameters.speedOfSound = 1490; % speed of sound in m/sec
 Resource.Parameters.numAvg = NA;
 Resource.Parameters.ioChannel = ioChannel;
-Resource.Parameters.saveDir = 'C:\Users\Verasonics\Desktop\Taylor\Code\findElementNumbers\recordings_take2\'; 
-Resource.Parameters.saveName = 'pt3_';
+Resource.Parameters.saveDir = 'C:\Users\Verasonics\Desktop\Taylor\Data\Coupling\SingleElement\20200313\'; 
+Resource.Parameters.saveName = 'singlePinSkull';
 % Resource.Parameters.simulateMode = 1; % runs script in simulate mode
 
 % Specify media points
@@ -30,13 +29,13 @@ Trans.units = 'mm';
 Trans.maxHighVoltage = 56;
 % Trans.frequency = 0.65*3;
 
-TPC(1).hv = 56;
+TPC(1).hv = 32;
 
 
 % Specify Resource buffers.
 Resource.RcvBuffer(1).datatype = 'int16';
-Resource.RcvBuffer(1).rowsPerFrame = 256*2048*4; % this allows for 1/4 maximum range
-Resource.RcvBuffer(1).colsPerFrame = 1; % change to 256 for V256 system
+Resource.RcvBuffer(1).rowsPerFrame = 256*1350; % this allows for 1/4 maximum range
+Resource.RcvBuffer(1).colsPerFrame = 256; % change to 256 for V256 system
 Resource.RcvBuffer(1).numFrames = 1; % minimum size is 1 frame.
 
 % Specify Transmit waveform structure.
@@ -74,7 +73,7 @@ TGC(1).Waveform = computeTGCWaveform(TGC);
 % Specify Receive structure array -
 Receive(1).Apod = zeros(1,256);
 Receive(1).startDepth = 0;
-Receive(1).endDepth = 20;
+Receive(1).endDepth = 30;
 Receive(1).TGC = 1; % Use the first TGC waveform defined above
 Receive(1).mode = 0;
 Receive(1).bufnum = 1;
@@ -133,8 +132,6 @@ for ii = 2:256
        nsc = nsc+1;
     n = n+1;
 end
-
-
 
 Event(n).info = 'Call external Processing function.';
 Event(n).tx = 0; % no TX structure.

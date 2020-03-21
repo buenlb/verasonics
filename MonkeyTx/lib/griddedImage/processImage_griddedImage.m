@@ -1,5 +1,5 @@
-function rawImg = processImage_griddedImage(RData)
-VERBOSE = 1;
+function [rawImg,Xe,Ye,Ze] = processImage_griddedImage(RData)
+VERBOSE = 0;
 % Create Figure Window
 if VERBOSE
     persistent figHandle;
@@ -106,8 +106,12 @@ for ii = 1:length(focX)
                 curS = circshift(curS,[round(delays(kk)/(650e-3*dt)),1]);
                 curTotal = curTotal+double(curS);
             end
-            R = sqrt((xTx-focX(ii)).^2+(yTx-focY(jj)).^2+(zTx-focZ(kk)).^2);
+            R = sqrt((xTx-xa).^2+(yTx-ya).^2+(zTx-za).^2);
             effectiveFocalDistance = max(R);
+            
+%             if focX(ii) >= 0
+%                 keyboard
+%             end
 
             if effectiveFocalDistance > d(end)
                 warning('Effective focal distance is outside of receive depth!')
@@ -115,10 +119,7 @@ for ii = 1:length(focX)
             else
                 % Determine voxel brightness
                 curTotal = abs(hilbert(curTotal));
-                img(ii,jj,kk) = max(curTotal(d>effectiveFocalDistance & d<effectiveFocalDistance+7));
-                if img(ii,jj,kk) == 0
-                    img(ii,jj,kk) = 0.1;
-                end
+                img(ii,jj,kk) = sum(curTotal(d>effectiveFocalDistance & d<effectiveFocalDistance+5));
             end
             idx = idx+1;
             Xe(ii,jj,kk) = focX(ii);
@@ -141,13 +142,19 @@ za = squeeze(Za(1,1,:));
 
 rawImg = img;
 
-img = interp3(Ye,Xe,Ze,img,Yar,Xar,Zar,'spline',0);
+img = interp3(Ye,Xe,Ze,img,Yar,Xar,Zar,'nearest',0);
+if sum(rawImg(:)<0) || sum(img(:)<0) || sum(imag(img(:)))
+    keyboard
+end
 disp(['Interpolation Complete: ', num2str(toc)]);
 imgAvg = zeros(size(img));
 imgAvg(img ~= 0) = 1;
 
-
+rawImg2 = img;
 img = Resource.Parameters.img + img;
+if sum(rawImg(:)<0) || sum(img(:)<0) || sum(imag(img(:)))
+    keyboard
+end
 Resource.Parameters.img = img;
 Resource.Parameters.imgAvg = Resource.Parameters.imgAvg + imgAvg;
 
@@ -173,14 +180,16 @@ if VERBOSE
     end
     set(figHandle,'position',[1          41        1920        1083]);
     drawnow
-
-    disp(['Saving Data: ', num2str(toc)]);
-    if Resource.Parameters.curGridIdx == 1
-        header = struct('gridSize',gridSize,'frequency',frequency,...
-        'focalSpotsX',focX,'focalSpotsY',focY,...
-        'focalSpotsZ',focZ,'Xa',Xa,'Ya',Ya,'Za',Za);
-        save([Resource.Parameters.saveDir, Resource.Parameters.logFileName], 'header')
-    end
-    save([Resource.Parameters.saveDir,'block',num2str(Resource.Parameters.curGridIdx),'.mat'],'RData');
-    disp(['Completed Process Step: ', num2str(toc)]);
 end
+if Resource.Parameters.curGridIdx == 1
+    header = struct('gridSize',gridSize,'frequency',frequency,...
+    'focalSpotsX',focX,'focalSpotsY',focY,...
+    'focalSpotsZ',focZ,'Xa',Xa,'Ya',Ya,'Za',Za);
+    save([Resource.Parameters.saveDir, Resource.Parameters.logFileName], 'header',...
+        'Receive','Resource','Trans')
+end
+if Resource.Parameters.saveResults
+    disp(['Saving Data: ', num2str(toc)]);
+    save([Resource.Parameters.saveDir,'block',num2str(Resource.Parameters.curGridIdx),'.mat'],'RData','curBlock');
+end
+disp(['Completed Process Step: ', num2str(toc)])

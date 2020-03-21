@@ -34,11 +34,11 @@ Grid.parameters = 'Negative Peak Voltage';
 Grid.recordWaveforms = 0; %                                       [boolean]
 
 % Transducer Parameters
-Tx.frequency = 0.610; % Frequency in MHz
+Tx.frequency = 0.650; % Frequency in MHz
 Tx.diameter = 6; % aperture diameter                            [mm]
 Tx.focalLength = 0; % Focal length (use 0 if Tx is unfocused)     [mm]
-Tx.serial = '003';
-Tx.model = 'MatchingLayer610';
+Tx.serial = '025';
+Tx.model = 'CFL09Housing';
 Tx.cone = 'none'; % none if no cone is present
 Tx.coneEdge = 0; % zero if no cone is present                          [mm]
 Tx.notes = '';

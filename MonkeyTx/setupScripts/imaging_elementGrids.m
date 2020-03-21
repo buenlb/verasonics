@@ -17,11 +17,12 @@ addpath([srcDirectory,'lib\griddedImage']); % Adds library functions specific to
 %% User Defined Variables
 frequency = 0.65; % Frequency in MHz
 nCycles = 1/2; % number of cycles with which to excite Tx (can integer multiples of 1/2). If zero an impulse (1/8 of the period) will be used.
-focalSpotsX = -2:1:2; % The x,y locations relative to the center of the grid that should be scanned by each grid.
+focalSpotsX = -4:2:4; % The x,y locations relative to the center of the grid that should be scanned by each grid.
 focalSpotsY = -7:7:7;
-focalSpotsZ = 20:5:40; % The z locations relative to the center of the grid that should be scanned by each grid.
+focalSpotsZ = 10:5:40; % The z locations relative to the center of the grid that should be scanned by each grid.
 gridSize = 3; % Array will be divided into grids that are gridSize elements X gridSize elements
-saveDir = 'C:\Users\Verasonics\Desktop\Taylor\Data\Coupling\GridOfElements\20200311\test1\'; % Where raw data will be stored
+saveDir = 'C:\Users\Verasonics\Desktop\Taylor\Data\Coupling\GridOfElements\20200316\test1\'; % Where raw data will be stored
+saveResults = 0; % 1 to save all iterations, zero to just save the header.
 
 %% Specify system parameters
 Resource.Parameters.numTransmit = 256; % no. of xmit chnls (V64LE,V128 or V256).
@@ -35,6 +36,7 @@ Resource.Parameters.curGridIdx = 1;
 Resource.Parameters.gridSize = gridSize;
 Resource.Parameters.saveDir = saveDir;
 Resource.Parameters.logFileName = 'log.mat';
+Resource.Parameters.saveResults = saveResults;
 
 if exist([Resource.Parameters.saveDir,Resource.Parameters.logFileName], 'file')
     ovw = input('Overwrite (this action is irreversible)? (0/1)>> ');
@@ -54,7 +56,7 @@ Media.MP(1,:) = [0,0,100,1.0]; % [x, y, z, reflectivity]
 
 %% Define array coordinate space
 xa = -156/2:1:156/2;
-ya = -56/2:1:56/2;
+ya = -56/2:7:56/2;
 za = 0:1:60;
 [Ya,Xa,Za] = meshgrid(ya,xa,za);
 Resource.Parameters.Xa = Xa;

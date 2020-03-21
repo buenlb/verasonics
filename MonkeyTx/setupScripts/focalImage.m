@@ -24,12 +24,12 @@
 clear all; close all; clc; %#ok<CLALL>
 
 %% User Defined Variables
-x = 0:0.25:3;
-y = -1:0.5:0;
-z = 45:0.25:50;
+x = -8:0.25:-2;
+y = -0.25:0.25:0;
+z = 41:0.25:48;
 frequency = 0.65; 
 nCycles = 5;
-initialV = 5;
+initialV = 16;
 imageSaveName = 'C:\Users\Verasonics\Desktop\Taylor\Data\FocalImages\20200205\testImage1.mat';
 
 %% Set up path locations
@@ -51,7 +51,7 @@ Resource.Parameters.img = zeros(length(x),length(y),length(z));
 Trans = transducerGeometry(0);
 Trans.frequency = frequency;
 Trans.units = 'mm';
-Trans.maxHighVoltage = 10;
+Trans.maxHighVoltage = 32;
 
 %% Transmit
 % Waveform
@@ -86,12 +86,12 @@ end
 
 % Initial voltage
 TPC(1).hv = initialV;
-TPC(1).highVoltageLimit = 8;
+TPC(1).highVoltageLimit = 33;
 
 %% Receive
 % Buffers
 Resource.RcvBuffer(1).datatype = 'int16';
-Resource.RcvBuffer(1).rowsPerFrame = length(x)*length(y)*2048*4; % this allows for 1/4 maximum range
+Resource.RcvBuffer(1).rowsPerFrame = length(x)*length(y)*1350; % this allows for 1/4 maximum range
 Resource.RcvBuffer(1).colsPerFrame = 1; % change to 256 for V256 system
 Resource.RcvBuffer(1).numFrames = 1; % minimum size is 1 frame.
 

@@ -4,7 +4,10 @@
 
 function idx = findFrontEdge(signal, threshold)
 idx = find(signal>threshold);
-
+if isempty(idx)
+    idx = nan;
+    return
+end
 idx = idx(1);
 
 difS = diff(signal);
