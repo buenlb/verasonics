@@ -13,9 +13,9 @@ for ii = 1:8
     for jj = 1:32
         elNo = (jj-1)*8+ii;
         if ismember(elNo,elements)
-            plot(x(jj),y(ii),'sr','markersize',4);
+            plot(x(jj),y(ii),'sr','markersize',2);
         else
-            plot(x(jj),y(ii),'sk','markersize',4);
+            plot(x(jj),y(ii),'sk','markersize',2);
         end
     end
 end

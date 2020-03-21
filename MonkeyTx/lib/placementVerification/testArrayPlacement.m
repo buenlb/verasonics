@@ -110,61 +110,79 @@ for ii = 1:length(blocks)
     end
 end
 idx = find(abs(skDist-gs.skDist) > 1);
-if ~isempty(idx)
-    warning([num2str(length(idx)), ' grids measured a distance with a difference greater than 1'])
-    showPlots = 1;
-    if showPlots
-        gsRaw = load(gs.fName);
-        gsReceive = gsRaw.griddedElRaw.Receive;
-        gsRcvData = gsRaw.griddedElRaw.RcvData;
-        h = figure;
-        set(h,'position',[1364          42         556        1074])
-        for ii = 1:length(idx)
-            curIdx = blIdx(idx(ii));
-            s = zeros(size(RcvData(Receive(ii).startSample:Receive(ii).endSample,blocks{1}(1))));
-            for jj = 1:gridSize^2
-                curS = double(RcvData(Receive(curIdx).startSample:Receive(curIdx).endSample,...
-                    blocks{curIdx}(jj)));
-                s = curS+s;
-            end
-            s = abs(hilbert(s));
-            s(d<gs.powerRange(1)) = 0;
-            s(d>gs.powerRange(2)) = 0;
-
-            sGs = zeros(size(gsRcvData(gsReceive(ii).startSample:gsReceive(ii).endSample,blocks{ii}(1))));
-            for jj = 1:gridSize^2
-                curS = double(gsRcvData(gsReceive(curIdx).startSample:gsReceive(curIdx).endSample,...
-                    blocks{curIdx}(jj)));
-                sGs = curS+sGs;
-            end
-            sGs = abs(hilbert(sGs));
-            sGs(d<gs.powerRange(1)) = 0;
-            sGs(d>gs.powerRange(2)) = 0;
-            
-            subplot(length(idx),1,ii)
-            plot(d,s,'-',d,sGs,'-','linewidth',2)
-            hold on
-            ax = gca;
-            ax.ColorOrderIndex = 1;
-            plot([skDist(idx(ii)),skDist(idx(ii))],[0,max(s)],'--',...
-                [gs.skDist(idx(ii)),gs.skDist(idx(ii))],[0,max(s)],'--','linewidth',2)
-            plotElementLocation(ax,[gs.powerRange(2)-10,max([0.75*max(sGs),0.75*max(s)])],...
-                10,blocks{curIdx});
-            xlabel('distance (mm)')
-            ylabel('a.u.')
-            axis([gs.powerRange',0,max([max(s),max(sGs)])])
-            title(['Element ', num2str(curIdx)])
-            if ii == 1
-                legend('Current','Gold Standard','location','northwest')
-                title(['Element ', num2str(curIdx), 'Avg err:',...
-                    num2str(mean(abs(skDist-gs.skDist)),2), 'mm.'])
-            end
-            makeFigureBig(h);
-        end
+if isempty(idx)
+    showPlots = questdlg(['All grids show good agreement on distance! Average error:',...
+        num2str(mean(abs(skDist-gs.skDist))), 'mm. Show traces?']);
+    if strcmp('Yes',showPlots)
+        idx = 1:length(elementsOfInterest);
+        showPlots = 1;
+    else
+        showPlots = 0;
     end
 else
-    msgbox(['All grids show good agreement on distance! Average error:',...
-        num2str(mean(abs(skDist-gs.skDist))), 'mm.'])
+    showPlots = questdlg([num2str(length(idx)), ' show error greater than 1 mm! Average error:',...
+        num2str(mean(abs(skDist-gs.skDist))), 'mm. Show traces?'],...
+        'Distance Results','All','Only Errors','None','Only Errors');
+    if strcmp('All',showPlots)
+        idx = 1:length(elementsOfInterest);
+        showPlots = 1;
+    elseif strcmp('None',showPlots)
+        showPlots = 0;
+    else
+        showPlots = 1;
+    end
+end
+if showPlots
+    gsRaw = load(gs.fName);
+    gsReceive = gsRaw.griddedElRaw.Receive;
+    gsRcvData = gsRaw.griddedElRaw.RcvData;
+    h = figure;
+    set(h,'position',[1364          42         556        1074])
+    for ii = 1:length(idx)
+        curIdx = blIdx(idx(ii));
+        s = zeros(size(RcvData(Receive(ii).startSample:Receive(ii).endSample,blocks{1}(1))));
+        for jj = 1:gridSize^2
+            curS = double(RcvData(Receive(curIdx).startSample:Receive(curIdx).endSample,...
+                blocks{curIdx}(jj)));
+            s = curS+s;
+        end
+        s = abs(hilbert(s));
+        s(d<gs.powerRange(1)) = 0;
+        s(d>gs.powerRange(2)) = 0;
+
+        sGs = zeros(size(gsRcvData(gsReceive(ii).startSample:gsReceive(ii).endSample,blocks{ii}(1))));
+        for jj = 1:gridSize^2
+            curS = double(gsRcvData(gsReceive(curIdx).startSample:gsReceive(curIdx).endSample,...
+                blocks{curIdx}(jj)));
+            sGs = curS+sGs;
+        end
+        sGs = abs(hilbert(sGs));
+        sGs(d<gs.powerRange(1)) = 0;
+        sGs(d>gs.powerRange(2)) = 0;
+
+        subplot(length(idx),1,ii)
+        plot(d,s,'-',d,sGs,'-','linewidth',2)
+        hold on
+        ax = gca;
+        ax.ColorOrderIndex = 1;
+        plot([skDist(idx(ii)),skDist(idx(ii))],[0,max(s)],'--',...
+            [gs.skDist(idx(ii)),gs.skDist(idx(ii))],[0,max(s)],'--','linewidth',2)
+        plotElementLocation(ax,[gs.powerRange(2)-5,max([0.75*max(sGs),0.75*max(s)])],...
+            5,blocks{curIdx});
+        ylabel('a.u.')
+        axis([gs.powerRange',0,max([max(s),max(sGs)])])
+        if ii == length(idx)
+            xlabel('distance (mm)');
+        else
+            ax.XTick = [];
+        end
+        title(['Err: ', num2str(abs(skDist(idx(ii))-gs.skDist(idx(ii))),2)])
+        if ii == 1
+            lgd = legend('Current','Gold Standard','location','northwest');
+            set(lgd,'position', [0.0276    0.9303    0.3435    0.0545]);
+        end
+        makeFigureBig(h);
+    end
 end
 
 %% Single Element Results (power)
