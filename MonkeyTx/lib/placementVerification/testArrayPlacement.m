@@ -195,24 +195,37 @@ t = 1e6*(0:(Receive(1).endSample-1))/(Receive(1).ADCRate*1e6/Receive(1).decimFac
 d = t*1.492/2+Receive(1).startDepth*Resource.Parameters.speedOfSound/(Trans.frequency*1e6)*1e3;
 power = zeros(1,256);
 totPower = 0;
+totS = zeros(size(RcvData(Receive(ii).startSample:Receive(ii).endSample,ii)));
 for ii = 1:size(RcvData,2)
     s = RcvData(Receive(ii).startSample:Receive(ii).endSample,ii);
     s = abs(hilbert(s));
     s(d < gs.powerRange(1)) = 0;
     s(d > gs.powerRange(2)) = 0;
-    s = s.^2;
+%     s = s.^2;
     power(ii) = sum(s);
     totPower = totPower+power(ii);
+    totS = totS+s;
 end
 idx = find(abs(power-gs.power)./gs.power > 0.5);
 if ~isempty(idx)
+    h = figure;
+    plot(d,totS/max(gs.totS),'--',d,gs.totS/max(gs.totS),'-','linewidth',2)
+    ax = gca;
+    plotElementLocation(ax,[gs.powerRange(2)-5,0.75],...
+            5,idx)
+    axis([gs.powerRange',0,1])
     showPlots = questdlg(['Current Power/GS Power: ', num2str(totPower/gs.totPower,2),...
         '. ', num2str(length(idx)), ' elements exceed threshold! Show Offending Elements?']);
+    xlabel('Distance (mm)')
+    ylabel('Voltage (a.u.)')
+    makeFigureBig(h);
     if strcmp('Yes',showPlots)
         gsReceive = gsRaw.singleElRaw.Receive;
         gsRcvData = gsRaw.singleElRaw.RcvData;
         for ii = 1:ceil(length(idx)/5)
             h = figure(99);
+            clf;
+            set(h,'position',[2          42         958        1074])
             for jj = 1:5
                 if (ii-1)*5+jj <= length(idx)
                     curIdx = idx((ii-1)*5+jj);
@@ -226,12 +239,14 @@ if ~isempty(idx)
                 sGs = abs(hilbert(sGs));
                 subplot(5,1,jj)
                 plot(d,s,'--',d,sGs,'-','linewidth',2)
+                ax = gca;
+                plotElementLocation(ax,[60,2e4],...
+                    10,curIdx)
                 xlabel('distance (mm)')
                 ylabel('a.u.')
                 title(['Element ', num2str(curIdx)])
                 makeFigureBig(h);
             end        
-            set(h,'position',[2          42         958        1074])
             waitforbuttonpress
         end
     elseif strcmp('Cancel',showPlots)

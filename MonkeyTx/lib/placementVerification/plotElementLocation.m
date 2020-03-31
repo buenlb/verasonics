@@ -20,9 +20,11 @@ for ii = 1:8
     end
 end
 
-txt = text(x(15),y(1)-(y(2)-y(1)),'x->');
+txt = text(x(15),y(1)-2*(y(2)-y(1)),'x->');
 set(txt,'FontWeight','Bold')
-txt = text(x(1)-2*(x(2)-x(1)),y(2),'y->');
+% set(txt,'FontSize',10)
+
+txt = text(x(1)-5*(x(2)-x(1)),y(2),'y->');
 set(txt,'Rotation',90);
 set(txt,'FontWeight','Bold')
 

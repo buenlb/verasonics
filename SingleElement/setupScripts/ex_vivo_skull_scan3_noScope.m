@@ -4,15 +4,19 @@ clear all; close all; clc;
 srcDirectory = setPaths();
 
 %% User Defined Variables
+%TRANSMITCH = 126; %Jan's adapter
+%RECEIVECH = 24; %Jan's adapter
+TRANSMITCH = 97; %Tom's adapter
+RECEIVECH = 1; %Tom's adapter
 NA = 64; % Desired number of averages
 frequency = 2.25; % Center frequency of the transducer in MHz
 samplingRate = 50; % Sampling rate of the pulse/echo data in MHz (max: 50)
 saveDir = 'C:\Users\Verasonics\Desktop\Taylor\Data\exVivo180Scans\20200308\Experiments\template_2.25MHzfocused\'; % Name of the directory in which to save results
 % saveDir = 'C:\Users\Verasonics\Desktop\Taylor\Data\exVivo180Scans\20200213\changeVoltageTest2\'; % Name of the directory in which to save results
 saveName = 'skull'; % Base name to use when saving files. 
-%angles = -21:3:126; % Vector specifying the angles to use.
+%angles = 0 : 3 : 360; % Vector specifying the angles to use.
 angles = 0; % Vector specifying the angles to use.
-excitations = [0,0,1,1,2,2,3,3,4,4,5,5]; % Vector specifying transmits. 0 is an impulse of lambda/8 width. A number smaller than 3 indicates the number of half cycles. 3 or 5 generate a chirp with 3 or 5 segments.
+excitations = [0,0,1,1,2,2,3,3,4,4,5,5]; % Vector specifying transmits. 0 is an impulse of lambda/8 width. A number smaller than 3 indicates the number of half cycles. 3, 4, 5 generate a chirp with 3, 4, 5 segments.
 %excitations = [0,0,1,1,2,2]; % Vector specifying transmits. 0 is an impulse of lambda/8 width. A number smaller than 3 indicates the number of half cycles. 3 or 5 generate a chirp with 3 or 5 segments.
 
 excitationVoltages = 7 * [1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2]; %lower voltages for templates
@@ -20,7 +24,7 @@ excitationVoltages = 7 * [1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2]; %lower voltages f
 %excitationVoltages = [32, 75, 32, 75, 32, 75, 32, 75, 32, 75]; %0.5 MHz needs to be driven at a lower voltage
 
 %% Specify system parameters
-ioChannel = 126;
+ioChannel = TRANSMITCH; 
 Resource.Parameters.numTransmit = 128; % no. of xmit chnls (V64LE,V128 or V256).
 Resource.Parameters.numRcvChannels = 128; % change to 64 for Vantage 64 or 64LE
 Resource.Parameters.connector = 1; % trans. connector to use (V256).
@@ -134,7 +138,7 @@ TGC(1).Waveform = computeTGCWaveform(TGC);
 
 %% Specify Receive structure array -
 Receive(1).Apod = zeros(1,128);
-Receive(1).Apod([Resource.Parameters.ioChannel,24]) = 1;
+Receive(1).Apod([Resource.Parameters.ioChannel, RECEIVECH]) = 1;
 Receive(1).startDepth = 0;
 Receive(1).endDepth = 500 * frequency/2.25;
 Receive(1).TGC = 1; % Use the first TGC waveform defined above

@@ -23,14 +23,16 @@ close all;
 
 power = zeros(1,256);
 totPower = 0;
+totS = zeros(size(RcvData(Receive(ii).startSample:Receive(ii).endSample,ii)));
 for ii = 1:256
     s = RcvData(Receive(ii).startSample:Receive(ii).endSample,ii);
     s = abs(hilbert(s));
     s(d<powerRange(1)) = 0;
     s(d>powerRange(2)) = 0;
-    s = s.^2;
+%     s = s.^2;
     power(ii) = sum(s);
     totPower = totPower+power(ii);
+    totS = totS+s;
 end
 
 %% Use gridded element image to determine distance between 5 grids and the skull
@@ -69,4 +71,4 @@ for ii = 1:length(blocks)
 end
 
 %% Save results in specified location.
-save(svName,'skDist','power','powerRange','fName','elementsOfInterest','totPower');
+save(svName,'skDist','power','powerRange','fName','elementsOfInterest','totPower','totS');
