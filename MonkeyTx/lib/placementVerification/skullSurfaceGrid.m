@@ -1,34 +1,34 @@
-% Takes the recevie data made by VSX running imaging_singleElement.mat and
-% produces a b-mode image based on the data
+% traceSkullSurfaces finds the front edge of the signal from each element
+% in order to estimate the location of the skull surface
 % 
 % @INPUTS
-%   RcvData: Raw data created by VSX
-%   Receive: Receive struct used by VSX
-%   distOfInterest: Optional. If length(distOfInterest) = 1 then all the
-%       signal arriving before distOfInterest is set to zero. if
-%       length(distOfInterest) = 2 then only signal between
-%       distOfInterest(1) and distOfInterest(2) is displayed. Distances are
-%       computed by assuming a speed of sound in water of 1492 m/s.
-%       distOfInterest should be given in mm.
+%   RcvData: Received data from verasonics
+%   Receive: Receive struct from verasonics
+%   gs: Struct containing relevant data from a "gold standard" file
+%      (created by createGoldStandardFile.m). Must have the range of
+%      distances in which the skull could be found and a template for a
+%      matched filter search of the signal.
 %   plotResult: If plotResult is true the resulting image is displayed.
 % 
 % @OUTPUTS
-%   img: a 3D bMode image.
-%   xa: x axis of 3D image
-%   ya: y axis of 3D image
-%   za: z axis of 3D image
+%   img: A stack of 8 images, one for each row of transducers, showing the
+%     estimated surface of the skull
 % 
 % Taylor Webb
 % University of Utah
 % March 2020
 
-function [sArray,xa,ya,za] = griddedElementBModeImage_2D(RcvData,Receive,distOfInterest,plotResult)
+function [sArray,skullLoc,xa,ya,za] = skullSurfaceGrid(RcvData,Receive,gs,plotResult)
+if nargin < 4
+    plotResult = 1;
+end
 %% Set up grids
 gridSize = 3;
 blocks = selectElementBlocks(gridSize);
 
 %% Set up time/distance vectors corresponding to data
 t = 1e6*(0:(Receive(1).endSample-1))/(Receive(1).ADCRate*1e6/Receive(1).decimFactor);
+dt = t(2)-t(1);
 d = t*1.492/2;
 
 %% Set up the array coordinate system
@@ -38,16 +38,17 @@ za = 10:dx:60;
 [Za,Xa] = meshgrid(za,xa);
 
 %% Set up the element coordinate system
-elWidth = 2.5;
+elWidth = 1;
 xe = -elWidth/2:dx:elWidth/2;
 ze = d;
 [Ze,Xe] = meshgrid(ze,xe);
 
 %% Interpolate data from element coordinate system to array coordinates
 elements = transducerGeometry(0);
-
 sArray = zeros(size(Xa,1),8-(gridSize-1),size(Xa,2));
 nElements = sArray;
+tmplt = double(gs.tmplt);
+skullLoc = zeros(length(blocks),3);
 gridPos = zeros(length(blocks),5);
 for ii = 1:length(blocks)
     disp(['Block ', num2str(ii), ' of ', num2str(length(blocks))])
@@ -61,12 +62,19 @@ for ii = 1:length(blocks)
     sTot = zeros(size(Receive(ii).startSample:Receive(ii).endSample))';
     for jj = 1:length(blocks{ii})
         s = double(RcvData(Receive(ii).startSample:Receive(ii).endSample,blocks{ii}(jj)));
-        s = (abs(hilbert(s)));
-        s(d<distOfInterest(1) | d>distOfInterest(2)) = 0;
+%         s = (abs(hilbert(s)));
+        s(d<gs.powerRange(1) | d>gs.powerRange(2)) = 0;
         sTot = sTot+s;
     end
     s = sTot;
-
+%     sAll(:,ii) = s;
+    
+    fe = frontEdgeMatchedFilter(s,tmplt,dt);
+    [skullLoc(ii,1),skullLoc(ii,2),skullLoc(ii,3)] = element2arrayCoords(0,0,d(fe),centerElement);
+    
+    s = zeros(size(s));
+    s(fe-5:fe+5) = 1;
+    
     sExpanded = zeros(size(Xe));
     for jj = 1:length(xe)
         sExpanded(jj,:) = s;
@@ -75,10 +83,7 @@ for ii = 1:length(blocks)
     curS = interp2(Ze,Xe,sExpanded,Zar,Xar,'spline',0);
     sArray(:,row,:) = squeeze(sArray(:,row,:)) + curS;
     
-    nElCur = zeros(size(curS));
-    nElCur(curS~=0) = 1;
-    
-    nElements(:,row,:) = squeeze(nElements(:,row,:))+nElCur;
+    nElements(curS~=0) = nElements(curS~=0)+1;
 
 end
 ya = unique(gridPos(:,2));
