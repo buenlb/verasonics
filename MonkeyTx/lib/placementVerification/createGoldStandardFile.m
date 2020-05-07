@@ -57,6 +57,15 @@ for ii = 1:length(blocks)
             curS = RcvData(Receive(ii).startSample:Receive(ii).endSample,blocks{ii}(jj));
             s = curS+s;
         end
+        %% Ask the user to select a template for signal detection
+        figure(1)
+        plot(d,s)
+        goodS = input('Satisfactory Signal? (0/1) >>');
+        if goodS
+            [x,~] = ginput(2);
+            tmplt = s;
+            tmplt = tmplt(d>x(1)&d<x(2));
+        end
         s = abs(hilbert(s));
         s(d<powerRange(1)) = 0;
         s(d>powerRange(2)) = 0;
@@ -69,6 +78,8 @@ for ii = 1:length(blocks)
         end
     end
 end
-
+if ~exist('tmplt','var')
+    error('You didn''t select a signal template!');
+end
 %% Save results in specified location.
-save(svName,'skDist','power','powerRange','fName','elementsOfInterest','totPower','totS');
+save(svName,'skDist','power','powerRange','fName','elementsOfInterest','totPower','totS','tmplt');
