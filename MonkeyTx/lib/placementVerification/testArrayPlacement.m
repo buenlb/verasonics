@@ -171,7 +171,6 @@ if showPlots
             5,blocks{curIdx});
         ylabel('a.u.')
         axis([gs.powerRange',0,max([max(s),max(sGs)])])
-        keyboard
         if ii == length(idx)
             xlabel('distance (mm)');
         else

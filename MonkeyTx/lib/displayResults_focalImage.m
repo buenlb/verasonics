@@ -99,4 +99,5 @@ else
 end
 if curIdx == length(x)
     save(Resource.Parameters.imageSaveName,'img','x','y','z','t');
+    closeVSX();
 end

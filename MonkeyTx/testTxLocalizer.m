@@ -15,7 +15,8 @@ if ~exist('loadDicomDir.m','file')
 end
 
 %% Load dicoms 
-dcmPath = 'C:\Users\Taylor\Documents\Projects\txLocCovid\004\';
+% dcmPath = 'C:\Users\Taylor\Documents\Projects\txLocCovid\004\';
+dcmPath = 'C:\Users\Verasonics\Box Sync\18623_08252016\004\';
 [img,header] = loadDicomDir(dcmPath);
 img = permuteImg(img,2,3,1);
 res = [header{1}.PixelSpacing(1);header{1}.SpacingBetweenSlices;header{1}.PixelSpacing(2)]*1e-3;

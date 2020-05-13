@@ -54,6 +54,7 @@ for ii = 1:length(expectedLocationsX)
     
     [~,idx] = max(result(:)); % The 3D "beginning" of the pattern
     % Add indices to get to the "center" of the pattern.
+    
     fidLoc(ii,1) = xSearch(lags{idx}(1))+floor(size(fd,1)/2);
     fidLoc(ii,2) = ySearch(lags{idx}(2))+floor(size(fd,2)/2);
     fidLoc(ii,3) = zSearch(lags{idx}(3))+floor(size(fd,3)/2);
