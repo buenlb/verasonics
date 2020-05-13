@@ -1,0 +1,11 @@
+<!-- This is a simple xml file containing data -->
+<file>
+  <data>
+     <x1>-5</x1>
+	 <x2>5</x2>
+	 <stepX>1</stepX>
+     <y1>-5</y1>
+	 <y2>5</y2>
+	 <stepY>1</stepY>
+  </data>
+</file>

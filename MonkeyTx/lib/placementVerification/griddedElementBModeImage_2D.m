@@ -23,93 +23,79 @@
 % March 2020
 
 function [sArray,xa,ya,za] = griddedElementBModeImage_2D(RcvData,Receive,distOfInterest,plotResult)
-if ~exist('plotResult','var')
-    plotResult = 0;
-end
+%% Set up grids
+gridSize = 3;
+blocks = selectElementBlocks(gridSize);
 
-% Set up time/distance vectors corresponding to data
+%% Set up time/distance vectors corresponding to data
 t = 1e6*(0:(Receive(1).endSample-1))/(Receive(1).ADCRate*1e6/Receive(1).decimFactor);
 d = t*1.492/2;
 
-% Determine ROI based on distOfInterest
-if ~exist('distOfInterest','var')
-    distOfInterest = [d(1),d(end)];
-elseif length(distOfInterest) == 1
-    distOfInterest = [distOfInterest, d(end)];
-elseif length(distOfInterest) ~= 2
-    error('distOfInterest must be either 1 or 2 elements in length')
-end
-
-% Set up the element coordinate system
-elWidth = 5;
-dx = 2;
-xe = -elWidth/2:dx:elWidth/2;
-ye = xe;
-ze = d;
-[Ye,Xe,Ze] = meshgrid(ye,xe,ze);
-
-% Set up the array coordinate system
+%% Set up the array coordinate system
+dx = 0.5;
 xa = -80/2:dx:80/2;
 za = 10:dx:60;
 [Za,Xa] = meshgrid(za,xa);
 
-% Set up grids
-gridSize = 3;
-blocks = selectElementBlocks(gridSize);
+%% Set up the element coordinate system
+elWidth = 2.5;
+xe = -elWidth/2:dx:elWidth/2;
+ze = d;
+[Ze,Xe] = meshgrid(ze,xe);
 
 %% Interpolate data from element coordinate system to array coordinates
 elements = transducerGeometry(0);
-sArray = zeros(size(Xa));
+
+sArray = zeros(size(Xa,1),8-(gridSize-1),size(Xa,2));
 nElements = sArray;
-for 
+gridPos = zeros(length(blocks),5);
 for ii = 1:length(blocks)
     disp(['Block ', num2str(ii), ' of ', num2str(length(blocks))])
-    centerElement = elements.ElementPos(blocks{ii}(ceil(gridSize/2)),:);
-    [Xar,Yar,Zar] = array2elementCoords(Xa,Ya,Za,centerElement);
+    centerElNo = blocks{ii}(ceil(gridSize/2));
+    centerElement = elements.ElementPos(centerElNo,:);
+    gridPos(ii,:) = centerElement;
+    [Xar,~,Zar] = array2elementCoords(Xa,0,Za,centerElement);
+    
+    row = mod(centerElNo,8)-1;
     
     sTot = zeros(size(Receive(ii).startSample:Receive(ii).endSample))';
     for jj = 1:length(blocks{ii})
-        s = RcvData (Receive(ii).startSample:Receive(ii).endSample,blocks{ii}(jj));
+        s = double(RcvData(Receive(ii).startSample:Receive(ii).endSample,blocks{ii}(jj)));
         s = (abs(hilbert(s)));
         s(d<distOfInterest(1) | d>distOfInterest(2)) = 0;
         sTot = sTot+s;
-    end
-    if max(s) == 0
-        keyboard
     end
     s = sTot;
 
     sExpanded = zeros(size(Xe));
     for jj = 1:length(xe)
-        for kk = 1:length(ye)
-            sExpanded(jj,kk,:) = s;
-        end
+        sExpanded(jj,:) = s;
     end
     
-    curS = interp3(Ye,Xe,Ze,sExpanded,Yar,Xar,Zar,'spline',0);
-    sArray = sArray + curS;
+    curS = interp2(Ze,Xe,sExpanded,Zar,Xar,'spline',0);
+    sArray(:,row,:) = squeeze(sArray(:,row,:)) + curS;
     
-    nElements(curS~=0) = nElements(curS~=0)+1;
+    nElCur = zeros(size(curS));
+    nElCur(curS~=0) = 1;
+    
+    nElements(:,row,:) = squeeze(nElements(:,row,:))+nElCur;
 
 end
+ya = unique(gridPos(:,2));
 % Account for voxels that have signal from multiple elements
+nElements(nElements==0) = 1;
 sArray = sArray./nElements;
 
 %% Display results
 if plotResult
     h = figure;
-    yFrames = unique(elements.ElementPos(:,2));
-    rows = floor(sqrt(length(yFrames)));
-    cols = ceil(sqrt(length(yFrames)));
-    if rows*cols < length(yFrames)
-        cols = cols+1;
-    end
-
-    for ii = 1:rows*cols
+    rows = 2;
+    cols = ceil(length(ya)/2);
+    
+    for ii = 1:length(ya)
         subplot(rows,cols,ii)
-        [~,yIdx] = min(abs(ya-yFrames(ii)));
-        imshow(squeeze(sArray(:,yIdx,:)),[0,max(sArray(:))],'xdata',za,'ydata',xa);
-        title(['y=',num2str(ya(yIdx))]);
+        imshow(squeeze(sArray(:,ii,:)),[0,max(sArray(:))],'xdata',za,'ydata',xa);
+        title(['y=',num2str(ya(ii))]);
         colorbar
         drawnow
     end

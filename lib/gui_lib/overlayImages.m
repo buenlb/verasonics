@@ -12,6 +12,9 @@
 %       threshold will be set to full transparency and will therefore be
 %       invisible
 %   window: Optional input specifying a window for the gray image data
+%   transparency: optional input specifying percent transparency. Default:
+%       0.8
+%   C: optional input, string specifying desired colormap. Default: hot
 % 
 % @OUTPUTS
 %   none
@@ -20,15 +23,30 @@
 % University of Utah
 % Summer 2019
 
-function overlayImages(gImg,cImg,handle,xAx,yAx,threshold,window)
-C = colormap(handle,'hot');
+function overlayImages(gImg,cImg,handle,xAx,yAx,threshold,window,transparency,C)
+if ~exist('C','var')
+    C = colormap(handle,'hot');
+else
+    C = colormap(handle,C);
+end
 L = size(C,1);
 
-Gs = round(interp1(linspace(min(cImg(:)),max(cImg(:)),L),1:L,cImg));
-rgbImage = reshape(C(Gs,:),[size(Gs) 3]);
+if size(gImg)~=size(cImg)
+    error('Images must be the same size!')
+end
+
+try
+    Gs = round(interp1(linspace(min(cImg(:)),max(cImg(:)),L),1:L,cImg));
+    rgbImage = reshape(C(Gs,:),[size(Gs) 3]);
+catch
+    rgbImage = zeros([size(cImg),3]);
+end
 
 if ~exist('window','var')
     window = [min(gImg(:)),max(gImg(:))];
+end
+if ~exist('transparency','var')
+    transparency = 0.8;
 end
 
 % Display the gray scale image
@@ -38,5 +56,5 @@ hold(handle,'on')
 % Display the color image
 cHandle = imshow(rgbImage,'Parent',handle,'xData',xAx,'yData',yAx,'InitialMagnification','fit');
 aData = zeros(size(cImg));
-aData(cImg > threshold) = 0.8;
+aData(cImg > threshold) = transparency;
 set(cHandle,'AlphaData',aData);

@@ -26,7 +26,7 @@
 % University of Utah
 % March 2020
 
-function [posError,couplingErr] = testArrayPlacement(goldStd,svName,fName)
+function [posError,couplingErr,rawTraces] = testArrayPlacement(goldStd,svName,fName)
 if exist('fName','var')
     data = load(fName);
     sImg = data.singleElRaw;
@@ -171,6 +171,7 @@ if showPlots
             5,blocks{curIdx});
         ylabel('a.u.')
         axis([gs.powerRange',0,max([max(s),max(sGs)])])
+        keyboard
         if ii == length(idx)
             xlabel('distance (mm)');
         else
