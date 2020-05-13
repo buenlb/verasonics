@@ -29,8 +29,8 @@ while ~centered
     if Tx.frequency <= 1
         soniq2dScan(lib,[Pos.X.Axis,Pos.Y.Axis],[-10,-10],[10,10],2*ones(1,2)*ceil(11/lambda)+1,{'parameter',Grid.parameters})
     else
-        soniq2dScan(lib,[Pos.X.Axis,Pos.Y.Axis],[-5,-5],[5,5],[26,26],{'parameter',Grid.parameters,'pause',100})
-        %soniq2dScan(lib,[Pos.X.Axis,Pos.Y.Axis],[-5,-5],[5,5],0.5*ones(1,2)*ceil(11/lambda)+1,{'parameter',Grid.parameters})
+        %soniq2dScan(lib,[Pos.X.Axis,Pos.Y.Axis],[-5,-5],[5,5],[26,26],{'parameter',Grid.parameters,'pause',100})
+        soniq2dScan(lib,[Pos.X.Axis,Pos.Y.Axis],[-5,-5],[5,5],0.5*ones(1,2)*ceil(11/lambda)+1,{'parameter',Grid.parameters})
     end
     
     calllib(lib,'MoveTo2DScanPeak');
