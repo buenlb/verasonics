@@ -4,7 +4,7 @@
 % @INPUTS
 %   xDist: x-distance between center of transducer and fiducial center
 %   yDist: y-distance between center of transducer and fiducial center
-%   res: desired resolution of resulting templates
+%   res: desired resolution of resulting templates (m)
 %   fiducialShape: string specifying shape of fiducial used.
 %       Possible Values:
 %           tube: epindorf centrifuge tube

@@ -31,8 +31,16 @@ else
 end
 L = size(C,1);
 
-Gs = round(interp1(linspace(min(cImg(:)),max(cImg(:)),L),1:L,cImg));
-rgbImage = reshape(C(Gs,:),[size(Gs) 3]);
+if size(gImg)~=size(cImg)
+    error('Images must be the same size!')
+end
+
+try
+    Gs = round(interp1(linspace(min(cImg(:)),max(cImg(:)),L),1:L,cImg));
+    rgbImage = reshape(C(Gs,:),[size(Gs) 3]);
+catch
+    rgbImage = zeros([size(cImg),3]);
+end
 
 if ~exist('window','var')
     window = [min(gImg(:)),max(gImg(:))];

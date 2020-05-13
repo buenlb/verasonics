@@ -19,7 +19,7 @@
 % Summer 2019
 
 function p = simulateArray(elements,frequency,grid,uiHandle)
-VERBOSE = 0;
+VERBOSE = 1;
 c = 1540;
 
 X = grid.X;
@@ -62,7 +62,7 @@ for ii = 1:length(elements.x)
     % Add the contribution of the current element
     p = p+elements.p(ii)*exp(1i*R*k+1i*elements.phi(ii));
 end
-
+close(d);
 if closeFigure
     close(uiHandle);
 end

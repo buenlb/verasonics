@@ -24,8 +24,9 @@ fd = createFiducialTemplate(xDist,yDist,res,'sphere');
 %% Find transducer
 
 % Search space based on x0
-maxPlane = x0(3)+round(2e-2/res(3))+ceil(size(fd,3)/2);
-minPlane = x0(3)-(round(2e-2/res(3))+ceil(size(fd,3)/2));
+searchDim = 2e-2;
+maxPlane = x0(3)+round(searchDim/res(3))+ceil(size(fd,3)/2);
+minPlane = x0(3)-(round(searchDim/res(3))+ceil(size(fd,3)/2));
 zSearch = minPlane:maxPlane;
 zSearch = zSearch(zSearch>0);
 
@@ -37,13 +38,15 @@ expectedLocationsY = [x0(2),x0(2)+round(yDist/res(2)),x0(2)-round(yDist/res(2))]
 % they are expected given x0
 fidLoc = zeros(length(expectedLocationsX),3);
 err = zeros(1,length(expectedLocationsX));
+d = waitbar(0,'Auto Locating Transducer');
 for ii = 1:length(expectedLocationsX)
+    waitbar((ii-1)/length(expectedLocationsX),d);
     disp(['Finding fiducial ', num2str(ii)]);
-    xSearch = (expectedLocationsX(ii)-(round(1e-2/res(1))+size(fd,1))):(expectedLocationsX(ii)+round(1e-2/res(1))+size(fd,1));
+    xSearch = (expectedLocationsX(ii)-(round(searchDim/res(1))+size(fd,1))):(expectedLocationsX(ii)+round(searchDim/res(1))+size(fd,1));
     xSearch = xSearch(xSearch>0);
     xSearch = xSearch(xSearch<=size(img,1));
     
-    ySearch = (expectedLocationsY(ii)-(round(1e-2/res(2))+size(fd,2))):(expectedLocationsY(ii)+round(1e-2/res(2))+size(fd,2));
+    ySearch = (expectedLocationsY(ii)-(round(searchDim/res(2))+size(fd,2))):(expectedLocationsY(ii)+round(searchDim/res(2))+size(fd,2));
     ySearch = ySearch(ySearch>0);
     ySearch = ySearch(ySearch<=size(img,2));
     
@@ -68,6 +71,8 @@ x0(2) = round(xDist/res(2)*sin(theta)+fidLoc(1,2));
 x0(3) = round(mean(fidLoc(:,3)));
 
 txCenter = x0;
+
+close(d);
 % [~,tmplt] = createFiducialTemplate(xDist,yDist,res,'sphere',theta);
 % 
 % % Search with full template
