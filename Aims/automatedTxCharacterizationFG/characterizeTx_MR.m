@@ -1,6 +1,6 @@
 close all; clearvars -except fg; clc;
 
-setPaths(); 
+setPaths();
 %return
 %% User Defined Variables
 saveResults = 0;
@@ -8,23 +8,23 @@ saveDirectory = 'C:\Users\Verasonics\Desktop\Arjun\MR compatible\';
 
 % Define the grid
 % Start and end points for x and y axis [mm]
-Grid.xStart = -5; 
-Grid.xEnd = 5;
-Grid.yStart = -5;
-Grid.yEnd = 5;
+Grid.xStart = -10;
+Grid.xEnd = 10;
+Grid.yStart = -10;
+Grid.yEnd = 10;
 
 % length to scan along z-axis [mm]
 %  Grid.zLength = 10; % zLength is total distance in the z-axis, with center at focus
-Grid.zStart = 30;
-Grid.zEnd   = 60;
+Grid.zStart = 50;
+Grid.zEnd   = 75;
 
 % time to wait in ms after positioner moves before acquiring data
-Grid.pause = 100;
+Grid.pause = 50;
 
 % Set grid spacing. If not set these will be automatically set to lambda/4
-Grid.dx = .2;
-Grid.dy = .2;
-Grid.dz = .5;
+Grid.dx = .75;
+Grid.dy = .75;
+Grid.dz = .75;
 
 % Set the parameter to measure on the grid
 % Grid.parameters = 'Pulse Intensity Integral';
@@ -44,13 +44,13 @@ Tx.coneEdge = 0; % zero if no cone is present                          [mm]
 Tx.notes = '';
 
 % optional field to set the starting x-y plane to a set distance.  Overwritten if transducer has a focus (i.e. Tx.focalLength is non-zero)
-%Tx.computedFocus = 25.4; 
+%Tx.computedFocus = 25.4;
 
 % Function Generator Parameters
 FgParams.amplifierModel = 'ENI A150';
 FgParams.amplifierSerial = '363';
 FgParams.gridVoltage = 50; % FG voltage for full grid               [mVpp]
-FgParams.maxVoltage = 500; % max FG voltage for Tx efficiency        [mVpp]
+FgParams.maxVoltage = 300; % max FG voltage for Tx efficiency        [mVpp]
 FgParams.minVoltage = 50;  % min FG voltage for Tx efficiency        [mVpp]
 FgParams.frequency = Tx.frequency; % center frequency                 [MHz]
 FgParams.nCycles = 100; % number of cycles in pulse
@@ -194,7 +194,7 @@ disp(['Estimated Time: ', time])
 
 %% Prep function generator
 if ~exist('fg','var')
-  fg = establishKeysightConnection(['USB0::0x0957::0x2A07::',FgParams.ID,'::0::INSTR']);
+    fg = establishKeysightConnection(['USB0::0x0957::0x2A07::',FgParams.ID,'::0::INSTR']);
 end
 if strcmp(fg.Status, 'closed')
     fopen(fg);
@@ -210,64 +210,98 @@ writeReadme(Tx,Grid,FgParams,Hydrophone,PreAmp,saveDirectory);
 
 %% Find the center
 tic
-findCenter(lib,Tx,Grid);
 
-%% XY Plane
-grid_xy = soniq2dScan(lib,[Pos.X.Axis,Pos.Y.Axis],[Grid.xStart,Grid.yStart],[Grid.xEnd,Grid.yEnd],...
-    [Grid.xPoints,Grid.yPoints],{'filename',[saveDirectory,'xy.snq'],...
-    'pause',Grid.pause,'parameter',Grid.parameters,'recordWaveforms',Grid.recordWaveforms});
-
-% Record the z location of this plane
-Pos = getPositionerSettings(lib);
-Grid.XYPlaneLoc = Pos.Z.loc;
-
-% Display Result
-h = figure;
-subplot(311)
-imagesc(grid_xy.x,grid_xy.y,grid_xy.data);
-axis('equal')
-axis([grid_xy.x(1) grid_xy.x(end) grid_xy.y(1) grid_xy.y(end)])
-xlabel(grid_xy.xLabel)
-ylabel(grid_xy.yLabel)
-makeFigureBig(h)
-set(h,'position',[962    42   958   954]);
-drawnow
-% YZ Plane
-grid_yz = soniq2dScan(lib,[Pos.Y.Axis,Pos.Z.Axis],[Grid.yStart,Grid.zStart],[Grid.yEnd,Grid.zEnd],...
-    [Grid.yPoints,Grid.zPoints],{'filename',[saveDirectory,'yz.snq'],...
-    'pause',Grid.pause,'parameter',Grid.parameters,'recordWaveforms',Grid.recordWaveforms});
-
-subplot(312)
-imagesc(grid_yz.x,grid_yz.y,grid_yz.data);
-axis('equal')
-axis([grid_yz.x(1) grid_yz.x(end) grid_yz.y(1) grid_yz.y(end)])
-xlabel(grid_yz.xLabel)
-ylabel(grid_yz.yLabel)
-makeFigureBig(h)
-set(h,'position',[962    42   958   954]);
-drawnow
-
-% XZ Plane
-grid_xz = soniq2dScan(lib,[Pos.X.Axis,Pos.Z.Axis],[Grid.xStart,Grid.zStart],[Grid.xEnd,Grid.zEnd],...
-    [Grid.xPoints,Grid.zPoints],{'filename',[saveDirectory,'xz.snq'],...
-    'pause',Grid.pause,'parameter',Grid.parameters,'recordWaveforms',Grid.recordWaveforms});
-
-subplot(313)
-imagesc(grid_xz.x,grid_xz.y,grid_xz.data);
-axis('equal')
-axis([grid_xz.x(1) grid_xz.x(end) grid_xz.y(1) grid_xz.y(end)])
-xlabel(grid_xz.xLabel)
-ylabel(grid_xz.yLabel)
-makeFigureBig(h)
-set(h,'position',[962    42   958   954]);
-drawnow
-
-%% Test output with different voltages
-calllib(lib,'MoveTo2DScanPeak');
-getEfficiencyCurve(lib,fg,FgParams,saveDirectory);
-
+for fgCF = [ 133 270]
+    FgParams.frequency = fgCF/1000;
+    saveLoc = [saveDirectory,num2str(fgCF),filesep];
+    %findCenter(lib,Tx,Grid,FgParams);
+    
+    if FgParams.nCycles > 50
+        windowLength = 2*FgParams.nCycles/FgParams.frequency;
+    elseif FgParams.nCycles == 1
+        windowLength = 100*FgParams.nCycles/FgParams.frequency;
+    else
+        windowLength = 8*FgParams.nCycles/FgParams.frequency;
+    end
+    
+    timeBase = windowLength/10;
+    setOscopeParameters(lib,{'timeBase',timeBase,'averages',Grid.averages});
+    actualTimeBase = calllib(lib,'GetScopeTimebase');
+    actualWindowLength = actualTimeBase*10;
+    dt = 1/(22*FgParams.frequency);
+    nSamples = ceil(actualWindowLength/(dt));
+    setOscopeParameters(lib,{'nSamples',nSamples});
+    nSamplesActual = calllib(lib,'GetScopePoints');
+    idx = 1;
+    while nSamplesActual < nSamples
+        setOscopeParameters(lib,{'nSamples',(idx+1)*nSamples});
+        nSamplesActual = calllib(lib,'GetScopePoints');
+        idx = idx+1;
+    end
+    % XY Plane
+    setFgBurstMode(fg,FgParams.frequency,100,FgParams.burstPeriod,FgParams.nCycles);
+    
+    grid_xy = soniq2dScan(lib,[Pos.X.Axis,Pos.Y.Axis],[Grid.xStart,Grid.yStart],[Grid.xEnd,Grid.yEnd],...
+        [Grid.xPoints,Grid.yPoints],{'filename',[saveLoc,'xy.snq'],...
+        'pause',Grid.pause,'parameter',Grid.parameters,'recordWaveforms',Grid.recordWaveforms});
+    
+    % Record the z location of this plane
+    Pos = getPositionerSettings(lib);
+    Grid.XYPlaneLoc = Pos.Z.loc;
+    
+    % Display Result
+    h = figure;
+    subplot(311)
+    imagesc(grid_xy.x,grid_xy.y,grid_xy.data);
+    axis('equal')
+    axis([grid_xy.x(1) grid_xy.x(end) grid_xy.y(1) grid_xy.y(end)])
+    xlabel(grid_xy.xLabel)
+    ylabel(grid_xy.yLabel)
+    makeFigureBig(h)
+    set(h,'position',[962    42   958   954]);
+    drawnow
+    % YZ Plane
+    setFgBurstMode(fg,FgParams.frequency,100,FgParams.burstPeriod,FgParams.nCycles);
+    
+    grid_yz = soniq2dScan(lib,[Pos.Y.Axis,Pos.Z.Axis],[Grid.yStart,Grid.zStart],[Grid.yEnd,Grid.zEnd],...
+        [Grid.yPoints,Grid.zPoints],{'filename',[saveLoc,'yz.snq'],...
+        'pause',Grid.pause,'parameter',Grid.parameters,'recordWaveforms',Grid.recordWaveforms});
+    
+    subplot(312)
+    imagesc(grid_yz.x,grid_yz.y,grid_yz.data);
+    axis('equal')
+    axis([grid_yz.x(1) grid_yz.x(end) grid_yz.y(1) grid_yz.y(end)])
+    xlabel(grid_yz.xLabel)
+    ylabel(grid_yz.yLabel)
+    makeFigureBig(h)
+    set(h,'position',[962    42   958   954]);
+    drawnow
+    
+    % XZ Plane
+    setFgBurstMode(fg,FgParams.frequency,100,FgParams.burstPeriod,FgParams.nCycles);
+    
+    grid_xz = soniq2dScan(lib,[Pos.X.Axis,Pos.Z.Axis],[Grid.xStart,Grid.zStart],[Grid.xEnd,Grid.zEnd],...
+        [Grid.xPoints,Grid.zPoints],{'filename',[saveLoc,'xz.snq'],...
+        'pause',Grid.pause,'parameter',Grid.parameters,'recordWaveforms',Grid.recordWaveforms});
+    
+    subplot(313)
+    imagesc(grid_xz.x,grid_xz.y,grid_xz.data);
+    axis('equal')
+    axis([grid_xz.x(1) grid_xz.x(end) grid_xz.y(1) grid_xz.y(end)])
+    xlabel(grid_xz.xLabel)
+    ylabel(grid_xz.yLabel)
+    makeFigureBig(h)
+    set(h,'position',[962    42   958   954]);
+    drawnow
+    
+    % Test output with different voltages
+    %calllib(lib,'MoveTo2DScanPeak');
+    getEfficiencyCurve(lib,fg,FgParams,saveLoc);
+    
+    save([saveLoc,'grids'],'grid*');
+end
 %% Generate report
-generateReport(Grid,Tx,FgParams,Hydrophone,grid_xy,grid_xz,grid_yz,[saveDirectory,'report\'])
+%generateReport(Grid,Tx,FgParams,Hydrophone,grid_xy,grid_xz,grid_yz,[saveDirectory,'report\'])
 
 %% Close connection
 

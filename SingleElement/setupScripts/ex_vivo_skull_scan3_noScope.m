@@ -9,19 +9,26 @@ srcDirectory = setPaths();
 TRANSMITCH = 97; %Tom's adapter
 RECEIVECH = 1; %Tom's adapter
 NA = 64; % Desired number of averages
-frequency = 2.25; % Center frequency of the transducer in MHz
+frequency = 0.5; % Center frequency of the transducer in MHz
 samplingRate = 50; % Sampling rate of the pulse/echo data in MHz (max: 50)
-saveDir = 'C:\Users\Verasonics\Desktop\Taylor\Data\exVivo180Scans\20200308\Experiments\template_2.25MHzfocused\'; % Name of the directory in which to save results
+saveDir = 'D:\exVivo180Scans\20200404\skull12645\0.5MHz_through\'; % Name of the directory in which to save results
 % saveDir = 'C:\Users\Verasonics\Desktop\Taylor\Data\exVivo180Scans\20200213\changeVoltageTest2\'; % Name of the directory in which to save results
 saveName = 'skull'; % Base name to use when saving files. 
-%angles = 0 : 3 : 360; % Vector specifying the angles to use.
-angles = 0; % Vector specifying the angles to use.
+angles = 0 : 1 : 360; % Vector specifying the angles to use.
+%angles = 0; % Vector specifying the angles to use.
 excitations = [0,0,1,1,2,2,3,3,4,4,5,5]; % Vector specifying transmits. 0 is an impulse of lambda/8 width. A number smaller than 3 indicates the number of half cycles. 3, 4, 5 generate a chirp with 3, 4, 5 segments.
 %excitations = [0,0,1,1,2,2]; % Vector specifying transmits. 0 is an impulse of lambda/8 width. A number smaller than 3 indicates the number of half cycles. 3 or 5 generate a chirp with 3 or 5 segments.
 
-excitationVoltages = 7 * [1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2]; %lower voltages for templates
-%excitationVoltages = [32, 96, 32, 96, 32, 96, 32, 96, 32, 96];
-%excitationVoltages = [32, 75, 32, 75, 32, 75, 32, 75, 32, 75]; %0.5 MHz needs to be driven at a lower voltage
+%excitationVoltages = 7 * [1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2]; %lower voltages for templates
+%excitationVoltages = [32, 96, 32, 96, 32, 96, 32, 96, 32, 96, 32, 96];
+switch frequency
+    case 2.25
+        excitationVoltages = [32, 96, 32, 96, 32, 86, 32, 86, 32, 58, 32, 58]; %2.25MHz
+    case 1.0
+        excitationVoltages = [32, 75, 32, 76, 32, 39, 14, 38, 13, 26, 13, 26]; %1.0 MHz
+    case 0.5
+        excitationVoltages = [20, 39, 20, 39, 20, 20, 20, 20, 14, 14, 14, 14]; %0.5 MHz
+end
 
 %% Specify system parameters
 ioChannel = TRANSMITCH; 
