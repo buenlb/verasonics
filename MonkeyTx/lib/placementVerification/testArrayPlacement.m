@@ -27,6 +27,14 @@
 % March 2020
 
 function [posError,couplingErr,rawTraces] = testArrayPlacement(goldStd,svName,fName)
+%% Error checking
+% Load Gold Standard Data
+gs = load(goldStd);
+if ~isfield(gs,'fName')
+    error('Invalid gold standard file')
+end
+gsRaw = load(gs.fName);
+
 if exist('fName','var')
     data = load(fName);
     sImg = data.singleElRaw;
@@ -44,10 +52,6 @@ else
     sImg = singleElRaw;
     gImg = griddedElRaw;
 end
-
-%% Load Gold Standard Data
-gs = load(goldStd);
-gsRaw = load(gs.fName);
 
 %% Show image for summary
 [img,xa,ya,za] = griddedElementBModeImage(gImg.RcvData,gImg.Receive,gs.powerRange,0);
@@ -196,8 +200,10 @@ d = t*1.492/2+Receive(1).startDepth*Resource.Parameters.speedOfSound/(Trans.freq
 power = zeros(1,256);
 totPower = 0;
 totS = zeros(size(RcvData(Receive(ii).startSample:Receive(ii).endSample,ii)));
+rawTraces = zeros(256,length(d));
 for ii = 1:size(RcvData,2)
     s = RcvData(Receive(ii).startSample:Receive(ii).endSample,ii);
+    rawTraces(ii,:) = s;
     s = abs(hilbert(s));
     s(d < gs.powerRange(1)) = 0;
     s(d > gs.powerRange(2)) = 0;
@@ -253,3 +259,5 @@ if ~isempty(idx)
         return
     end
 end
+posError = skDist-gs.skDist;
+couplingErr = power-gs.power;
