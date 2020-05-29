@@ -15,8 +15,8 @@ if ~exist('loadDicomDir.m','file')
 end
 
 %% Load dicoms 
-dcmPath = 'C:\Users\Taylor\Documents\Projects\txLocCovid\004\';
-% dcmPath = 'C:\Users\Verasonics\Box Sync\18623_08252016\004\';
+% dcmPath = 'C:\Users\Taylor\Documents\Projects\txLocCovid\004\';
+dcmPath = 'C:\Users\Verasonics\Box Sync\18623_08252016\004\';
 [img,header] = loadDicomDir(dcmPath);
 img = permuteImg(img,2,3,1);
 res = [header{1}.PixelSpacing(1);header{1}.SpacingBetweenSlices;header{1}.PixelSpacing(2)]*1e-3;
@@ -35,8 +35,8 @@ expImg(ceil(expRows/2):(ceil(expRows/2)+size(img,1)-1),:,...
 img = expImg;
 
 % Fiducial characteristics (locations relative to center of transducer)
-xDist = 78e-3;
-yDist = 31.5e-3;
+xDist = (172/2)*1e-3;
+yDist = (35/2)*1e-3;
 
 txLocationIdx = [200,50,50];
 txAngle = 7*pi/180;

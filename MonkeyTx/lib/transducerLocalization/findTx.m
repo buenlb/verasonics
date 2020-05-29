@@ -15,8 +15,8 @@
 % April 2020
 function [txCenter,theta] = findTx(img,res,x0)
 %% Fiducial characteristics (locations relative to center of transducer)
-xDist = 78e-3;
-yDist = 31.5e-3;
+xDist = (172/2)*1e-3;
+yDist = (35/2)*1e-3;
 
 %% Get template
 fd = createFiducialTemplate(xDist,yDist,res,'vitE');
@@ -63,6 +63,7 @@ for ii = 1:length(expectedLocationsX)
                     ((expectedLocationsY(ii)-fidLoc(ii,2))*res(2)).^2+...
                     ((x0(3)-fidLoc(ii,3))*res(3)).^2);
 end
+waitbar((ii)/length(expectedLocationsX),d);
 disp(['Mean error between initial estimate and single fiducial estimate: ', num2str(mean(err*1e3),2), ' mm.'])
 
 % Determine a new x0 based on individual fiducials
