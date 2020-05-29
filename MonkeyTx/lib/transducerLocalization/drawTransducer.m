@@ -4,7 +4,7 @@ xDist = 78e-3;
 yDist = 31.5e-3;
 
 %% Create image
-[~,img] = createFiducialTemplate(xDist,yDist,res,'sphere',txAngle,txLoc,imgSz);
+[~,img] = createFiducialTemplate(xDist,yDist,res,'vitE',txAngle,txLoc,imgSz);
 
 trans = transducerGeometry(0);
 

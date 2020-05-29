@@ -8,6 +8,10 @@
 %   fiducialShape: string specifying shape of fiducial used.
 %       Possible Values:
 %           tube: epindorf centrifuge tube
+%           sphere: spherical fiducial with radius 5.5 mm
+%           vitE: Ellipsoid fiducial with dimensions of vitamin E pill. The
+%               one I had at the time of this writing was a = b = 3.5 mm
+%               and c = 7.75 mm.
 %   theta: optional input. a two element vector representing the angle
 %       between the transducer's x-axis and the x-axis of the image
 %       (element 1) and the angle between the xy plane of the transducer
@@ -22,6 +26,8 @@
 %   ind: individual fiducial shape at resolution res
 %   complete: all fiducials at appropriate distance based on xDist, yDist,
 %       and res.
+%   fdIndices: The indices at which complete was set to an individual
+%       fiducial, ind
 
 function [ind,complete,fdIndices] = createFiducialTemplate(xDist,yDist,res,fiducialShape,theta,txCenter,szImg)
 %% Create individual markers
@@ -66,8 +72,23 @@ switch fiducialShape
          fiducialShape(sqrt(YF.^2+XF.^2+ZF.^2)<r) = 1;
          
          ind = fiducialShape;
+    case 'vitE'
+        % Elipsoid semi-axes in m.
+        a = (7/2)*1e-3;
+        b = (7/2)*1e-3;
+        c = (15.5/2)*1e-3;
+        
+        xf = -a:res(1):a;
+        yf = -b:res(2):b;
+        zf = -c:res(3):c;
+        
+        [YF,XF,ZF] = meshgrid(yf,xf,zf);
+        
+        fiducialShape = zeros(size(XF));
+        fiducialShape(XF.^2/a^2+YF.^2/b^2+ZF.^2/c^2 < 1) = 1;
+        ind = fiducialShape;
     otherwise
-        error(['Fiducial Shape: ', not recognized])
+        error(['Fiducial Shape: ', fiducialShape, ' not recognized'])
 end
 %% Parse input
 if nargin < 5

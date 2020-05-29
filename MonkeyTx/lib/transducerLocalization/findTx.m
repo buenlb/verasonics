@@ -19,7 +19,7 @@ xDist = 78e-3;
 yDist = 31.5e-3;
 
 %% Get template
-fd = createFiducialTemplate(xDist,yDist,res,'sphere');
+fd = createFiducialTemplate(xDist,yDist,res,'vitE');
 
 %% Find transducer
 

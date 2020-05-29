@@ -15,8 +15,8 @@ if ~exist('loadDicomDir.m','file')
 end
 
 %% Load dicoms 
-% dcmPath = 'C:\Users\Taylor\Documents\Projects\txLocCovid\004\';
-dcmPath = 'C:\Users\Verasonics\Box Sync\18623_08252016\004\';
+dcmPath = 'C:\Users\Taylor\Documents\Projects\txLocCovid\004\';
+% dcmPath = 'C:\Users\Verasonics\Box Sync\18623_08252016\004\';
 [img,header] = loadDicomDir(dcmPath);
 img = permuteImg(img,2,3,1);
 res = [header{1}.PixelSpacing(1);header{1}.SpacingBetweenSlices;header{1}.PixelSpacing(2)]*1e-3;
@@ -41,7 +41,8 @@ yDist = 31.5e-3;
 txLocationIdx = [200,50,50];
 txAngle = 7*pi/180;
 
-[fiducialShape,~,fdIdx] = createFiducialTemplate(xDist,yDist,res,'sphere',txAngle,txLocationIdx,size(img));
+[fiducialShape,~,fdIdx] = createFiducialTemplate(xDist,yDist,res,'vitE',txAngle,txLocationIdx,size(img));
+tmp = fiducialShape;
 fiducialShape = fiducialShape*3000;  % Make it approximately as bright as grey matter.
 fiducialShape = imgaussfilt(fiducialShape,5);
 
