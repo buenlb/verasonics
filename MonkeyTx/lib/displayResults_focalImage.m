@@ -97,7 +97,7 @@ else
     title(['y=',num2str(y(1))]);
     set(figHandle,'position',[2          42         958        1074])
 end
-if curIdx == length(x)
+if curIdx == length(z)
     save(Resource.Parameters.imageSaveName,'img','x','y','z','t');
-    closeVSX();
+%     closeVSX();
 end

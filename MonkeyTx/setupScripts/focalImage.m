@@ -24,9 +24,9 @@
 clear all; close all; clc; %#ok<CLALL>
 
 %% User Defined Variables
-x = -8:0.25:-2;
-y = -0.25:0.25:0;
-z = 41:0.25:48;
+x = -8:1:8;
+y = -8:1:8;
+z = 50:1:65;
 frequency = 0.65; 
 nCycles = 5;
 initialV = 16;

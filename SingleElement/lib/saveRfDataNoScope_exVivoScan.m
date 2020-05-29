@@ -36,6 +36,9 @@ end
 saveName = [newSaveDir, Resource.Parameters.saveName,'_TxData.mat'];
 
 % Acquire the waveform
+%store only the channels of interest
+choi = [1 97];
+RData = RData(:, choi); %help to reduce the total file size by about a factor of 4
 save(saveName, 'RData','Resource','Trans','Receive');
 
 disp(['  Transmit ', num2str(transmitIdx), ' is complete.']);
