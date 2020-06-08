@@ -213,7 +213,7 @@ for ii = 1:size(RcvData,2)
     totS = totS+s;
 end
 idx = find(abs(power-gs.power)./gs.power > 0.5);
-keyboard
+
 if ~isempty(idx)
     h = figure;
     plot(d,totS/max(gs.totS),'--',d,gs.totS/max(gs.totS),'-','linewidth',2)

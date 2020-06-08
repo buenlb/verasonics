@@ -9,9 +9,8 @@
 clear all; close all; clc;
 
 if ~exist('loadDicomDir.m','file')
-    addpath('lib')
-    addpath('..\lib\gui_lib')
-    addpath('lib\transducerLocalization')
+    addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\mrLib')
+    addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\mrLib\transducerLocalization')
 end
 
 %% Load dicoms 
@@ -35,17 +34,17 @@ expImg(ceil(expRows/2):(ceil(expRows/2)+size(img,1)-1),:,...
 img = expImg;
 
 % Fiducial characteristics (locations relative to center of transducer)
-xDist = (172/2)*1e-3;
+xDist = (169/2)*1e-3;
 yDist = (35/2)*1e-3;
 
 txLocationIdx = [200,50,50];
-txAngle = 7*pi/180;
+txAngle = 5*pi/180;
 
 [fiducialShape,~,fdIdx] = createFiducialTemplate(xDist,yDist,res,'vitE',txAngle,txLocationIdx,size(img));
 tmp = fiducialShape;
 fiducialShape = fiducialShape*3000;  % Make it approximately as bright as grey matter.
 fiducialShape = imgaussfilt(fiducialShape,5);
-
+% 
 img(fdIdx{1,1},fdIdx{1,2},fdIdx{1,3}) = fiducialShape+576+88*randn(size(fiducialShape));
 img(fdIdx{2,1},fdIdx{2,2},fdIdx{2,3}) = fiducialShape+576+88*randn(size(fiducialShape));
 img(fdIdx{3,1},fdIdx{3,2},fdIdx{3,3}) = fiducialShape+576+88*randn(size(fiducialShape));
@@ -53,10 +52,9 @@ img(fdIdx{3,1},fdIdx{3,2},fdIdx{3,3}) = fiducialShape+576+88*randn(size(fiducial
 x = 0:res(1):((size(img,1)-1)*res(1));
 y = 0:res(2):((size(img,2)-1)*res(2));
 z = 0:res(3):((size(img,3)-1)*res(3));
-
 %% Test localization
 tic 
-[txCenter,theta] = findTx(img,res,txLocationIdx+[4,-2,8]);
+[txCenter,theta] = findTx(img,res,txLocationIdx+[4,-2,6]);
 toc
 err = 1e3*norm(txLocationIdx.*res'-txCenter.*res');
 disp(['Found with ', num2str(err), 'mm of position error and ', num2str(abs(theta-txAngle)*180/pi), ' degrees of angular error.'])
