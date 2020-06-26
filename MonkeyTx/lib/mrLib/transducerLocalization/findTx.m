@@ -17,9 +17,10 @@ function [txCenter,theta] = findTx(img,res,x0)
 %% Fiducial characteristics (locations relative to center of transducer)
 xDist = (169/2)*1e-3;
 yDist = (35/2)*1e-3;
+zDist = 9.03e-3;
 
 %% Get template
-fd = createFiducialTemplate(xDist,yDist,res,'vitE');
+fd = createFiducialTemplate(xDist,yDist,zDist,res,'vitE');
 
 %% Find transducer
 
@@ -29,6 +30,7 @@ maxPlane = x0(3)+round(searchDim/res(3))+ceil(size(fd,3)/2)+round(9.03e-3/res(3)
 minPlane = x0(3)-(round(searchDim/res(3))+ceil(size(fd,3)/2))+round(9.03e-3/res(3));
 zSearch = minPlane:maxPlane;
 zSearch = zSearch(zSearch>0);
+zSearch = zSearch(zSearch<=size(img,3));
 
 expectedLocationsX = [x0(1)-round(xDist/res(1)),x0(1)+round(xDist/res(1)),x0(1)+round(xDist/res(1))];
 expectedLocationsY = [x0(2),x0(2)+round(yDist/res(2)),x0(2)-round(yDist/res(2))];
@@ -70,11 +72,10 @@ theta = asin(res(1)*(fidLoc(3,1)-fidLoc(2,1))/(2*yDist)); % Estimated angle betw
 x0(1) = round(xDist/res(1)*cos(theta)+fidLoc(1,1));
 x0(2) = round(xDist/res(2)*sin(theta)+fidLoc(1,2));
 x0(3) = round(mean(fidLoc(:,3)))-round(9.03e-3/res(3));
-
 txCenter = x0;
-
+return
 close(d);
-[~,tmplt,~,tmpltCenter] = createFiducialTemplate(xDist,yDist,res,'vitE',theta);
+[~,tmplt,~,tmpltCenter] = createFiducialTemplate(xDist,yDist,zDist,res,'vitE',theta);
 
 % Search with full template
 xSearch = (x0(1)-(round(0.5e-2/res(1))+size(tmplt,1))):(x0(1)+round(0.5e-2/res(1))+size(tmplt,1));
@@ -87,6 +88,9 @@ ySearch = ySearch(ySearch<=size(img,2));
 
 maxPlane = x0(3)+round(0.5e-2/res(3))+ceil(size(tmplt,3)/2);
 minPlane = x0(3)-(round(0.5e-2/res(3))+ceil(size(tmplt,3)/2));
+if maxPlane < size(tmplt,3)
+    maxPlane = size(tmplt,3)+round(0.5e-2/res(3));
+end
 zSearch = minPlane:maxPlane;
 zSearch = zSearch(zSearch>0);
 zSearch = zSearch(zSearch<size(img,3));

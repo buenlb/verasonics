@@ -1,4 +1,4 @@
-function [imgstack, hdr, dimL, dimP, dimS] = loadDicomDir(dirpath,uiHandle)
+function [imgstack, header, dimL, dimP, dimS] = loadDicomDir(dirpath,uiHandle)
 
 % loadDicomDir          loads all DICOM images in a directory
 %
@@ -23,6 +23,9 @@ function [imgstack, hdr, dimL, dimP, dimS] = loadDicomDir(dirpath,uiHandle)
 
 %% setup
 listing = dir(fullfile(dirpath, '*.dcm'));
+if isempty(listing)
+    listing = dir(fullfile(dirpath, '*.ima'));
+end
 numFiles = length(listing);
 
 if numFiles < 1
@@ -35,7 +38,6 @@ end
 file = fullfile(dirpath, listing(1).name);
 % hdr = dicominfo(file, 'dictionary', 'gems-dicom-dict.txt');
 hdr = dicominfo(file, 'UseDictionaryVR', true);
-
 file2 = fullfile(dirpath, listing(end).name);
 hdr2 = dicominfo(file2,'UseDictionaryVR', true);
 
@@ -82,6 +84,7 @@ else
     closeFigure = 0;
 end
 d = waitbar(0,'Loading Dicoms');
+figure(d)
 for i = 1:numFiles
     waitbar(i/numFiles,d,'Loading Dicoms')
     
@@ -89,20 +92,19 @@ for i = 1:numFiles
     %d.Message = ['File ', num2str(i), ' of ', num2str(numFiles)];
     
     file = fullfile(dirpath, listing(i).name);
-    header = dicominfo(file, 'UseDictionaryVR', true);
-    if ~isfield('RescaleSlope',header)
+    header{i} = dicominfo(file, 'UseDictionaryVR', true);
+    if ~isfield(header{i},'RescaleSlope')
         if i == 1
             fprintf('\n')
             disp('WARNING: No rescale slope!')
         end
-        imgstack(:,:,i) = double(dicomread(header));
+        imgstack(:,:,i) = double(dicomread(header{i}));
     else
-        imgstack(:,:,i) = header.RescaleSlope*double(dicomread(header)) + header.RescaleIntercept;
+        imgstack(:,:,i) = header{i}.RescaleSlope*double(dicomread(header{i})) + header{i}.RescaleIntercept;
     end
 end
-hdr = {hdr,hdr2};
 
 if closeFigure
     close(uiHandle);
-    close(d);
 end
+close(d);

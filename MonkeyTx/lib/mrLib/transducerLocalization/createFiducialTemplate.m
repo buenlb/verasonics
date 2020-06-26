@@ -31,7 +31,7 @@
 %   txCenter: The index at which the center was placed. Useful for angled
 %       templates that didn't get a center passed in.
 
-function [ind,complete,fdIndices,txCenter] = createFiducialTemplate(xDist,yDist,res,fiducialShape,theta,txCenter,szImg)
+function [ind,complete,fdIndices,txCenter] = createFiducialTemplate(xDist,yDist,zDist,res,fiducialShape,theta,txCenter,szImg)
 %% Create individual markers
 switch fiducialShape
     case 'tube'
@@ -93,14 +93,14 @@ switch fiducialShape
         error(['Fiducial Shape: ', fiducialShape, ' not recognized'])
 end
 %% Parse input
-if nargin < 5
+if nargin < 6
     theta = [0,0];
-    szImg = [ceil(2*xDist/res(1)+2*size(ind,1)),ceil(2*yDist/res(2))+2*size(ind,2)+round(abs(sin(theta(1))*xDist)/res(2)),2*size(ind,3)+ceil(9.03e-3/res(3))];
+    szImg = [ceil(2*xDist/res(1)+2*size(ind,1)),ceil(2*yDist/res(2))+2*size(ind,2)+round(abs(sin(theta(1))*xDist)/res(2)),2*size(ind,3)+ceil(zDist/res(3))];
     txCenter = ceil(szImg/2)+1;
-elseif nargin == 5
-    szImg = [ceil(2*xDist/res(1)+2*size(ind,1)),ceil(2*yDist/res(2))+2*size(ind,2)+2*round(abs(sin(theta(1))*xDist)/res(2)),2*size(ind,3)+ceil(9.03e-3/res(3))];
+elseif nargin == 6
+    szImg = [ceil(2*xDist/res(1)+2*size(ind,1)),ceil(2*yDist/res(2))+2*size(ind,2)+2*round(abs(sin(theta(1))*xDist)/res(2)),2*size(ind,3)+ceil(zDist/res(3))];
     txCenter = ceil(szImg/2)+1;
-elseif nargin < 7
+elseif nargin < 8
     error('If txCenter is specified then size must also be specified')
 end
 %% Place markers
@@ -113,7 +113,7 @@ z = 0:res(3):((size(complete,3)-1)*res(3));
 center = [x(txCenter(1)),y(txCenter(2)),z(txCenter(3))];
 [Y,X,Z] = meshgrid(y,x,z);
 % First Fiducial
-fid1 = [(center(1)-xDist*cos(theta(1))),center(2)-sin(theta(1))*xDist,center(3)+9.03e-3];
+fid1 = [(center(1)-xDist*cos(theta(1))),center(2)-sin(theta(1))*xDist,center(3)+zDist];
 [~,fid1Idx] = min((X(:)-fid1(1)).^2+(Y(:)-fid1(2)).^2+(Z(:)-fid1(3)).^2);
 [fid1_xIdx,fid1_yIdx,fid1_zIdx] = ind2sub(size(X),fid1Idx);
 
@@ -132,7 +132,7 @@ fdIndices{1,2} = yIdx;
 fdIndices{1,3} = zIdx;
 
 % Second Fiducial
-fid2 = [center(1)+xDist*cos(theta(1))-yDist*sin(theta(1)),center(2)+yDist*cos(theta(1))+xDist*sin(theta(1)),center(3)+9.03e-3];
+fid2 = [center(1)+xDist*cos(theta(1))-yDist*sin(theta(1)),center(2)+yDist*cos(theta(1))+xDist*sin(theta(1)),center(3)+zDist];
 [~,fid2Idx] = min((X(:)-fid2(1)).^2+(Y(:)-fid2(2)).^2+(Z(:)-fid2(3)).^2);
 [fid2_xIdx,fid2_yIdx,fid2_zIdx] = ind2sub(size(X),fid2Idx);
 
@@ -150,7 +150,7 @@ fdIndices{2,2} = yIdx;
 fdIndices{2,3} = zIdx;
 
 % Third Fiducial
-fid3 = [center(1)+xDist*cos(theta(1))+yDist*sin(theta(1)),center(2)-yDist*cos(theta(1))+xDist*sin(theta(1)),center(3)+9.03e-3];
+fid3 = [center(1)+xDist*cos(theta(1))+yDist*sin(theta(1)),center(2)-yDist*cos(theta(1))+xDist*sin(theta(1)),center(3)+zDist];
 [~,fid3Idx] = min((X(:)-fid3(1)).^2+(Y(:)-fid3(2)).^2+(Z(:)-fid3(3)).^2);
 [fid3_xIdx,fid3_yIdx,fid3_zIdx] = ind2sub(size(X),fid3Idx);
 

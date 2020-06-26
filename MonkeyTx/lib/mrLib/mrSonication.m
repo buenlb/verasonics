@@ -12,6 +12,11 @@
 % University of Utah
 
 function sys = mrSonication(sys,duration,voltage)
+if sys.focalSpot(3)<0
+    error('Z component of focus must be greater than 0!')
+elseif sys.focalSpot(3)<30
+    warning('Z component of focus is less than 30 mm')
+end
 evalin('base','save(''tmpBeforeSonication'',''sys'')')
 doppler256_MR(duration,voltage,sys.focalSpot*1e-3);
 
@@ -26,6 +31,9 @@ if success
     sonication.voltage = voltage;
     sonication.time = now;
     sonication.focus = sys.focalSpot;
+    sonication.description = input('Describe this sonication: ', 's');
+    sonication.tPath = uigetdir('C:\Users\Verasonics\Desktop\Taylor\Data\');
+    sonication.tMagPath = uigetdir('C:\Users\Verasonics\Desktop\Taylor\Data\');
 
     if ~isfield(sys,'sonication')
         sys.sonication = sonication;
@@ -33,7 +41,10 @@ if success
         sys.sonication(end+1) = sonication;
     end
 end
-
-save(sys.logFile,'sys');
+try
+    save(sys.logFile,'sys');
+catch
+    keyboard
+end
 
 return

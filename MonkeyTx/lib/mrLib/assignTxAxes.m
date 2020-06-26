@@ -98,7 +98,11 @@ switch position
         end
         
         res(1) = hdr.PixelSpacing(1);
-        res(2) = hdr.SpacingBetweenSlices;
+        if isfield(hdr,'SpacingBetweenSlices')
+            res(2) = hdr.SpacingBetweenSlices;
+        else
+            res(2) = hdr.SliceThickness;
+        end
         res(3) = hdr.PixelSpacing(2);
     otherwise
         error(['Patient Position ', position, ' not recognized/implemented'])

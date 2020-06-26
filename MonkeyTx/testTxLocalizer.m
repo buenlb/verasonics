@@ -32,15 +32,17 @@ expImg(ceil(expRows/2):(ceil(expRows/2)+size(img,1)-1),:,...
 
 %% Create Fiducials
 img = expImg;
+img = img(:,:,end:-1:1);
 
 % Fiducial characteristics (locations relative to center of transducer)
 xDist = (169/2)*1e-3;
 yDist = (35/2)*1e-3;
+zDist = 9.03e-3;
 
-txLocationIdx = [200,50,50];
+txLocationIdx = [200,50,size(img,3)-50];
 txAngle = 5*pi/180;
 
-[fiducialShape,~,fdIdx] = createFiducialTemplate(xDist,yDist,res,'vitE',txAngle,txLocationIdx,size(img));
+[fiducialShape,~,fdIdx] = createFiducialTemplate(xDist,yDist,zDist,res,'vitE',txAngle,txLocationIdx,size(img));
 tmp = fiducialShape;
 fiducialShape = fiducialShape*3000;  % Make it approximately as bright as grey matter.
 fiducialShape = imgaussfilt(fiducialShape,5);
@@ -61,7 +63,7 @@ disp(['Found with ', num2str(err), 'mm of position error and ', num2str(abs(thet
 %% Display result
 img2d = squeeze(img(:,:,150));
 % img2d = sum(img,3);
-tmplt3d = drawTransducer(size(img),txCenter,theta,res);
+tmplt3d = drawTransducer(size(img),txCenter,theta,res,-1);
 tmplt2d = sum(tmplt3d,3);
 tmplt2d(tmplt2d > 1) = 1;
 h = figure;

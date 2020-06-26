@@ -1,6 +1,6 @@
 
 function Trans = doppler256_MR(duration, voltage, focus)
-maxV = 10; % Maximum allowed voltage
+maxV = 20; % Maximum allowed voltage
 %% Set up path locations
 srcDirectory = setPaths();
 %% Return Trans struct if no parameters specified.
