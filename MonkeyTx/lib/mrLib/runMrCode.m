@@ -13,7 +13,9 @@
 %     done regularly in order to avoid data loss with errors
 %   couplingFile: Full file name of location in which data gathered during
 %     coupling validation is stored.
-%   aPath: Path to anatomical images
+%   incomingDcms: Path where images pushed from scanner will arrive
+%   mrPath: Path to MR images generated during this session.
+%   aSeriesNo: MR series number of anatomical imaging dataset
 %   aImg: Anatomical Imaging Data set
 %   txCenter: Location of transducer center in MR Coordinates
 %   txTheta: Angle of Tx x-axis and MR x-axis
@@ -36,8 +38,10 @@
 %           different from current target to enable tracking of different
 %           foci in the same MR session).
 %         focusTx: Tx coords of focus targeted with this sonication
-%         thermPath: Path to thermometry images corresponding to this
-%           sonication
+%         phaseSeriesNo: MR series number for the phase images
+%           corresponding to this sonication
+%         magSeriesNo: MR series number for the magnitude images
+%           corresponding to this sonication
 %   tImg: Thermometry dataset for the most recent sonication. This gets
 %     replaced with each new sonication but can be easliy re-loaded using
 %     sys.sonications(sonicationOfInterest).thermPath.
@@ -52,21 +56,33 @@ addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\MATFILES\')
 addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\setupScripts\')
 addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\lib')
 addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\mrLib\thermometry\')
+addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\mrLib\transducerLocalization\');
 
 % Establish file names for storing results 
 goldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRLogs\goldStandard_testCoupling.mat';
-logFile ='C:\Users\Verasonics\Desktop\Taylor\Data\MRLogs\20200623\withSkull1.mat';
-couplingFile = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRLogs\20200623\inMR2.mat';
+logFile ='C:\Users\Verasonics\Desktop\Taylor\Data\MRLogs\20200629\MR_experiment_afterDegassAndSuccessfulSpot.mat';
+couplingFile = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRLogs\20200629\afterFlipAndDegass_inMR.mat';
 
 sys.logFile = logFile;
 sys.goldStandard = goldStandard;
 sys.couplingFile = couplingFile;
-sys.aPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRLogs\20200623\phantom_20200623\s000017 t1_mpr_tra_iso\';
+sys.mrPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRImages\20200629\';
+sys.aSeriesNo = 50;
 sys.invertTx = 1;
-
+sys.incomingDcms = 'C:\Users\Verasonics\Desktop\Taylor\Data\MrImages\IncomingDicoms\';
+return
+%% Check Coupling
+save('tmp.mat','sys');
+testArrayPlacement(sys.goldStandard,sys.couplingFile);
+load('tmp.mat');
+delete('tmp.mat');
+return
 %% Localize Transducer
 if exist(sys.logFile,'file')
-    error('You must not overwrite an old log file!')
+    warning('File exists, continuing where you left off!')
+    load(sys.logFile);
+    return
+%     error('You must not overwrite an old log file!')
 end
 sys = registerTx(sys);
 save(sys.logFile,'sys');
@@ -76,16 +92,12 @@ sys = selectFocus(sys);
 save(sys.logFile,'sys');
 
 %% Sonicate
-sys = mrSonication(sys,10,5);
+sys = mrSonication(sys,10,1.6);
 
-%% Overlay result
-sys.tPath = sys.sonication(end).tPath;
-sys.tMagPath = sys.sonication(end).tMagPath;
+% Overlay result
 sys.nSlices = 8;
 sys = overlayTemperatureAnatomy(sys);
-return
-%% Coupling Checks
-save('tmp.mat','sys');
-testArrayPlacement(sys.goldStandardFile,sys.couplingCheckFile);
-load('tmp.mat');
-delete('tmp.mat');
+sys = rmfield(sys,'tImg');
+sys = rmfield(sys,'tHeader');
+sys = rmfield(sys,'tInterp');
+save(sys.logFile,'sys');

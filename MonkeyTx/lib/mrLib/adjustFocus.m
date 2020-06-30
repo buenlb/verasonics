@@ -1,4 +1,8 @@
 function adjustFocus(sys,newFocus)
+x = sys.ux;
+y = sys.uy;
+z = sys.uz;
+
 focalSpotIdx = newFocus;
 focalSpot = ([x(focalSpotIdx(1)),y(focalSpotIdx(2)),z(focalSpotIdx(3))])*1e3;
 

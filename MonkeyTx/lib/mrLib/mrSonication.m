@@ -30,10 +30,20 @@ if success
     sonication.duration = duration;
     sonication.voltage = voltage;
     sonication.time = now;
-    sonication.focus = sys.focalSpot;
+    sonication.focalSpot = sys.focalSpot;
+    sonication.focalSpotIdx = sys.focalSpotIdx;
+    sonication.focalSpotMr = sys.focalSpotMr;
     sonication.description = input('Describe this sonication: ', 's');
-    sonication.tPath = uigetdir('C:\Users\Verasonics\Desktop\Taylor\Data\');
-    sonication.tMagPath = uigetdir('C:\Users\Verasonics\Desktop\Taylor\Data\');
+    userInput = input('Press enter when files are ready (input s to skip).','s');
+    if ~strcmp(userInput, 's')
+        [img,header,seriesNo] = sortDicoms(sys.incomingDcms, sys.mrPath);
+        sonication.phaseSeriesNo = seriesNo(2);
+        sonication.magSeriesNo = seriesNo(1);
+        
+        sys.tImg = img{2};
+        sys.tMagImg = img{1};
+        sys.tHeader = header(2,:);
+    end
 
     if ~isfield(sys,'sonication')
         sys.sonication = sonication;

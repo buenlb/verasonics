@@ -1,4 +1,4 @@
-function [imgstack, header, dimL, dimP, dimS] = loadDicomDir(dirpath,uiHandle)
+function [imgstack, header, dimL, dimP, dimS, file] = loadDicomDir(dirpath,uiHandle)
 
 % loadDicomDir          loads all DICOM images in a directory
 %
@@ -25,6 +25,20 @@ function [imgstack, header, dimL, dimP, dimS] = loadDicomDir(dirpath,uiHandle)
 listing = dir(fullfile(dirpath, '*.dcm'));
 if isempty(listing)
     listing = dir(fullfile(dirpath, '*.ima'));
+end
+if isempty(listing)
+    listing = dir(dirpath);
+    curIdx = 1;
+    for ii = 1:length(listing)
+        if listing(ii).isdir
+            continue
+        else
+            newListing(curIdx) = listing(ii);
+            curIdx = curIdx+1;
+        end
+    end
+    listing = newListing;
+            
 end
 numFiles = length(listing);
 
@@ -85,14 +99,15 @@ else
 end
 d = waitbar(0,'Loading Dicoms');
 figure(d)
+clear file;
 for i = 1:numFiles
     waitbar(i/numFiles,d,'Loading Dicoms')
     
     %d.Value = i/numFiles;
     %d.Message = ['File ', num2str(i), ' of ', num2str(numFiles)];
     
-    file = fullfile(dirpath, listing(i).name);
-    header{i} = dicominfo(file, 'UseDictionaryVR', true);
+    file{i} = fullfile(dirpath, listing(i).name);
+    header{i} = dicominfo(file{i}, 'UseDictionaryVR', true);
     if ~isfield(header{i},'RescaleSlope')
         if i == 1
             fprintf('\n')

@@ -33,7 +33,7 @@ for ii = 1:length(xTx)
     [~,idx] = min((X(:)-xTxMr(ii)).^2+(Y(:)-yTxMr(ii)).^2+(Z(:)-zTxMr(ii)).^2);
     [xIdx,yIdx,zIdx] = ind2sub(size(img),idx);
     wdwLength = ceil(elWidth/res(1));
-    curYidx = yIdx-2*floor(wdwLength/2):yIdx+2*floor(wdwLength/2);
+    curYidx = yIdx-floor(wdwLength/2):yIdx+floor(wdwLength/2);
     if ~mod(wdwLength,2)
         wdwLength = wdwLength+1;
     end

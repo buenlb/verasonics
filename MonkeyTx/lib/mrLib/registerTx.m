@@ -32,16 +32,19 @@ function sys = registerTx(sys)
 addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\mrLib\transducerLocalization')
 
 %% Prompt user for location of MR scan if none was provided
-if ~isfield(sys,'aPath')
+if ~isfield(sys,'mrPath')
     sys.aPath = uigetdir();
     
     if ~sys.aPath
         error('User cancelled')
     end
 end
-
+aPath = [sys.mrPath,num2str(sys.aSeriesNo,'%03d'),'\'];
+if ~exist(aPath,'dir')
+    sortDicoms(sys.incomingDcms,sys.mrPath)
+end
 %% Load MR scan
-[img,header] = loadDicomDir(sys.aPath);
+[img,header] = loadDicomDir(aPath);
 
 %% Re-configure image to match the Tx coordinate convention
 
