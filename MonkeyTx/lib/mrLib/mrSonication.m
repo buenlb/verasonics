@@ -18,11 +18,11 @@ elseif sys.focalSpot(3)<30
     warning('Z component of focus is less than 30 mm')
 end
 evalin('base','save(''tmpBeforeSonication'',''sys'')')
-doppler256_MR(duration,voltage,sys.focalSpot*1e-3);
+% doppler256_MR(duration,voltage,sys.focalSpot*1e-3);
 
-evalin('base', 'clearvars -except sys')
-evalin('base', 'filename = ''doppler256_MR.mat''');
-evalin('base', 'VSX')
+% evalin('base', 'clearvars -except sys')
+% evalin('base', 'filename = ''doppler256_MR.mat''');
+% evalin('base', 'VSX')
 
 success = input('Sonication Successful? (0/1)>> ');
 

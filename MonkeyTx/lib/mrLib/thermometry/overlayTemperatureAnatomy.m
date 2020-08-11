@@ -8,7 +8,6 @@
 %       thermPath: Directory in which thermometry images are held
 %       thermMagPath: Directory in which magnitude images corresponding to
 %         thermometry phase images are found.
-%       nSlices: Number of slices in thermometry data
 %     @OPTIONAL FIELDS
 %       baseline: Baseline images in thermometry data set - defaults to 1
 %       focus: focus in MR coordinates. This dictates which slice is shown.
@@ -34,17 +33,11 @@
 % University of Utah
 
 function sys = overlayTemperatureAnatomy(sys,sonicationNo)
-%% Error check
-if ~isfield(sys,'nSlices')
-    error('You must provide the number of thermometry slices in the data.')
-end
-nSlices = sys.nSlices;
-
 % if no sonication number is provided, default to the last one
 if nargin < 2
     sonicationNo = length(sys.sonication);
 end
-%% Set baseline default if now baseline is provided
+%% Set baseline default if no baseline is provided
 if ~isfield(sys,'baseline')
     sys.baseline = 1;
 end
@@ -61,70 +54,25 @@ else
     az = sys.az;
 end
 
-if ~isfield(sys,'tImg')
-    [tImg,tHeader] = loadDicomDir([sys.mrPath,num2str(sys.sonication(sonicationNo).phaseSeriesNo,'%03d')]);
-    tMagImg = loadDicomDir([sys.mrPath,num2str(sys.sonication(sonicationNo).magSeriesNo,'%03d')]);
-else
-    tImg = sys.tImg;
-    tMagImg = sys.tMagImg;
-    tHeader = sys.tHeader;
-end
-    tImg(tMagImg<30) = 0;
-%% Get coordinates and reorient matrices along common axes
-[tx,tz,ty,~,tDimOrder] = findMrCoordinates(tHeader(nSlices+1:2*nSlices));
-dimOrderTx = [tDimOrder(1),tDimOrder(3),tDimOrder(2)];
-tSys = sys;
-tSys.img = tImg;
-tSys.path = [sys.mrPath,num2str(sys.sonication(sonicationNo).phaseSeriesNo,'%03d')];
-tSys.imgHeader = tHeader{nSlices+1};
-T = getTemperatureSeimens(tSys,0);
-tImg = permute(tImg,dimOrderTx);
-T = permute(T,[dimOrderTx,4]);
-
-tx = tx*1e-3;
-ty = ty*1e-3;
-tz = tz*1e-3;
-
-% Get the direction of axes correct. Note that increasing ax, ay, or az
-% means decreasing ux, uy, or uz. Therefore it is a positively oriented
-% anatomical axis that results in a reversing of the ultrasound axis.
-if tx(2)-tx(1) > 0
-    tImg = tImg(end:-1:1,:,:);
-    T = T(end:-1:1,:,:,:);
-    tx = tx(end:-1:1);
-end
-if ty(2)-ty(1) > 0 
-    tImg = tImg(:,end:-1:1,:);
-    T = T(:,end:-1:1,:,:);
-    ty = ty(end:-1:1);
-end
-if tz(2)-tz(1) > 0 
-    tImg = tImg(:,:,end:-1:1);
-    T = T(:,:,end:-1:1,:);
-    tz = tz(end:-1:1);
-end
-
-if sys.invertTx
-    warning('Inverting Tx!')
-    tImg = tImg(:,:,end:-1:1);
-    T = T(:,:,end:-1:1,:);
-    tz = tz(end:-1:1);
-
-    tImg = tImg(end:-1:1,:,:);
-    T = T(end:-1:1,:,:,:);
-    tx = tx(end:-1:1);
-end
-
+%% Temperature Data
+[T,tImg,tMagImg,tx,ty,tz,phHeader] = loadTemperatureSonication(sys,sonicationNo);
+T = denoiseThermometry(T,sys.sonication(sonicationNo).firstDynamic,sys.sonication(1).duration,phHeader);
+%% Interpolate temperature data onto anatomical data
 [tY,tX,tZ] = meshgrid(ty,tx,tz);
 [aY,aX,aZ] = meshgrid(ay,ax,az);
 
-%% Interpolate temperature data onto anatomical data
 tInterp = zeros([size(aX),size(T,4)-1]);
 for ii = 2:size(T,4)
     tInterp(:,:,:,ii-1) = interp3(tY,tX,tZ,T(:,:,:,ii),aY,aX,aZ);
 end
+keyboard
 %% Load results into sys
 sys.tInterp = tInterp;
+sys.T = T;
+sys.tx = tx;
+sys.ty = ty;
+sys.tz = tz;
+sys.tImg = tImg;
 
 %% Plot Results
 orthogonalTemperatureViews(sys,6,sonicationNo,[0,3]);

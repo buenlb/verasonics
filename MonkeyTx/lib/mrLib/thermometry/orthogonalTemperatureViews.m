@@ -16,7 +16,7 @@ if nargin < 4
 end
 %% Pull relevant variables out of sys
 focus = sys.sonication(sonicationNo).focalSpotMr*1e-3;
-focalRadius = 5e-3;
+focalRadius = 2.5e-3;
 
 ax = sys.ax;
 ay = sys.ay;
@@ -35,7 +35,7 @@ tInterp(isnan(tInterp)) = 0;
 % Coronal
 h = figure;
 sp2 = subplot(231);
-overlayImages2(squeeze(aImg(:,fY,:)).',squeeze(tInterp(:,fY,:,dynamic)).',[],tWindow,ax,az,sp2,0.8);
+overlayImages2(squeeze(aImg(:,fY,:)).',squeeze(tInterp(:,fY,:,dynamic)).',[],tWindow,sys.ux,sys.uz,sp2,0.8);
 xlabel('x')
 ylabel('z')
 title('Coronal')
@@ -43,7 +43,7 @@ makeFigureBig(h);
 
 % Sagital
 sp3 = subplot(232);
-overlayImages2(squeeze(aImg(fX,:,:)).',squeeze(tInterp(fX,:,:,dynamic)).',[],tWindow,ay,az,sp3,0.8);
+overlayImages2(squeeze(aImg(fX,:,:)).',squeeze(tInterp(fX,:,:,dynamic)).',[],tWindow,sys.uy,sys.uz,sp3,0.8);
 xlabel('y')
 ylabel('z')
 title('Sagital')
@@ -51,7 +51,7 @@ makeFigureBig(h);
 
 % Axial
 sp1 = subplot(233);
-overlayImages2(aImg(:,:,fZ),squeeze(tInterp(:,:,fZ,dynamic)),[],tWindow,ay,ax,sp1,0.8);
+overlayImages2(aImg(:,:,fZ),squeeze(tInterp(:,:,fZ,dynamic)),[],tWindow,sys.uy,sys.ux,sp1,0.8);
 xlabel('y')
 ylabel('x')
 title('Axial')
@@ -72,15 +72,15 @@ aSag = squeeze(double(aImg(fX,:,:)));
 aCor = squeeze(double(aImg(:,fY,:)));
 aAx = squeeze(double(aImg(:,:,fZ)));
 
-overlayImages2(aCor.',roiCor.',[],[0.1,1],ax,az,sp4,1);
+overlayImages2(aCor.',roiCor.',[],[0.1,1],sys.ux,sys.uz,sp4,1);
 makeFigureBig(h);
 
 sp5 = subplot(235);
-overlayImages2(aSag.',roiSag.',[],[0.1,1],ay,az,sp5,1);
+overlayImages2(aSag.',roiSag.',[],[0.1,1],sys.uy,sys.uz,sp5,1);
 makeFigureBig(h);
 
 sp6 = subplot(236);
-overlayImages2(aAx,roiAx,[],[0.1,1],ay,ax,sp6,1);
+overlayImages2(aAx,roiAx,[],[0.1,1],sys.uy,sys.ux,sp6,1);
 makeFigureBig(h);
 set(h,'position',[1          41        1920         963])
 

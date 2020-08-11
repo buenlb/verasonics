@@ -48,34 +48,38 @@
 
 clear all; close all; clc;
 %% Setup
+verasonicsDir = 'C:\Users\Taylor\Documents\Projects\txLocCovid\verasonics\';
 % Add relevant paths to give access to library functions
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib')
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\griddedImage')
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\placementVerification')
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\MATFILES\')
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\setupScripts\')
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\lib')
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\mrLib\thermometry\')
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\mrLib\transducerLocalization\');
+addpath([verasonicsDir, 'MonkeyTx\lib'])
+addpath([verasonicsDir, 'MonkeyTx\lib\griddedImage'])
+addpath([verasonicsDir, 'MonkeyTx\lib\placementVerification'])
+addpath([verasonicsDir, 'MonkeyTx\MATFILES\'])
+addpath([verasonicsDir, 'MonkeyTx\setupScripts\'])
+addpath([verasonicsDir, 'lib'])
+addpath([verasonicsDir, 'MonkeyTx\lib\mrLib\thermometry\'])
+addpath([verasonicsDir, 'MonkeyTx\lib\mrLib\transducerLocalization\']);
 
 % Establish file names for storing results 
 goldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRLogs\goldStandard_testCoupling.mat';
-logFile ='C:\Users\Verasonics\Desktop\Taylor\Data\MRLogs\20200629\MR_experiment_afterDegassAndSuccessfulSpot.mat';
+logFile ='C:\Users\Taylor\Documents\Data\MR\Thermometry\phantom_20200623\createdPostScan.mat';
 couplingFile = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRLogs\20200629\afterFlipAndDegass_inMR.mat';
 
 sys.logFile = logFile;
 sys.goldStandard = goldStandard;
 sys.couplingFile = couplingFile;
-sys.mrPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRImages\20200629\';
-sys.aSeriesNo = 50;
+sys.mrPath = 'C:\Users\Taylor\Documents\Data\MR\Thermometry\Phantom_20200629\images\20200629\';
+% sys.mrPath = 'C:\Users\Taylor\Documents\Data\MR\Thermometry\phantom_20200623\images\';
+sys.aSeriesNo = 52;
 sys.invertTx = 1;
-sys.incomingDcms = 'C:\Users\Verasonics\Desktop\Taylor\Data\MrImages\IncomingDicoms\';
+sys.incomingDcms = 'C:\Users\Taylor\Documents\Data\MR\Thermometry\phantom_20200623\incomingImages\';
 return
 %% Check Coupling
-save('tmp.mat','sys');
-testArrayPlacement(sys.goldStandard,sys.couplingFile);
-load('tmp.mat');
-delete('tmp.mat');
+if ~exist(sys.couplingFile,'file')
+    save('tmp.mat','sys');
+    testArrayPlacement(sys.goldStandard,sys.couplingFile);
+    load('tmp.mat');
+    delete('tmp.mat');
+end
 return
 %% Localize Transducer
 if exist(sys.logFile,'file')
@@ -92,9 +96,9 @@ sys = selectFocus(sys);
 save(sys.logFile,'sys');
 
 %% Sonicate
-sys = mrSonication(sys,10,1.6);
+sys = mrSonication(sys,10,15);
 
-% Overlay result
+%% Overlay result
 sys.nSlices = 8;
 sys = overlayTemperatureAnatomy(sys);
 sys = rmfield(sys,'tImg');
