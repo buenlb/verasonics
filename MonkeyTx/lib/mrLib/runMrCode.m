@@ -48,7 +48,9 @@
 
 clear all; close all; clc;
 %% Setup
+verasonicsDir = 'C:\Users\Taylor\Documents\Projects\txLocCovid\verasonics\';
 % Add relevant paths to give access to library functions
+
 addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib')
 addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\griddedImage')
 addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\placementVerification')
@@ -62,19 +64,23 @@ goldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRLogs\goldStandard_test
 logFile ='C:\Users\Verasonics\Desktop\Taylor\Data\tmp\test.mat';
 couplingFile = 'C:\Users\Verasonics\Desktop\Taylor\Data\tmp\Gauss_20200710_1125.mat';
 
+
 sys.logFile = logFile;
 sys.goldStandard = goldStandard;
 sys.couplingFile = couplingFile;
-sys.mrPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRImages\20200629\';
-sys.aSeriesNo = 50;
+sys.mrPath = 'C:\Users\Taylor\Documents\Data\MR\Thermometry\Phantom_20200629\images\20200629\';
+% sys.mrPath = 'C:\Users\Taylor\Documents\Data\MR\Thermometry\phantom_20200623\images\';
+sys.aSeriesNo = 52;
 sys.invertTx = 1;
-sys.incomingDcms = 'C:\Users\Verasonics\Desktop\Taylor\Data\MrImages\IncomingDicoms\';
+sys.incomingDcms = 'C:\Users\Taylor\Documents\Data\MR\Thermometry\phantom_20200623\incomingImages\';
 return
 %% Check Coupling
-save('tmp.mat','sys');
-testArrayPlacement(sys.goldStandard,sys.couplingFile);
-load('tmp.mat');
-delete('tmp.mat');
+if ~exist(sys.couplingFile,'file')
+    save('tmp.mat','sys');
+    testArrayPlacement(sys.goldStandard,sys.couplingFile);
+    load('tmp.mat');
+    delete('tmp.mat');
+end
 return
 %% Localize Transducer
 if exist(sys.logFile,'file')
@@ -101,3 +107,4 @@ if isfield(sys.sonication(end),'phaseSeriesNo')
     sys = rmfield(sys,'tHeader');
     sys = rmfield(sys,'tInterp');
 end
+

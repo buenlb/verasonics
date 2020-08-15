@@ -1,5 +1,6 @@
 function overlayImages2(gImg,cImg,gWindow,cWindow,xData,yData,ax,transparency,map)
 %% Process Inputs
+defaultMap = 'winter';
 if nargin < 3
     gWindow = [min(gImg(:)),max(gImg(:))];
     cWindow = [min(cImg(:)),max(cImg(:))];
@@ -8,7 +9,7 @@ if nargin < 3
     figure;
     ax = gca;
     transparency = 0.5;
-    map = 'hot';
+    map = defaultMap;
 elseif nargin < 4
     cWindow = [min(cImg(:)),max(cImg(:))];
     xData = 1:size(gImg,2);
@@ -16,33 +17,37 @@ elseif nargin < 4
     figure;
     ax = gca;
     transparency = 0.5;
-    map = 'hot';
+    map = defaultMap;
 elseif nargin < 5
     xData = 1:size(gImg,2);
     yData = 1:size(gImg,1);
     figure;
     ax = gca;
     transparency = 0.5;
-    map = 'hot';
+    map = defaultMap;
 elseif nargin < 6
     error('If you specify xData you must also specify yData')
 elseif nargin < 7
     figure;
     ax = gca;
     transparency = 0.5;
-    map = 'hot';
+    map = defaultMap;
 elseif nargin < 8
     transparency = 0.5;
-    map = 'hot';
+    map = defaultMap;
 elseif nargin < 9
-    map = 'hot';
+    map = defaultMap;
+end
+
+if isempty(cWindow)
+    cWindow = [min(cImg(:)), max(cImg(:))];
 end
 
 %% Gray Image
 axis(ax);
-imshow(gImg,gWindow,'xData',xData,'yData',yData);
+imshow(gImg,gWindow,'xData',xData,'yData',yData,'parent',ax);
 axis('equal')
-hold on
+hold(ax,'on')
 
 %% Color Image
 h = figure;
@@ -51,7 +56,7 @@ close(h);
 m = length(cmap);
 index = fix((cImg-min(cWindow))/(max(cWindow)-min(cWindow))*m)+1;
 rgb = ind2rgb(index,cmap);
-tPlot = imshow(rgb,'xData',xData,'yData',yData);
+tPlot = imshow(rgb,'xData',xData,'yData',yData,'parent',ax);
 axis('equal')
 
 %% Transparency

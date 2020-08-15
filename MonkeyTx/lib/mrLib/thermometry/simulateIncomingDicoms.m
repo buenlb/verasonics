@@ -1,10 +1,10 @@
 % Move sorted dicoms to a folder that simulates their arrival from MR
 % scanner
 
-phasePath = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRLogs\20200623\phantom_20200623\s000049 seg_EPI3D_HIFU2_ETL5_TR25_TE13_10s_15V_10foot_11right_60pos\';
-magPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRLogs\20200623\phantom_20200623\s000048 seg_EPI3D_HIFU2_ETL5_TR25_TE13_10s_15V_10foot_11right_60pos\';
+phasePath = 'C:\Users\Taylor\Documents\Data\MR\Thermometry\phantom_20200623\s000049 seg_EPI3D_HIFU2_ETL5_TR25_TE13_10s_15V_10foot_11right_60pos\';
+magPath = 'C:\Users\Taylor\Documents\Data\MR\Thermometry\phantom_20200623\s000048 seg_EPI3D_HIFU2_ETL5_TR25_TE13_10s_15V_10foot_11right_60pos\';
 
-incomingDcms = 'C:\Users\Verasonics\Desktop\Taylor\Data\MrImages\IncomingDicoms\';
+incomingDcms = 'C:\Users\Taylor\Documents\Data\MR\Thermometry\phantom_20200623\incomingImages\';
 
 mgImgs = dir([magPath,'*.dcm']);
 phImgs = dir([phasePath,'*.dcm']);
