@@ -40,6 +40,7 @@ Resource.Parameters.numRcvChannels = 256; % change to 64 for Vantage 64 or 64LE
 Resource.Parameters.connector = 0; % trans. connector to use (V256).
 Resource.Parameters.speedOfSound = 1490; % speed of sound in m/sec
 Resource.Parameters.verbose = 3;
+Resource.Parameters.phases = phases;
 % Resource.Parameters.simulateMode = 1;
 
 %% Set up longer pulses
@@ -96,21 +97,11 @@ end
 TX(1).waveform = 1; % use 1st TW structure.
 TX(1).focus = 0;
 TX(1).Apod = ones(1,256);
-badElements = load('C:\Users\Verasonics\Downloads\elementsOff.mat');
-TX(1).Apod(badElements.unconnected) = 0;
+% badElements = load('C:\Users\Verasonics\Downloads\elementsOff.mat');
+% TX(1).Apod(badElements.unconnected) = 0;
 
-xTx = Trans.ElementPos(:,1);
-yTx = Trans.ElementPos(:,2);
-zTx = Trans.ElementPos(:,3);
-
-elements.x = xTx*1e-3;
-elements.y = yTx*1e-3;
-elements.z = zTx*1e-3;
-            
-elements = steerArray(elements,focus,frequency);
-delays = [elements.t]';
 % delays = zeros(size(delays));
-TX(1).Delay = delays;
+TX(1).Delay = phases{1};
 
 for ii = 2:length(nCycles)
     TX(ii) = TX(1);
@@ -124,15 +115,8 @@ TGC(1).Waveform = computeTGCWaveform(TGC);
 
 %% External Function
 Process(1).classname = 'External';
-Process(1).method = 'closeVSX';
+Process(1).method = 'waitForServer';
 Process(1).Parameters = {'srcbuffer','receive',... % name of buffer to process.
-'srcbufnum',1,...
-'srcframenum',1,...
-'dstbuffer','none'};
-
-Process(2).classname = 'External';
-Process(2).method = 'waitForUser';
-Process(2).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'srcbufnum',1,...
 'srcframenum',1,...
 'dstbuffer','none'};
@@ -152,49 +136,49 @@ SeqControl(nsc).argument = 5;
 SeqControl(nsc).condition = 'immediate';
 nsc = nsc + 1;
 
-Event(n).info = 'Wait until freeze is pushed in order to sync with MR';
+Event(n).info = 'Get instruction from task server';
+serverEvent = n;
 Event(n).tx = 0;
 Event(n).rcv = 0;
 Event(n).recon = 0;
-Event(n).process = 2;
+Event(n).process = 1;
+Event(n).seqControl = 0;
+n = n+1;
+
+Event(n).info = 'Sync with visual task';
+Event(n).tx = 0;
+Event(n).rcv = 0;
+Event(n).recon = 0;
+Event(n).process = 0;
 Event(n).seqControl = nsc; % set TPC profile command.
 SeqControl(nsc).command = 'sync';
 nsc = nsc+1;
 n = n+1;
 
-for ii = 1:length(nCycles)
-    % Specify sequence events.
-    Event(n).info = 'Sonicate.';
-    Event(n).tx = ii; % use 1st TX structure.
-    Event(n).rcv = 0; % no receive
-    Event(n).recon = 0; % no reconstruction.
-    Event(n).process = 0; % no processing
-    if ii == 1
-        Event(n).seqControl = [nsc];
-        
-%         SeqControl(nsc).command = 'timeToNextAcq';
-%         SeqControl(nsc).argument = T*maxCycles;
-%         nscTime2Aq = nsc;
-%         nsc = nsc + 1;
-        
-        SeqControl(nsc).command = 'triggerOut';
-        nscTrig = nsc;
-        nsc = nsc + 1;
-    else
-        Event(n).seqControl = [nscTrig];
-    end
-    n = n+1;
-end
-
-Event(n).info = 'Close VSX.';
-Event(n).tx = 0; % use 1st TX structure.
-Event(n).rcv = 0; % use 1st Rcv structure.
+Event(n).info = 'Sonicate.';
+Event(n).tx = 1; % use 1st TX structure.
+Event(n).rcv = 0; % no receive
 Event(n).recon = 0; % no reconstruction.
-Event(n).process = 1; % call function to close
-Event(n).seqControl = nsc;
+Event(n).process = 0; % no processing
+Event(n).seqControl = [nsc];
+    SeqControl(nsc).command = 'triggerIn';
+    SeqControl(nsc).condition = 'Trigger_1_Falling';
+    SeqControl(nsc).argument = 1;
+    nsc = nsc + 1;
+n = n+1;
 
-SeqControl(nsc).command = 'sync';
-        SeqControl(nsc).argument = duration*1e6;
+Event(n).info = 'Return to beginning';
+Event(n).tx = 0; % use 1st TX structure.
+Event(n).rcv = 0; % no receive
+Event(n).recon = 0; % no reconstruction.
+Event(n).process = 0; % no processing
+Event(n).seqControl = [nsc];
+    SeqControl(nsc).command = 'jump';
+    SeqControl(nsc).argument = serverEvent;
+    SeqControl(nsc).condition = 'exitAfterJump';
+    nsc = nsc + 1;
+n = n+1;
+
 % Save all the structures to a .mat file.
 scriptName = mfilename('fullpath');
 svName = matFileName(scriptName);

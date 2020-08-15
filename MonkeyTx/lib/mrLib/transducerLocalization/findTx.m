@@ -17,7 +17,7 @@ function [txCenter,theta] = findTx(img,res,x0)
 %% Fiducial characteristics (locations relative to center of transducer)
 xDist = (169/2)*1e-3;
 yDist = (35/2)*1e-3;
-zDist = 9.03e-3;
+zDist = 9.4e-3;
 
 %% Get template
 fd = createFiducialTemplate(xDist,yDist,zDist,res,'vitE');

@@ -86,11 +86,24 @@ for ii = 1:length(blocks)
         end
     end
     
-    curS = interp3(Ye,Xe,Ze,sExpanded,Yar,Xar,Zar,'spline',0);
+    curS = interp3(Ye,Xe,Ze,sExpanded,Yar,Xar,Zar,'nearest',0);
     sArray = sArray + curS;
     
     nElements(curS~=0) = nElements(curS~=0)+1;
-
+    
+%     curS(isnan(curS)) = 0;
+%     figure(99)
+%     subplot(311)
+%     plot(t,s,'-');
+%     title(['YLoc = ', num2str(centerElement(2))])
+%     subplot(312)
+%     imshow(squeeze(sExpanded(1,:,:)),[])
+%     subplot(313)
+%     [~,tmpIdx] = min(abs(Yar(:)));
+%     [~,tmpIdx,~] = ind2sub(size(Yar),tmpIdx);
+%     imshow(squeeze(squeeze(curS(:,tmpIdx,:))),[])
+%     set(figure(99),'Position',[962   162   958   954]);
+%     keyboard
 end
 % Account for voxels that have signal from multiple elements
 sArray = sArray./nElements;

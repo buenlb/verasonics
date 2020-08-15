@@ -86,7 +86,7 @@ end
 
 % Initial voltage
 TPC(1).hv = initialV;
-TPC(1).highVoltageLimit = 33;
+TPC(1).highVoltageLimit = 15;
 
 %% Receive
 % Buffers

@@ -4,18 +4,26 @@
 % 
 % @INPUTS
 %   plotGeometry: flag that turns on plots of the results
+%   sn: Transducer serial number. The two transducers from Doppler are
+%       numbered a little bit differently and this has to be accounted for
+%       in the geometry that is returned
 % 
 % @OUTPUTS
 %   xE: Euclidian x location of each element in m
 %   yE: Euclidian y location of each element in m
 %   zE: Euclidian z location of each element in m
 
-function [Trans,xE,yE,zE,corners] = transducerGeometry(plotGeometry)
+function [Trans,xE,yE,zE,corners] = transducerGeometry(plotGeometry,sn)
 r = 65; % Radius of curvature
 h = 4.2*(8-1)-0.2; % y dimension length
 nX = 32; % Number of elements in the long dimension
 nY = 8; % Number of elements in the short dimension
 d = 4; % element length in mm
+
+if ~exist('sn','var')
+    warning('You did not provide a serial number. Assuming JAB800')
+    sn = 'JAB800';
+end
 
 curvedDistance = (32-1)*4.2-0.2; % Distance spanned by elements along the x dimension
 theta1 = (curvedDistance/(2*pi*r))*pi; % Angle subtended by half of the array.
@@ -26,15 +34,17 @@ lambda = c/f; % Wavelength in mm
 th = linspace(-theta1,theta1,nX);
 x = r*sin(th);
 z = -r*cos(th)+r;
-if nY > 1
-    y = linspace(-h/2,h/2,nY);
-else
-    y = 0;
+switch sn
+    case 'JAB800'
+        y = linspace(h/2,-h/2,nY);
+    case 'IHG989'
+        y = linspace(-h/2,h/2,nY);
+    otherwise
+        error('You must specify a serial number!')
 end
-
 idx = 1;
 for ii = 1:nX
-    for jj = nY:-1:1
+    for jj = 1:1:nY
         X(idx) = x(ii);
         Y(idx) = y(jj);
         Z(idx) = z(ii);
@@ -96,7 +106,7 @@ directivity = cos(th);
 Trans = struct('name','custom','frequency',f/1e6,'type',2,'units','mm',...
     'numelements',nX*nY,'ElementPos',elementPositions,'ElementSens',directivity,...
     'connType',1,'spacing',3.2/lambda,'maxHighVoltage',10, 'Connector',(1:256)',...
-    'impedance',100);
+    'impedance',150);
 
 % Some notes:
 % - This allows the system to set the Tx BW by default. This will effect

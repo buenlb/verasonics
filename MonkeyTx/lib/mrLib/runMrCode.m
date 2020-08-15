@@ -57,11 +57,10 @@ addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\setupScript
 addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\lib')
 addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\mrLib\thermometry\')
 addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\mrLib\transducerLocalization\');
-
 % Establish file names for storing results 
 goldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRLogs\goldStandard_testCoupling.mat';
-logFile ='C:\Users\Verasonics\Desktop\Taylor\Data\MRLogs\20200629\MR_experiment_afterDegassAndSuccessfulSpot.mat';
-couplingFile = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRLogs\20200629\afterFlipAndDegass_inMR.mat';
+logFile ='C:\Users\Verasonics\Desktop\Taylor\Data\tmp\test.mat';
+couplingFile = 'C:\Users\Verasonics\Desktop\Taylor\Data\tmp\Gauss_20200710_1125.mat';
 
 sys.logFile = logFile;
 sys.goldStandard = goldStandard;
@@ -92,12 +91,13 @@ sys = selectFocus(sys);
 save(sys.logFile,'sys');
 
 %% Sonicate
-sys = mrSonication(sys,10,1.6);
-
-% Overlay result
-sys.nSlices = 8;
-sys = overlayTemperatureAnatomy(sys);
-sys = rmfield(sys,'tImg');
-sys = rmfield(sys,'tHeader');
-sys = rmfield(sys,'tInterp');
+sys = mrSonication(sys,20,1.6);
 save(sys.logFile,'sys');
+% Overlay result
+if isfield(sys.sonication(end),'phaseSeriesNo')
+    sys.nSlices = 8;
+    sys = overlayTemperatureAnatomy(sys);
+    sys = rmfield(sys,'tImg');
+    sys = rmfield(sys,'tHeader');
+    sys = rmfield(sys,'tInterp');
+end
