@@ -1,4 +1,6 @@
 function initializeSkullRotation(RData)
+alpha = 5;
+
 Resource = evalin('base','Resource');
 if Resource.Parameters.firstAngle
     disp('here')
@@ -15,7 +17,7 @@ if Resource.Parameters.firstAngle
     pos = getPositionerSettings(lib);
 
     angles = Resource.Parameters.angles;
-    movePositionerAbs(lib,pos.THETA.Axis,angles(1));
+    movePositionerAbs(lib,pos.THETA.Axis, -angles(1) * alpha);
 
     Resource.Parameters.firstAngle = 0;
     assignin('base','Resource',Resource);

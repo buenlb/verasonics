@@ -50,7 +50,11 @@ clear all; close all; clc;
 %% Setup
 verasonicsDir = 'C:\Users\Taylor\Documents\Projects\txLocCovid\verasonics\';
 % Add relevant paths to give access to library functions
+<<<<<<< Updated upstream
 
+=======
+<<<<<<< HEAD
+>>>>>>> Stashed changes
 addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib')
 addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\griddedImage')
 addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\placementVerification')
@@ -63,6 +67,21 @@ addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\mrLib\t
 goldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRLogs\goldStandard_testCoupling.mat';
 logFile ='C:\Users\Verasonics\Desktop\Taylor\Data\tmp\test.mat';
 couplingFile = 'C:\Users\Verasonics\Desktop\Taylor\Data\tmp\Gauss_20200710_1125.mat';
+=======
+addpath([verasonicsDir, 'MonkeyTx\lib'])
+addpath([verasonicsDir, 'MonkeyTx\lib\griddedImage'])
+addpath([verasonicsDir, 'MonkeyTx\lib\placementVerification'])
+addpath([verasonicsDir, 'MonkeyTx\MATFILES\'])
+addpath([verasonicsDir, 'MonkeyTx\setupScripts\'])
+addpath([verasonicsDir, 'lib'])
+addpath([verasonicsDir, 'MonkeyTx\lib\mrLib\thermometry\'])
+addpath([verasonicsDir, 'MonkeyTx\lib\mrLib\transducerLocalization\']);
+
+% Establish file names for storing results 
+goldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRLogs\goldStandard_testCoupling.mat';
+logFile ='C:\Users\Taylor\Documents\Data\MR\Thermometry\phantom_20200623\createdPostScan.mat';
+couplingFile = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRLogs\20200629\afterFlipAndDegass_inMR.mat';
+>>>>>>> 82cab77cb3add267610fdfaec9d4e6f26244190c
 
 
 sys.logFile = logFile;
@@ -97,6 +116,7 @@ sys = selectFocus(sys);
 save(sys.logFile,'sys');
 
 %% Sonicate
+<<<<<<< HEAD
 sys = mrSonication(sys,20,1.6);
 save(sys.logFile,'sys');
 % Overlay result
@@ -107,4 +127,18 @@ if isfield(sys.sonication(end),'phaseSeriesNo')
     sys = rmfield(sys,'tHeader');
     sys = rmfield(sys,'tInterp');
 end
+<<<<<<< Updated upstream
 
+=======
+=======
+sys = mrSonication(sys,10,15);
+
+%% Overlay result
+sys.nSlices = 8;
+sys = overlayTemperatureAnatomy(sys);
+sys = rmfield(sys,'tImg');
+sys = rmfield(sys,'tHeader');
+sys = rmfield(sys,'tInterp');
+save(sys.logFile,'sys');
+>>>>>>> 82cab77cb3add267610fdfaec9d4e6f26244190c
+>>>>>>> Stashed changes

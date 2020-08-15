@@ -34,7 +34,7 @@ Grid.parameters = 'Negative Peak Voltage';
 Grid.recordWaveforms = 0; %                                       [boolean]
 
 % Transducer Parameters
-Tx.frequency = 0.27; % Frequency in MHz
+Tx.frequency = 0.65; % Frequency in MHz
 Tx.diameter = 64; % aperture diameter                            [mm]
 Tx.focalLength = 63.2; % Focal length (use 0 if Tx is unfocused)     [mm]
 Tx.serial = '021';
