@@ -60,7 +60,8 @@ for ii = 1:length(blocks)
         %% Ask the user to select a template for signal detection
         figure(1)
         plot(d,s)
-        goodS = input('Satisfactory Signal? (0/1) >>');
+%         goodS = input('Satisfactory Signal? (0/1) >>');
+        goodS = 1;
         if goodS
             [x,~] = ginput(2);
             tmplt = s;

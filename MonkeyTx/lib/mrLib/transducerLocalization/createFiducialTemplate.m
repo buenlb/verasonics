@@ -95,10 +95,10 @@ end
 %% Parse input
 if nargin < 6
     theta = [0,0];
-    szImg = [ceil(2*xDist/res(1)+2*size(ind,1)),ceil(2*yDist/res(2))+2*size(ind,2)+round(abs(sin(theta(1))*xDist)/res(2)),2*size(ind,3)+ceil(zDist/res(3))];
+    szImg = [ceil(2*xDist/res(1)+2*size(ind,1)),ceil(2*yDist/res(2))+2*size(ind,2)+round(abs(sin(theta(1))*xDist)/res(2)),2*size(ind,3)+2*ceil(zDist/res(3))];
     txCenter = ceil(szImg/2)+1;
 elseif nargin == 6
-    szImg = [ceil(2*xDist/res(1)+2*size(ind,1)),ceil(2*yDist/res(2))+2*size(ind,2)+2*round(abs(sin(theta(1))*xDist)/res(2)),2*size(ind,3)+ceil(zDist/res(3))];
+    szImg = [ceil(2*xDist/res(1)+2*size(ind,1)),ceil(2*yDist/res(2))+2*size(ind,2)+2*round(abs(sin(theta(1))*xDist)/res(2)),2*size(ind,3)+2*ceil(zDist/res(3))];
     txCenter = ceil(szImg/2)+1;
 elseif nargin < 8
     error('If txCenter is specified then size must also be specified')

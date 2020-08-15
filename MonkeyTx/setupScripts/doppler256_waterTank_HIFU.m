@@ -256,4 +256,5 @@ SeqControl(nsc).argument = 3;
 scriptName = mfilename('fullpath');
 svName = matFileName(scriptName);
 save(svName);
-keyboard
+VSX
+% keyboard

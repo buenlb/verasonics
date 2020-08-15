@@ -2,7 +2,7 @@ function img = drawTransducer(imgSz,txLoc,txAngle,res,sgnZ)
 %% Fiducial characteristics (locations relative to center of transducer)
 xDist = (169/2)*1e-3;
 yDist = (35/2)*1e-3;
-zDist = 9.03e-3;
+zDist = 9.4e-3;
 
 %% Create image
 [~,img] = createFiducialTemplate(xDist,yDist,zDist,res,'vitE',txAngle,txLoc,imgSz);

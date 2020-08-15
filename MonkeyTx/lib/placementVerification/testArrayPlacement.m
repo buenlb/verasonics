@@ -56,32 +56,76 @@ end
 %% Show image for summary
 [img,xa,ya,za] = griddedElementBModeImage(gImg.RcvData,gImg.Receive,gs.powerRange,0);
 gsImg = griddedElementBModeImage(gsRaw.griddedElRaw.RcvData,gsRaw.griddedElRaw.Receive,gs.powerRange,0);
+img(isnan(img)) = 0;
+gsImg(isnan(gsImg)) = 0;
 elements = transducerGeometry(0);
 h = figure;
-set(h,'position',[2          42        1362        1074]);
+set(h,'position',[2          42        958        954]);
+h2 = figure;
+set(h2,'position',[962          42        958        954]);
+
+% These images were produced with grids of elements so there won't be data
+% at the edges of the array. Find where we expect data.
 yFrames = unique(elements.ElementPos(:,2));
-width = 0.25;
-height = 0.5;
-for ii = 1:8
-    if ii < 5
-        sp(ii) = axes('Position',[(ii-1)*width,0.5,width,height]);
+yFrames = yFrames(2:end-1);
+width = 0.30;
+height = 0.45;
+
+for ii = 1:6
+    figure(h2)
+    if ii < 4
+        sp2(ii) = axes('Position',[(ii-1)*width,0.5,width,height]);
     else
-        sp(ii) = axes('Position',[(ii-5)*width,0,width,height]);
+        sp2(ii) = axes('Position',[(ii-4)*width,0,width,height]);
     end
     [~,yIdx] = min(abs(ya-yFrames(ii)));
-    imshowpair(squeeze(img(:,yIdx+1,:)),squeeze(gsImg(:,yIdx+1,:)));%,...
+    imshowpair(squeeze(img(:,yIdx,:)),squeeze(gsImg(:,yIdx,:)));%,...
+%         'falsecolor','xdata',za,'ydata',xa);
+    axis('equal')
+    axis('tight')
+    makeFigureBig(h2);
+    
+    figure(h)
+    if ii < 4
+        sp(ii) = axes('Position',[(ii-1)*width,0.5,width,height]);
+    else
+        sp(ii) = axes('Position',[(ii-4)*width,0,width,height]);
+    end
+    [~,yIdx] = min(abs(ya-yFrames(ii)));
+    imshow(squeeze(img(:,yIdx,:)),[]);%,...
 %         'falsecolor','xdata',za,'ydata',xa);
     axis('equal')
     axis('tight')
     makeFigureBig(h);
 end
+axes(sp(2));
+tt = title('Current Data');
+tt.Position = [15.5,0.0105,0];
 
+axes(sp2(2));
+tt = title('Overlay of Current Data to Gold Standard Data');
+tt.Position = [15.5,0.0105,0];
+
+axes(sp(1))
+tt = title('Front');
+set(tt,'FontSize',12)
+
+axes(sp2(1))
+tt = title('Front');
+set(tt,'FontSize',12)
+
+axes(sp(6))
+tt = title('Back');
+set(tt,'FontSize',12)
+
+axes(sp2(6))
+tt = title('Back');
+set(tt,'FontSize',12)
 %% Gridded Element Results (distance)
 RcvData = gImg.RcvData;
 Receive = gImg.Receive;
 Resource = gImg.Resource;
 Trans = transducerGeometry(0);
-
 t = 1e6*(0:(Receive(1).endSample-1))/(Receive(1).ADCRate*1e6/Receive(1).decimFactor);
 d = t*1.492/2+Receive(1).startDepth*Resource.Parameters.speedOfSound/(Trans.frequency*1e6)*1e3;
 
@@ -141,7 +185,7 @@ if showPlots
     gsReceive = gsRaw.griddedElRaw.Receive;
     gsRcvData = gsRaw.griddedElRaw.RcvData;
     h = figure;
-    set(h,'position',[1364          42         556        1074])
+    set(h,'position',[1364          162         556        954])
     for ii = 1:length(idx)
         curIdx = blIdx(idx(ii));
         s = zeros(size(RcvData(Receive(ii).startSample:Receive(ii).endSample,blocks{1}(1))));
@@ -212,27 +256,48 @@ for ii = 1:size(RcvData,2)
     totPower = totPower+power(ii);
     totS = totS+s;
 end
-idx = find(abs(power-gs.power)./gs.power > 0.5);
+
+%% Visualize total power on each element
+xTx = Trans.ElementPos(:,1);
+yTx = Trans.ElementPos(:,2);
+zTx = Trans.ElementPos(:,3);
+
+plotElementValues(xTx,yTx,zTx,power/max(power))
+title('Total power on individual elements')
+h = gcf;
+h.Position = [h.Position(1)-h.Position(3)/2,h.Position(2:4)];
+
+plotElementValues(xTx,yTx,zTx,100*(power-gs.power)./gs.power,'jet')
+title('Percent difference')
+h = gcf;
+h.Position = [h.Position(1)-h.Position(3)/2,h.Position(2)-h.Position(4),h.Position(3:4)];
+%% Plot total power and mark whether each element is above or below the gold standard
+idx1 = find(abs(power-gs.power)./gs.power > 0.2 & power > gs.power);
+idx2 = find(abs(power-gs.power)./gs.power > 0.2 & power < gs.power);
+idx = [idx1,idx2];
 
 if ~isempty(idx)
     h = figure;
     plot(d,totS/max(gs.totS),'--',d,gs.totS/max(gs.totS),'-','linewidth',2)
     ax = gca;
-    plotElementLocation(ax,[gs.powerRange(2)-5,0.75],...
-            5,idx)
-    axis([gs.powerRange',0,1])
-    showPlots = questdlg(['Current Power/GS Power: ', num2str(totPower/gs.totPower,2),...
-        '. ', num2str(length(idx)), ' elements exceed threshold! Show Offending Elements?']);
     xlabel('Distance (mm)')
     ylabel('Voltage (a.u.)')
+    axis([gs.powerRange',0,1])
     makeFigureBig(h);
+    plotElementLocation2(ax,[1/3,1/6],[idx1,-idx2])
+    h.Position = [h.Position(1)+h.Position(3)/2,h.Position(2:4)];
+    drawnow
+    
+    showPlots = questdlg(['Current Power/GS Power: ', num2str(totPower/gs.totPower,2),...
+        '. ', num2str(length(idx)), ' elements exceed threshold! Show Offending Elements?']);
+    
     if strcmp('Yes',showPlots)
         gsReceive = gsRaw.singleElRaw.Receive;
         gsRcvData = gsRaw.singleElRaw.RcvData;
         for ii = 1:ceil(length(idx)/5)
             h = figure(99);
             clf;
-            set(h,'position',[2          42         958        1074])
+            set(h,'position',[2          42        958        954])
             for jj = 1:5
                 if (ii-1)*5+jj <= length(idx)
                     curIdx = idx((ii-1)*5+jj);
@@ -247,8 +312,7 @@ if ~isempty(idx)
                 subplot(5,1,jj)
                 plot(d,s,'--',d,sGs,'-','linewidth',2)
                 ax = gca;
-                plotElementLocation(ax,[60,2e4],...
-                    10,curIdx)
+                plotElementLocation2(ax,[1/2,1/2],sign(power-gs.power)*curIdx)
                 xlabel('distance (mm)')
                 ylabel('a.u.')
                 title(['Element ', num2str(curIdx)])
@@ -261,4 +325,4 @@ if ~isempty(idx)
     end
 end
 posError = skDist-gs.skDist;
-couplingErr = power-gs.power;
+couplingErr = (power-gs.power)./gs.power;

@@ -63,5 +63,6 @@ elements.phi = phi;
 elements.t = t;
 
 if plotPhaseResults
-    plotPhases(elements.x*1e3,elements.y*1e3,elements.z*1e3,t);
+    plotElementValues(elements.x*1e3,elements.y*1e3,elements.z*1e3,t,'jet');
+    title('Phase (N Cycles Delayed)');
 end
