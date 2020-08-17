@@ -1,6 +1,6 @@
 function setExcitationNoScope_exVivoScan2(RData)
 
-alpha = 5; %rotation increment; use 5 or 10; do also use negative angles to change direction
+alpha = 10; %rotation increment; use 5 or 10; do also use negative angles to change direction
 
 disp('setExcitationNoScope')
 Resource = evalin('base','Resource');

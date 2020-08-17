@@ -48,26 +48,9 @@
 
 clear all; close all; clc;
 %% Setup
-verasonicsDir = 'C:\Users\Taylor\Documents\Projects\txLocCovid\verasonics\';
+verasonicsDir = 'C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\';
 % Add relevant paths to give access to library functions
-<<<<<<< Updated upstream
 
-=======
-<<<<<<< HEAD
->>>>>>> Stashed changes
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib')
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\griddedImage')
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\placementVerification')
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\MATFILES\')
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\setupScripts\')
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\lib')
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\mrLib\thermometry\')
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\mrLib\transducerLocalization\');
-% Establish file names for storing results 
-goldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRLogs\goldStandard_testCoupling.mat';
-logFile ='C:\Users\Verasonics\Desktop\Taylor\Data\tmp\test.mat';
-couplingFile = 'C:\Users\Verasonics\Desktop\Taylor\Data\tmp\Gauss_20200710_1125.mat';
-=======
 addpath([verasonicsDir, 'MonkeyTx\lib'])
 addpath([verasonicsDir, 'MonkeyTx\lib\griddedImage'])
 addpath([verasonicsDir, 'MonkeyTx\lib\placementVerification'])
@@ -79,19 +62,16 @@ addpath([verasonicsDir, 'MonkeyTx\lib\mrLib\transducerLocalization\']);
 
 % Establish file names for storing results 
 goldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRLogs\goldStandard_testCoupling.mat';
-logFile ='C:\Users\Taylor\Documents\Data\MR\Thermometry\phantom_20200623\createdPostScan.mat';
-couplingFile = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRLogs\20200629\afterFlipAndDegass_inMR.mat';
->>>>>>> 82cab77cb3add267610fdfaec9d4e6f26244190c
-
-
+logFile ='C:\Users\Verasonics\Desktop\Taylor\Data\MRLogs\test.mat';
+couplingFile = 'C:\Users\Verasonics\Desktop\Taylor\Data\tmp\tmpTest.mat';
 sys.logFile = logFile;
 sys.goldStandard = goldStandard;
 sys.couplingFile = couplingFile;
-sys.mrPath = 'C:\Users\Taylor\Documents\Data\MR\Thermometry\Phantom_20200629\images\20200629\';
-% sys.mrPath = 'C:\Users\Taylor\Documents\Data\MR\Thermometry\phantom_20200623\images\';
-sys.aSeriesNo = 52;
+% sys.mrPath = 'C:\Users\Taylor\Documents\Data\MR\Thermometry\Phantom_20200629\images\20200629\';
+sys.mrPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRImages\20200629\';
+sys.aSeriesNo = 50;
 sys.invertTx = 1;
-sys.incomingDcms = 'C:\Users\Taylor\Documents\Data\MR\Thermometry\phantom_20200623\incomingImages\';
+sys.incomingDcms = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRImages\IncomingDicoms\';
 return
 %% Check Coupling
 if ~exist(sys.couplingFile,'file')
@@ -116,29 +96,15 @@ sys = selectFocus(sys);
 save(sys.logFile,'sys');
 
 %% Sonicate
-<<<<<<< HEAD
-sys = mrSonication(sys,20,1.6);
+sys = mrSonication(sys,10,1.6);
 save(sys.logFile,'sys');
 % Overlay result
 if isfield(sys.sonication(end),'phaseSeriesNo')
     sys.nSlices = 8;
     sys = overlayTemperatureAnatomy(sys);
+    sys.dynamic = sys.sonication(end).firstDynamic;
+    waitfor(orthogonalTemperatureViewsGui(sys));
     sys = rmfield(sys,'tImg');
     sys = rmfield(sys,'tHeader');
     sys = rmfield(sys,'tInterp');
 end
-<<<<<<< Updated upstream
-
-=======
-=======
-sys = mrSonication(sys,10,15);
-
-%% Overlay result
-sys.nSlices = 8;
-sys = overlayTemperatureAnatomy(sys);
-sys = rmfield(sys,'tImg');
-sys = rmfield(sys,'tHeader');
-sys = rmfield(sys,'tInterp');
-save(sys.logFile,'sys');
->>>>>>> 82cab77cb3add267610fdfaec9d4e6f26244190c
->>>>>>> Stashed changes

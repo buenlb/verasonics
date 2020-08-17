@@ -1,6 +1,6 @@
 function rotateSkull2(RData)
 
-alpha = 5; %rotation increment; use 5 or 10; do also use negative angles to change direction
+alpha = 10; %rotation increment; use 5 or 10; do also use negative angles to change direction
 
 Resource = evalin('base','Resource');
 Receive = evalin('base','Receive');
@@ -10,7 +10,7 @@ pos = getPositionerSettings(lib);
 
 angles = Resource.Parameters.angles;
 
-idx = find(abs(pos.THETA.loc - angles) < 1e-6);
+idx = find(abs(-pos.THETA.loc/alpha - angles) < 1e-6);
 
 save([Resource.Parameters.saveDir, Resource.Parameters.saveName, 'angle', num2str(idx),'.mat'],...
     'RData','Resource','Receive')

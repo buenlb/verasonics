@@ -32,10 +32,13 @@
 % Taylor Webb
 % University of Utah
 
-function sys = overlayTemperatureAnatomy(sys,sonicationNo)
+function sys = overlayTemperatureAnatomy(sys,sonicationNo,plotResults)
 % if no sonication number is provided, default to the last one
 if nargin < 2
     sonicationNo = length(sys.sonication);
+    plotResults = 0;
+elseif nargin < 3
+    plotResults = 0;
 end
 %% Set baseline default if no baseline is provided
 if ~isfield(sys,'baseline')
@@ -65,7 +68,6 @@ tInterp = zeros([size(aX),size(T,4)-1]);
 for ii = 2:size(T,4)
     tInterp(:,:,:,ii-1) = interp3(tY,tX,tZ,T(:,:,:,ii),aY,aX,aZ);
 end
-keyboard
 %% Load results into sys
 sys.tInterp = tInterp;
 sys.T = T;
@@ -75,4 +77,6 @@ sys.tz = tz;
 sys.tImg = tImg;
 
 %% Plot Results
-orthogonalTemperatureViews(sys,6,sonicationNo,[0,3]);
+if plotResults
+    orthogonalTemperatureViews(sys,6,sonicationNo,[0,3]);
+end

@@ -13,16 +13,18 @@ RECEIVECH = 1; %Tom's adapter
 NA = 64; % Desired number of averages
 frequency = 0.5; % Center frequency of the transducer in MHz
 samplingRate = 50; % Sampling rate of the pulse/echo data in MHz (max: 50)
-saveDir = 'D:\exVivo180Scans\iterative_throughtransmit\skull12522\pos_5\0.5MHz_noskull\'; % Name of the directory in which to save results
+saveDir = 'D:\exVivo180Scans\iterative_throughtransmit\skull12522\pos_10\0.5MHz_RxinsteadofH'; % Name of the directory in which to save results
 % saveDir = 'C:\Users\Verasonics\Desktop\Taylor\Data\exVivo180Scans\20200213\changeVoltageTest2\'; % Name of the directory in which to save results
 saveName = 'skull'; % Base name to use when saving files. 
-alpha = 5;
+alpha = 10;
 %angles = 0 : 1 : 360/alpha; % Vector specifying the angles to use.
-angles = -1 : 1 : 20/alpha; % Vector specifying the angles to use.
+%angles = -1 : 1 : 20/alpha; % Vector specifying the angles to use.
+angles = -1 : 1 : 360/alpha; % Vector specifying the angles to use.
+%angles = -1 : 1;
 %angles = 0; % Vector specifying the angles to use.
 %excitations = [0,0,1,1,2,2,3,3,4,4,5,5]; % Vector specifying transmits. 0 is an impulse of lambda/8 width. A number smaller than 3 indicates the number of half cycles. 3, 4, 5 generate a chirp with 3, 4, 5 segments.
-excitations = [0]; % Vector specifying transmits. 0 is an impulse of lambda/8 width. A number smaller than 3 indicates the number of half cycles. 3, 4, 5 generate a chirp with 3, 4, 5 segments.
-
+excitations = [1,2,3,4]; % Vector specifying transmits. 0 is an impulse of lambda/8 width. Else the number of half cycles.
+%excitations = [2]; % Vector specifying transmits. 0 is an impulse of lambda/8 width. Else the number of half cycles.
 %excitationVoltages = 7 * [1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2]; %lower voltages for templates
 %excitationVoltages = [32, 96, 32, 96, 32, 96, 32, 96, 32, 96, 32, 96];
 switch frequency
@@ -34,7 +36,8 @@ switch frequency
 %        excitationVoltages = [20, 39, 20, 39, 20, 20, 20, 20, 14, 14, 14, 14]; %0.5 MHz
         excitationVoltages = [20, 40, 20, 40, 20, 40, 20, 40, 20, 40, 20, 40]; %0.5 MHz
 end
-excitationVoltages = 20;
+excitationVoltages = [40 40 20 20];
+%excitationVoltages = [40];
 
 %% Specify system parameters
 ioChannel = TRANSMITCH; 
@@ -188,14 +191,14 @@ Process(2).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'dstbuffer','none'};
 
 Process(3).classname = 'External';
-Process(3).method = 'initializeSkullRotation';
+Process(3).method = 'initializeSkullRotation2';
 Process(3).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'srcbufnum',1,...
 'srcframenum',1,...
 'dstbuffer','none'};
 
 Process(4).classname = 'External';
-Process(4).method = 'saveRfDataNoScope_exVivoScan';
+Process(4).method = 'saveRfDataNoScope_exVivoScan2';
 Process(4).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'srcbufnum',1,...
 'srcframenum',1,...

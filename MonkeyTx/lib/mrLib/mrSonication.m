@@ -18,11 +18,11 @@ elseif sys.focalSpot(3)<30
     warning('Z component of focus is less than 30 mm')
 end
 evalin('base','save(''tmpBeforeSonication'',''sys'')')
-% doppler256_MR(duration,voltage,sys.focalSpot*1e-3);
+doppler256_MR(duration,voltage,sys.focalSpot*1e-3);
 
-% evalin('base', 'clearvars -except sys')
-% evalin('base', 'filename = ''doppler256_MR.mat''');
-% evalin('base', 'VSX')
+evalin('base', 'clearvars -except sys')
+evalin('base', 'filename = ''doppler256_MR.mat''');
+evalin('base', 'VSX')
 
 success = input('Sonication Successful? (0/1)>> ');
 
@@ -34,15 +34,32 @@ if success
     sonication.focalSpotIdx = sys.focalSpotIdx;
     sonication.focalSpotMr = sys.focalSpotMr;
     sonication.description = input('Describe this sonication: ', 's');
+    sonication.firstDynamic = input('What dynamic is the first dynamic?');
     userInput = input('Press enter when files are ready (input s to skip).','s');
     if ~strcmp(userInput, 's')
-        [img,header,seriesNo] = sortDicoms(sys.incomingDcms, sys.mrPath);
-        sonication.phaseSeriesNo = seriesNo(2);
-        sonication.magSeriesNo = seriesNo(1);
-        
-        sys.tImg = img{2};
-        sys.tMagImg = img{1};
-        sys.tHeader = header(2,:);
+        try
+            [img,header,seriesNo] = sortDicoms(sys.incomingDcms, sys.mrPath);
+            sonication.phaseSeriesNo = seriesNo(2);
+            sonication.magSeriesNo = seriesNo(1);
+
+            sys.tImg = img{2};
+            sys.tMagImg = img{1};
+            sys.tHeader = header(2,:);
+        catch
+            % Just in case this errors - save the sonication
+            sonication.phaseSeriesNo = 0;
+            sonication.magSeriesNo = 0;
+            if ~isfield(sys,'sonication')
+                sys.sonication = sonication;
+            else
+                sys.sonication(end+1) = sonication;
+            end
+            warning('Failure to load dicoms!')
+            return
+        end
+    else
+        sonication.phaseSeriesNo = 0;
+        sonication.magSeriesNo = 0;
     end
 
     if ~isfield(sys,'sonication')

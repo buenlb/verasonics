@@ -8,7 +8,9 @@
 % Taylor Webb
 % Fall 2019
 
-function saveRfDataNoScope_exVivoScan(RData)
+function saveRfDataNoScope_exVivoScan2(RData)
+
+alpha = 10; %rotation increment; use 5 or 10; do also use negative angles to change direction
 
 
 Resource = evalin('base','Resource'); 
@@ -27,7 +29,7 @@ end
 lib = 'soniq';
 pos = getPositionerSettings(lib);
 angles = Resource.Parameters.angles;
-angleIdx = find(abs(pos.THETA.loc - angles) < 1e-6);
+angleIdx = find(abs(-pos.THETA.loc/alpha - angles) < 1e-6);
 
 % Create a save name based on the transmit, average, and angle number of
 % the current file.
