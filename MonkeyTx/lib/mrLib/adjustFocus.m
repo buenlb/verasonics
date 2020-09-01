@@ -1,3 +1,22 @@
+% sys = adjustFocus(sys,newFocus,focalType)
+% Adjust the focus in the struct sys with the focus given in the variable
+% new Focus.
+% 
+% @INPUTS
+%   sys: System struct
+%   newFocus: Desired focal spot as an index, in MR coords, or in US
+%       coords. If in US or MR coords it should be mm
+%   focalType: Specifies whether new focus is an index into the MR matrix
+%       (focalType = 'idx') or is specified in MR coordinates (focalType =
+%       'MR') or US coordinates (focalType = 'US')
+% 
+% @OUTPUTS
+%   sys: System struct with all relevant fields updated to the new focus
+% 
+% Taylor Webb
+% University of Utah
+% August 2020
+
 function sys = adjustFocus(sys,newFocus,focalType)
 x = sys.ux;
 y = sys.uy;

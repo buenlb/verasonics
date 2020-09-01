@@ -61,18 +61,18 @@ addpath([verasonicsDir, 'MonkeyTx\lib\mrLib\thermometry\'])
 addpath([verasonicsDir, 'MonkeyTx\lib\mrLib\transducerLocalization\']);
 
 % Establish file names for storing results 
-goldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRLogs\goldStandard_testCoupling.mat';
-logFile ='C:\Users\Verasonics\Desktop\Taylor\Data\MRLogs\test.mat';
-couplingFile = 'C:\Users\Verasonics\Desktop\Taylor\Data\tmp\tmpTest.mat';
+goldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\MrExperiments\20200827\firstInMrGoldStandard.mat';
+logFile ='C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20200827\Logs\dryRun_flippedUpright.mat';
+couplingFile = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20200827\UltrasoundData\inScanner_1.8_txOffset7_upRight_1242.mat';
 sys.logFile = logFile;
 sys.goldStandard = goldStandard;
 sys.couplingFile = couplingFile;
 % sys.mrPath = 'C:\Users\Taylor\Documents\Data\MR\Thermometry\Phantom_20200629\images\20200629\';
-sys.mrPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRImages\20200629\';
-sys.aSeriesNo = 50;
-sys.invertTx = 1;
-sys.incomingDcms = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRImages\IncomingDicoms\';
-return
+sys.mrPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20200827\Images\';
+sys.aSeriesNo = 41;
+sys.invertTx = 0;
+sys.incomingDcms = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\IncomingImages\';
+
 %% Check Coupling
 if ~exist(sys.couplingFile,'file')
     save('tmp.mat','sys');

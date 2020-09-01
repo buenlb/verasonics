@@ -22,6 +22,7 @@ powerRange = x;
 close all;
 
 power = zeros(1,256);
+mxPower = power;
 totPower = 0;
 totS = zeros(size(RcvData(Receive(ii).startSample:Receive(ii).endSample,ii)));
 for ii = 1:256
@@ -31,6 +32,7 @@ for ii = 1:256
     s(d>powerRange(2)) = 0;
 %     s = s.^2;
     power(ii) = sum(s);
+    mxPower(ii) = max(s);
     totPower = totPower+power(ii);
     totS = totS+s;
 end
@@ -83,4 +85,4 @@ if ~exist('tmplt','var')
     error('You didn''t select a signal template!');
 end
 %% Save results in specified location.
-save(svName,'skDist','power','powerRange','fName','elementsOfInterest','totPower','totS','tmplt');
+save(svName,'skDist','power','mxPower','powerRange','fName','elementsOfInterest','totPower','totS','tmplt');

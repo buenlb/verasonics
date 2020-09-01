@@ -242,6 +242,7 @@ RcvData = sImg.RcvData;
 t = 1e6*(0:(Receive(1).endSample-1))/(Receive(1).ADCRate*1e6/Receive(1).decimFactor);
 d = t*1.492/2+Receive(1).startDepth*Resource.Parameters.speedOfSound/(Trans.frequency*1e6)*1e3;
 power = zeros(1,256);
+mxPower = power;
 totPower = 0;
 totS = zeros(size(RcvData(Receive(ii).startSample:Receive(ii).endSample,ii)));
 rawTraces = zeros(256,length(d));
@@ -253,11 +254,13 @@ for ii = 1:size(RcvData,2)
     s(d > gs.powerRange(2)) = 0;
 %     s = s.^2;
     power(ii) = sum(s);
+    mxPower(ii) = max(s);
     totPower = totPower+power(ii);
     totS = totS+s;
 end
 
 %% Visualize total power on each element
+pctThreshold = 0.2;
 xTx = Trans.ElementPos(:,1);
 yTx = Trans.ElementPos(:,2);
 zTx = Trans.ElementPos(:,3);
@@ -267,13 +270,76 @@ title('Total power on individual elements')
 h = gcf;
 h.Position = [h.Position(1)-h.Position(3)/2,h.Position(2:4)];
 
-plotElementValues(xTx,yTx,zTx,100*(power-gs.power)./gs.power,'jet')
+pctPower = 100*(power-gs.power)./gs.power;
+pctPower(pctPower<-pctThreshold*100) = -pctThreshold*100;
+pctPower(pctPower>pctThreshold*100) = pctThreshold*100;
+plotElementValues(xTx,yTx,zTx,pctPower,'jet')
 title('Percent difference')
 h = gcf;
 h.Position = [h.Position(1)-h.Position(3)/2,h.Position(2)-h.Position(4),h.Position(3:4)];
+
+%% Visualize trouble spots by showing where power differences exceed different thresholds
+curThreshold = 0.1;
+idx1 = find(abs(power-gs.power)./gs.power > curThreshold & power > gs.power & abs(mxPower-gs.mxPower)./gs.mxPower > curThreshold);
+idx2 = find(abs(power-gs.power)./gs.power > curThreshold & power < gs.power & abs(mxPower-gs.mxPower)./gs.mxPower > curThreshold);
+
+h = figure;
+h.Position = [h.Position(1)+h.Position(3)/2,h.Position(2)-h.Position(4),h.Position(3:4)];
+subplot(221)
+ax = gca;
+ax2 = plotElementLocation2(ax,[1,1/2],[idx1,-idx2],4);
+axes(ax);
+ax.Visible = 'off';
+ax.Title.Visible = 'on';
+title([num2str(curThreshold*100), '% Threshold'])
+makeFigureBig(h,14,14);
+axes(ax2)
+
+curThreshold = 0.2;
+idx1 = find(abs(power-gs.power)./gs.power > curThreshold & power > gs.power & abs(mxPower-gs.mxPower)./gs.mxPower > curThreshold);
+idx2 = find(abs(power-gs.power)./gs.power > curThreshold & power < gs.power & abs(mxPower-gs.mxPower)./gs.mxPower > curThreshold);
+
+subplot(222)
+ax = gca;
+ax2 = plotElementLocation2(ax,[1,1/2],[idx1,-idx2],4);
+axes(ax);
+ax.Visible = 'off';
+ax.Title.Visible = 'on';
+title([num2str(curThreshold*100), '% Threshold'])
+makeFigureBig(h,14,14);
+axes(ax2)
+
+curThreshold = 0.35;
+idx1 = find(abs(power-gs.power)./gs.power > curThreshold & power > gs.power & abs(mxPower-gs.mxPower)./gs.mxPower > curThreshold);
+idx2 = find(abs(power-gs.power)./gs.power > curThreshold & power < gs.power & abs(mxPower-gs.mxPower)./gs.mxPower > curThreshold);
+
+subplot(223)
+ax = gca;
+ax2 = plotElementLocation2(ax,[1,1/2],[idx1,-idx2],4);
+axes(ax);
+ax.Visible = 'off';
+ax.Title.Visible = 'on';
+title([num2str(curThreshold*100), '% Threshold'])
+makeFigureBig(h,14,14);
+axes(ax2)
+
+curThreshold = 0.5;
+idx1 = find(abs(power-gs.power)./gs.power > curThreshold & power > gs.power & abs(mxPower-gs.mxPower)./gs.mxPower > curThreshold);
+idx2 = find(abs(power-gs.power)./gs.power > curThreshold & power < gs.power & abs(mxPower-gs.mxPower)./gs.mxPower > curThreshold);
+
+subplot(224)
+ax = gca;
+ax2 = plotElementLocation2(ax,[1,1/2],[idx1,-idx2],4);
+axes(ax);
+ax.Visible = 'off';
+ax.Title.Visible = 'on';
+title([num2str(curThreshold*100), '% Threshold'])
+makeFigureBig(h,14,14);
+axes(ax2)
+
 %% Plot total power and mark whether each element is above or below the gold standard
-idx1 = find(abs(power-gs.power)./gs.power > 0.2 & power > gs.power);
-idx2 = find(abs(power-gs.power)./gs.power > 0.2 & power < gs.power);
+idx1 = find(abs(power-gs.power)./gs.power > pctThreshold & power > gs.power & abs(mxPower-gs.mxPower)./gs.mxPower > pctThreshold);
+idx2 = find(abs(power-gs.power)./gs.power > pctThreshold & power < gs.power & abs(mxPower-gs.mxPower)./gs.mxPower > pctThreshold);
 idx = [idx1,idx2];
 
 if ~isempty(idx)
@@ -282,7 +348,7 @@ if ~isempty(idx)
     ax = gca;
     xlabel('Distance (mm)')
     ylabel('Voltage (a.u.)')
-    axis([gs.powerRange',0,1])
+    axis([gs.powerRange',0,max([1,max(totS/max(gs.totS))])])
     makeFigureBig(h);
     plotElementLocation2(ax,[1/3,1/6],[idx1,-idx2])
     h.Position = [h.Position(1)+h.Position(3)/2,h.Position(2:4)];
@@ -312,7 +378,7 @@ if ~isempty(idx)
                 subplot(5,1,jj)
                 plot(d,s,'--',d,sGs,'-','linewidth',2)
                 ax = gca;
-                plotElementLocation2(ax,[1/2,1/2],sign(power-gs.power)*curIdx)
+                plotElementLocation2(ax,[1/2,1/2],sign(power(curIdx)-gs.power(curIdx))*curIdx)
                 xlabel('distance (mm)')
                 ylabel('a.u.')
                 title(['Element ', num2str(curIdx)])
