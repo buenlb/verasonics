@@ -1,6 +1,6 @@
 clear all; clc;
 
-HIFU =0;
+HIFU = 0;
 %% Set up path locations
 srcDirectory = setPaths();
 
@@ -8,8 +8,9 @@ srcDirectory = setPaths();
 txSn = 'JAB800'; % Serial number of transducer - necessary for correct geometry
 % txSn = 'IHG989';
 frequency = 0.65; % Frequency in MHz
-focus = [-11,0,65]; % Focal location in mm. x is the long axis of the array, y is the short axis, and z is depth
-nCycles = 5; % number of cycles with which to excite Tx (can integer multiples of 1/2)
+focus = [0,0,65]; % Focal location in mm. x is the long axis of the array, y is the short axis, and z is depth
+% nCycles = 10*frequency*1e6; % number of cycles with which to excite Tx (can integer multiples of 1/2)
+nCycles = 5;
 ioChannel = 8;
 NA = 1;
 
@@ -22,6 +23,39 @@ Resource.Parameters.numAvg = NA;
 Resource.Parameters.ioChannel = ioChannel;
 % Resource.Parameters.simulateMode = 1; % runs script in simulate mode
 
+if HIFU
+    %% Set up longer pulses
+    % HIFU % The Resource.HIFU.externalHifuPwr parameter must be specified in a
+    % script using TPC Profile 5 with the HIFU option, to inform the system
+    % that the script intends to use the external power supply.  This is also
+    % to make sure that the script was explicitly written by the user for this
+    % purpose, and to prevent a script intended only for an Extended Transmit
+    % system from accidentally being used on the HIFU system.
+    Resource.HIFU.externalHifuPwr = 1;
+
+    % HIFU % The string value assigned to the variable below is used to set the
+    % port ID for the virtual serial port used to control the external HIFU
+    % power supply.  The port ID was assigned by the Windows OS when it
+    % installed the SW driver for the power supply; the value assigned here may
+    % have to be modified to match.  To find the value to use, open the Windows
+    % Device Manager and select the serial/ COM port heading.  If you have
+    % installed the driver for the external power supply, and it is connected
+    % to the host computer and turned on, you should see it listed along with
+    % the COM port ID number assigned to it.
+    Resource.HIFU.extPwrComPortID = 'COM5';
+
+    Resource.HIFU.psType = 'QPX600DP'; % set to 'QPX600DP' to match supply being used
+
+    TPC(5).hv = 1.6;
+    maxV = 60;
+    maxCycles = 12*frequency*1e6;
+    for ii = 1:5
+        TPC(ii).maxHighVoltage = maxV;
+        TPC(ii).highVoltageLimit = maxV;
+        TPC(ii).xmitDuration = maxCycles;
+    end
+end
+
 % Specify media points
 Media.MP(1,:) = [0,0,100,1.0]; % [x, y, z, reflectivity]
 
@@ -29,7 +63,7 @@ Media.MP(1,:) = [0,0,100,1.0]; % [x, y, z, reflectivity]
 Trans = transducerGeometry(0);
 Trans.frequency = frequency;
 Trans.units = 'mm';
-Trans.maxHighVoltage = 5;
+Trans.maxHighVoltage = 80;
 
 TPC(1).hv = 1.6;
 
@@ -50,7 +84,8 @@ TW(1).Parameters = [Trans.frequency,0.67,nCycles*2,1]; % A, B, C, D
 % Specify TX structure array.
 TX(1).waveform = 1; % use 1st TW structure.
 TX(1).focus = 0;
-TX(1).Apod = ones(1,256);
+TX(1).Apod = zeros(1,256);
+TX(1).Apod(8) = 1;
 % TX(1).Apod(ioChannel) = 1;
 
 
@@ -119,15 +154,15 @@ Event(n).tx = 1; % use 1st TX structure.
 Event(n).rcv = 1; % use 1st Rcv structure.
 Event(n).recon = 0; % no reconstruction.
 Event(n).process = 0; % no processing
-Event(n).seqControl = [nsc,nsc+1,nsc+2];
-SeqControl(nsc).command = 'timeToNextAcq';
-if HIFU
-    SeqControl(nsc).argument = 1e6;
-else
+if ~HIFU
+    Event(n).seqControl = [nsc,nsc+1,nsc+2];
+    SeqControl(nsc).command = 'timeToNextAcq';
     SeqControl(nsc).argument = 1e5;
+    nscTime2Aq = nsc;
+    nsc = nsc + 1;
+else
+    Event(n).seqControl = [nsc,nsc+1];
 end
-nscTime2Aq = nsc;
-nsc = nsc + 1;
 SeqControl(nsc).command = 'transferToHost';
 nsc = nsc + 1;
 SeqControl(nsc).command = 'triggerOut';
@@ -139,62 +174,67 @@ for ii = 2:NA
     nsc
     Event(n) = Event(1);
     Event(n).rcv = ii;
-    Event(n).seqControl = [nscTime2Aq,nscTrig,nsc];
+    if ~HIFU
+        Event(n).seqControl = [nscTime2Aq,nscTrig,nsc];
+    else
+        Event(n).seqControl = [nscTrig,nsc];
+    end
      SeqControl(nsc).command = 'transferToHost';
 	   nsc = nsc + 1;
     n = n+1;
 end
 
-Event(n).info = 'Call external Processing function.';
-Event(n).tx = 0; % no TX structure.
-Event(n).rcv = 0; % no Rcv structure.
-Event(n).recon = 0; % no reconstruction.
-Event(n).process = 1; % no processing function
-Event(n).seqControl = [nsc,nsc+1,nsc+2]; % wait for data to be transferred
-SeqControl(nsc).command = 'waitForTransferComplete';
-if NA > 1
-    SeqControl(nsc).argument = nsc-1;
-else
-    SeqControl(nsc).argument = nsc-2;
-end
-SeqControl(nsc+1).command = 'markTransferProcessed';
-if NA > 1
-    SeqControl(nsc+1).argument = nsc-1;
-else
-    SeqControl(nsc+1).argument = nsc-2;
-end
-SeqControl(nsc+2).command = 'sync';
-SeqControl(nsc+2).argument = 25e6;
-nsc = nsc+3;
-n = n+1;
+if ~HIFU
+    Event(n).info = 'Call external Processing function.';
+    Event(n).tx = 0; % no TX structure.
+    Event(n).rcv = 0; % no Rcv structure.
+    Event(n).recon = 0; % no reconstruction.
+    Event(n).process = 1; % no processing function
+    Event(n).seqControl = [nsc,nsc+1,nsc+2]; % wait for data to be transferred
+    SeqControl(nsc).command = 'waitForTransferComplete';
+    if NA > 1
+        SeqControl(nsc).argument = nsc-1;
+    else
+        SeqControl(nsc).argument = nsc-2;
+    end
+    SeqControl(nsc+1).command = 'markTransferProcessed';
+    if NA > 1
+        SeqControl(nsc+1).argument = nsc-1;
+    else
+        SeqControl(nsc+1).argument = nsc-2;
+    end
+    SeqControl(nsc+2).command = 'sync';
+    SeqControl(nsc+2).argument = 25e6;
+    nsc = nsc+3;
+    n = n+1;
 
-% Event(n).info = 'Call external Processing function.';
-% Event(n).tx = 0; % no TX structure.
-% Event(n).rcv = 0; % no Rcv structure.
-% Event(n).recon = 0; % no reconstruction.
-% Event(n).process = 1; % call processing function
-% Event(n).seqControl = [3,4,5]; % wait for data to be transferred
-% SeqControl(3).command = 'waitForTransferComplete';
-% SeqControl(3).argument = 2;
-% SeqControl(4).command = 'markTransferProcessed';
-% SeqControl(4).argument = 2;
-% SeqControl(5).command = 'sync';
-% n = n+1;
+    % Event(n).info = 'Call external Processing function.';
+    % Event(n).tx = 0; % no TX structure.
+    % Event(n).rcv = 0; % no Rcv structure.
+    % Event(n).recon = 0; % no reconstruction.
+    % Event(n).process = 1; % call processing function
+    % Event(n).seqControl = [3,4,5]; % wait for data to be transferred
+    % SeqControl(3).command = 'waitForTransferComplete';
+    % SeqControl(3).argument = 2;
+    % SeqControl(4).command = 'markTransferProcessed';
+    % SeqControl(4).argument = 2;
+    % SeqControl(5).command = 'sync';
+    % n = n+1;
 
-Event(n).info = 'Jump back to Event 1.';
-Event(n).tx = 0; % no TX structure.
-Event(n).rcv = 0; % no Rcv structure.
-Event(n).recon = 0; % no reconstruction.
-Event(n).process = 0; % no processing
-Event(n).seqControl = nsc; % jump back to Event 1
-SeqControl(nsc).command = 'jump';
-SeqControl(nsc).condition = 'exitAfterJump';
-if HIFU
-    SeqControl(nsc).argument = 2;
-else
-    SeqControl(nsc).argument = 1;
+    Event(n).info = 'Jump back to Event 1.';
+    Event(n).tx = 0; % no TX structure.
+    Event(n).rcv = 0; % no Rcv structure.
+    Event(n).recon = 0; % no reconstruction.
+    Event(n).process = 0; % no processing
+    Event(n).seqControl = nsc; % jump back to Event 1
+    SeqControl(nsc).command = 'jump';
+    SeqControl(nsc).condition = 'exitAfterJump';
+    if HIFU
+        SeqControl(nsc).argument = 2;
+    else
+        SeqControl(nsc).argument = 1;
+    end
 end
-
 % Save all the structures to a .mat file.
 scriptName = mfilename('fullpath');
 svName = matFileName(scriptName);

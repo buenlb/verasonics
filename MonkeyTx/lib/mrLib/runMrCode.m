@@ -61,18 +61,18 @@ addpath([verasonicsDir, 'MonkeyTx\lib\mrLib\thermometry\'])
 addpath([verasonicsDir, 'MonkeyTx\lib\mrLib\transducerLocalization\']);
 
 % Establish file names for storing results 
-goldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\MrExperiments\20200827\firstInMrGoldStandard.mat';
-logFile ='C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20200827\Logs\dryRun_flippedUpright.mat';
-couplingFile = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20200827\UltrasoundData\inScanner_1.8_txOffset7_upRight_1242.mat';
+goldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\invivo\20200814\Euler_goldStandard.mat';
+logFile ='C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20200910\Logs\Euler_20200910.mat';
+couplingFile = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20200910\UltrasoundData\Euler_20200910_inScanner_1456.mat';
 sys.logFile = logFile;
 sys.goldStandard = goldStandard;
 sys.couplingFile = couplingFile;
 % sys.mrPath = 'C:\Users\Taylor\Documents\Data\MR\Thermometry\Phantom_20200629\images\20200629\';
-sys.mrPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20200827\Images\';
-sys.aSeriesNo = 41;
+sys.mrPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20200910\Images\';
+sys.aSeriesNo = 20;
 sys.invertTx = 0;
 sys.incomingDcms = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\IncomingImages\';
-
+return
 %% Check Coupling
 if ~exist(sys.couplingFile,'file')
     save('tmp.mat','sys');
@@ -96,11 +96,11 @@ sys = selectFocus(sys);
 save(sys.logFile,'sys');
 
 %% Sonicate
-sys = mrSonication(sys,10,1.6);
+sys = mrSonication(sys,10,20);
 save(sys.logFile,'sys');
 % Overlay result
-if isfield(sys.sonication(end),'phaseSeriesNo')
-    sys.nSlices = 8;
+if isfield(sys.sonication(end),'phaseSeriesNo') & sys.sonication(end).phaseSeriesNo > 0
+    sys.nSlices = 10;
     sys = overlayTemperatureAnatomy(sys);
     sys.dynamic = sys.sonication(end).firstDynamic;
     waitfor(orthogonalTemperatureViewsGui(sys));

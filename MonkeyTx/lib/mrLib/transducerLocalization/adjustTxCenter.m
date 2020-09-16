@@ -29,4 +29,9 @@ switch type
     otherwise
         error(['Center type ', type, ' not defined.'])
 end
+
+sys.ux = sys.ux-sys.ux(sys.txCenterIdx(1));
+sys.uy = sys.uy-sys.uy(sys.txCenterIdx(2));
+sys.uz = sys.uz-sys.uz(sys.txCenterIdx(3));
+
 sys.txImg = displayTxLoc(sys);

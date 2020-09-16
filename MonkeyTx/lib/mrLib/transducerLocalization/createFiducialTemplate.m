@@ -78,7 +78,7 @@ switch fiducialShape
         % Elipsoid semi-axes in m.
         a = (7/2)*1e-3;
         b = (7/2)*1e-3;
-        c = (15.5/2)*1e-3;
+        c = (14.5/2)*1e-3;
         
         xf = -a:res(1):a;
         yf = -b:res(2):b;
@@ -122,8 +122,7 @@ xIdx = ((fid1_xIdx-floor(szFd(1)/2)):(fid1_xIdx+(ceil(szFd(1)/2))-1));
 yIdx = ((fid1_yIdx-floor(szFd(2)/2)):(fid1_yIdx+(ceil(szFd(2)/2))-1));
 zIdx = ((fid1_zIdx-floor(szFd(3)/2)):(fid1_zIdx+(ceil(szFd(3)/2))-1));
 if max(xIdx)>size(complete,1) || max(yIdx)>size(complete,2) || max(zIdx)>size(complete,3)
-    keyboard
-    error('Exceeds dimensions of complete.')
+    error('One of the fiducials fell off the edge.')
 end
 complete(xIdx,yIdx,zIdx) = fiducialShape;
 

@@ -47,6 +47,7 @@ end
 
 %% Anatomical Data
 if ~isfield(sys,'aImg')
+    disp('Reloading anatomical Image.')
     [aImg,aHeader] = loadDicomDir([sys.mrPath,num2str(sys.aSeriesNo,'%03d')]);
     [ax,ay,az,~,aDimOrder] = findMrCoordinates(aHeader);
     dimOrderTx = [aDimOrder(1),aDimOrder(3),aDimOrder(2)];
@@ -58,16 +59,19 @@ else
 end
 
 %% Temperature Data
-[T,tImg,tMagImg,tx,ty,tz,phHeader] = loadTemperatureSonication(sys,sonicationNo);
-% T = denoiseThermometry(T,sys.sonication(sonicationNo).firstDynamic,sys.sonication(1).duration,phHeader);
+[T,tImg,tMagImg,tx,ty,tz,phHeader,~,acqTime] = loadTemperatureSonication(sys,sonicationNo);
+T = denoiseThermometry(T,sys.sonication(sonicationNo).firstDynamic,sys.sonication(1).duration,phHeader);
 %% Interpolate temperature data onto anatomical data
 [tY,tX,tZ] = meshgrid(ty,tx,tz);
 [aY,aX,aZ] = meshgrid(ay,ax,az);
 
-tInterp = zeros([size(aX),size(T,4)-1]);
-for ii = 2:size(T,4)
-    tInterp(:,:,:,ii-1) = interp3(tY,tX,tZ,T(:,:,:,ii),aY,aX,aZ);
+d = waitbar(0,'Interpolating');
+tInterp = zeros([size(aX),size(T,4)]);
+for ii = 1:size(T,4)
+    tInterp(:,:,:,ii) = interp3(tY,tX,tZ,T(:,:,:,ii),aY,aX,aZ);
+    waitbar((ii)/size(T,4),d,['Interpolating... Dynamic: ', num2str(ii), ' of ', num2str(size(T,4))]);
 end
+close(d)
 %% Load results into sys
 sys.tInterp = tInterp;
 sys.T = T;
@@ -75,6 +79,8 @@ sys.tx = tx;
 sys.ty = ty;
 sys.tz = tz;
 sys.tImg = tImg;
+sys.dynamicLength = acqTime;
+sys.curSonication = sonicationNo;
 
 %% Plot Results
 if plotResults

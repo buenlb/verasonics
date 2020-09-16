@@ -42,7 +42,9 @@ end
 if isempty(cWindow)
     cWindow = [min(cImg(:)), max(cImg(:))];
 end
-
+if isempty(ax)
+    ax = gca;
+end
 %% Gray Image
 axis(ax);
 imshow(gImg,gWindow,'xData',xData,'yData',yData,'parent',ax);

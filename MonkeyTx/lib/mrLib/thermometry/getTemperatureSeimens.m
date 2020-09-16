@@ -10,23 +10,16 @@
 %          sys.path.
 %       baseline: Dynamic to use as baseline. If not set, system
 %          automatically uses the first dynamic
-%       nSlices: Number of slices - this must be set or an error is thrown.
+%   nSlices: number of thermometry slices
 %       
 % @OUTPUTS
 %   T: Estimate of temperature
-%   estTreatmentTime: Estimate of each dynamic length based on fields in
-%       the header. This allows for the plotting of temperature with time.
 % 
 % Taylor Webb
 % University of Utah
 % 
 
-function [T, estTreatmentTime] = getTemperatureSeimens(sys, PLOTRESULTS)
-%% Error checking
-if~isfield(sys,'nSlices')
-    error('You must specify the number of slices!')
-end
-nSlices = sys.nSlices;
+function T = getTemperatureSeimens(sys, nSlices, PLOTRESULTS)
 %% Load images if they haven't been loaded already
 if sys.path(end) ~= '/'
     sys.path = [sys.path, '/'];
@@ -53,32 +46,30 @@ images = dir([sys.path,'*.IMA']);
 if isempty(images)
     images = dir([sys.path,'*.dcm']);
 end
-nImageFiles = size(img,3);
-nImages = nImageFiles - nSlices*2;
+nImages = size(img,3);
 dynamics = nImages/nSlices;
-disp(['      Number of dcm images in path: ', num2str(nImageFiles), '. Number of temperature images: ', num2str(nImages), '. Number of Dymanics: ', num2str(dynamics)])
+disp(['      Number of dcm images in path: ', num2str(nImages), '. Number of temperature images: ', num2str(nImages), '. Number of Dymanics: ', num2str(dynamics)])
+
+%% Generate the baseline
+baselineImgs = (1+(baseline(1)-1)*nSlices):(nSlices+(baseline(end)-1)*nSlices);
+baselineImg = zeros(size(img,1),size(img,2),nSlices);
+for ii = 1:nSlices
+    curSlices = baselineImgs(ii):nSlices:nSlices*baseline(end);
+    baselineImg(:,:,ii) = mean(img(:,:,curSlices),3);
+end
 
 %% Find temperature
-imgIdx = nSlices+1; % For some reason the first set of slices is always blank on the data
-baselineImgs = (nSlices+1+(baseline-1)*nSlices):(nSlices+(baseline-1)*nSlices+nSlices);
-baselineImg = zeros(size(img,1),size(img,2),nSlices);
-for ii = 1:dynamics+1
-    for jj = 1:nSlices
-        if imgIdx < baseline
-            imgIdx = imgIdx+1;
-            continue
-        end        
+T = zeros(size(img,1),size(img,2),nSlices,dynamics-length(baseline));
+imgIdx = 1;
+for ii = 1:dynamics
+    for jj = 1:nSlices        
         curImg = img(:,:,imgIdx);
-        if ismember(imgIdx,baselineImgs)
-            baselineImg(:,:,jj) = curImg;
+        if ii == 1 && jj == 1
             header = dicominfo([sys.path, images(imgIdx).name]);
-            B0 = header.MagneticFieldStrength;
-            TE = header.EchoTime;
-            TR = double(header.RepetitionTime);
-            rows = double(header.Rows);
-            estTreatmentTime = TR*1e-3*rows/2*(nImages-2);
+            B0 = double(header.MagneticFieldStrength);
+            TE = double(header.EchoTime);
         else
-            T(:,:,jj,ii) = myTempDrift2(B0,baselineImg(:,:,jj),curImg,TE); %#ok<AGROW>
+            T(:,:,jj,ii) = myTempDrift2(B0,baselineImg(:,:,jj),curImg,TE);
             
             if PLOTRESULTS
                 spRows = ceil(sqrt(nSlices));

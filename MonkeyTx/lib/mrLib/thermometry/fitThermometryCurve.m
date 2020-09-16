@@ -16,7 +16,7 @@ if m < 0
     keepPoint = false;
     err = inf;
     return
-elseif rSquared < 0.5
+elseif rSquared < 0
     keepPoint = false;
     err = inf;
     return

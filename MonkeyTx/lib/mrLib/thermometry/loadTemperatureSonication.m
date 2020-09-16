@@ -1,10 +1,11 @@
-function [T,phImg,mgImg,tx,ty,tz,phHeader,mgHeader] = loadTemperatureSonication(sys,sonicationNo)
+function [T,phImg,mgImg,tx,ty,tz,phHeader,mgHeader,treatmentTime] = loadTemperatureSonication(sys,sonicationNo)
 %% Load Images
 [phImg,phHeader] = loadDicomDir([sys.mrPath,num2str(sys.sonication(sonicationNo).phaseSeriesNo,'%03d')]);
 [mgImg,mgHeader] = loadDicomDir([sys.mrPath,num2str(sys.sonication(sonicationNo).magSeriesNo,'%03d')]);
 
 phImg(mgImg<30) = 0;
 nSlices = howManySlices(phHeader);
+treatmentTime = findAcquisitionTime(phHeader);
 
 %% Put images in system coordinates
 [tx,tz,ty,~,tDimOrder] = findMrCoordinates(phHeader(nSlices+1:2*nSlices));
@@ -13,7 +14,7 @@ tSys = sys;
 tSys.img = phImg;
 tSys.path = [sys.mrPath,num2str(sys.sonication(sonicationNo).phaseSeriesNo,'%03d')];
 tSys.imgHeader = phHeader{nSlices+1};
-T = getTemperatureSeimens(tSys,0);
+T = getTemperatureSeimens(tSys,nSlices,0);
 phImg = permute(phImg,dimOrderTx);
 mgImg = permute(mgImg,dimOrderTx);
 T = permute(T,[dimOrderTx,4]);

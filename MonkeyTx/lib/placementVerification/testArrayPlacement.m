@@ -121,6 +121,7 @@ set(tt,'FontSize',12)
 axes(sp2(6))
 tt = title('Back');
 set(tt,'FontSize',12)
+keyboard
 %% Gridded Element Results (distance)
 RcvData = gImg.RcvData;
 Receive = gImg.Receive;

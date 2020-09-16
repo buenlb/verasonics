@@ -1,8 +1,8 @@
 function tmplt3d = displayTxLoc(sys)
 img = sys.aImg;
-x = sys.ax;
-y = sys.ay;
-z = sys.az;
+x = sys.ux;
+y = sys.uy;
+z = sys.uz;
 txCenter = sys.txCenterIdx;
 theta = sys.txTheta;
 res = sys.aRes;
@@ -16,14 +16,14 @@ zIdx = txCenter(3)+round(zDist/res(3));
 img2d = squeeze(img(:,:,zIdx));
 figure;
 ax = gca;
-overlayImages2(img2d',tmplt2d',[0,max(img2d(:))],[0,1],x,y,ax,0.4,'winter');
+overlayImages2(img2d',tmplt2d',[0,1/10*max(img2d(:))],[0,1],x,y,ax,0.4,'winter');
 
 yIdx = txCenter(2);
 img2d = squeeze(img(:,yIdx,:));
 tmplt2d = squeeze(tmplt3d(:,round(yIdx),:));
 figure;
 ax = gca;
-overlayImages2(img2d',tmplt2d',[0,max(img2d(:))],[0,1],x,z,ax,0.4,'winter');
+overlayImages2(img2d',tmplt2d',[0,1/10*max(img2d(:))],[0,1],x,z,ax,0.4,'winter');
 axis('equal')
 
 %% Print location in MR coordinates

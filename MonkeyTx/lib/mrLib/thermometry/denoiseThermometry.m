@@ -29,4 +29,5 @@ for ii = 1:size(T,1)
     end
     waitbar((ii+1)/size(T,1),d,['De-noising Thermometry: Row ', num2str(ii), ' of ', num2str(size(T,1))]);
 end
+close(d);
 toc

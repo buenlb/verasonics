@@ -70,9 +70,10 @@ disp(['Mean error between initial estimate and single fiducial estimate: ', num2
 theta = asin(res(1)*(fidLoc(3,1)-fidLoc(2,1))/(2*yDist)); % Estimated angle between x_tx and x_mri
 x0(1) = round(xDist/res(1)*cos(theta)+fidLoc(1,1));
 x0(2) = round(xDist/res(2)*sin(theta)+fidLoc(1,2));
-x0(3) = round(mean(fidLoc(:,3)))-round(9.03e-3/res(3));
+x0(3) = round(mean(fidLoc(:,3)))-round(zDist/res(3));
 txCenter = x0;
 return
+
 close(d);
 [~,tmplt,~,tmpltCenter] = createFiducialTemplate(xDist,yDist,zDist,res,'vitE',theta);
 
