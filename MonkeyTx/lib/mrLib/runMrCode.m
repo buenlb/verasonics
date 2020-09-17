@@ -62,8 +62,8 @@ addpath([verasonicsDir, 'MonkeyTx\lib\mrLib\transducerLocalization\']);
 
 % Establish file names for storing results 
 goldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\invivo\20200814\Euler_goldStandard.mat';
-logFile ='C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20200910\Logs\Euler_20200910.mat';
-couplingFile = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20200910\UltrasoundData\Euler_20200910_inScanner_1456.mat';
+logFile ='C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20200917\Logs\Euler_20200910.mat';
+couplingFile = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20200917\UltrasoundData\WaterTank7.mat';
 sys.logFile = logFile;
 sys.goldStandard = goldStandard;
 sys.couplingFile = couplingFile;
@@ -72,7 +72,7 @@ sys.mrPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20200910\Ima
 sys.aSeriesNo = 20;
 sys.invertTx = 0;
 sys.incomingDcms = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\IncomingImages\';
-return
+
 %% Check Coupling
 if ~exist(sys.couplingFile,'file')
     save('tmp.mat','sys');

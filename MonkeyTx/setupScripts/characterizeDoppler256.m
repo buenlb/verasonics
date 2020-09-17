@@ -11,7 +11,7 @@ frequency = 0.65; % Frequency in MHz
 focus = [0,0,65]; % Focal location in mm. x is the long axis of the array, y is the short axis, and z is depth
 % nCycles = 10*frequency*1e6; % number of cycles with which to excite Tx (can integer multiples of 1/2)
 nCycles = 5;
-ioChannel = 8;
+ioChannel = 124;
 NA = 1;
 
 % Specify system parameters
@@ -85,7 +85,7 @@ TW(1).Parameters = [Trans.frequency,0.67,nCycles*2,1]; % A, B, C, D
 TX(1).waveform = 1; % use 1st TW structure.
 TX(1).focus = 0;
 TX(1).Apod = zeros(1,256);
-TX(1).Apod(8) = 1;
+TX(1).Apod(ioChannel) = 1;
 % TX(1).Apod(ioChannel) = 1;
 
 
@@ -109,13 +109,14 @@ TGC(1).Waveform = computeTGCWaveform(TGC);
 % Specify Receive structure array -
 Receive(1).Apod = ones(1,256);
 Receive(1).startDepth = 0;
-Receive(1).endDepth = 200;
+Receive(1).endDepth = 100;
 Receive(1).TGC = 1; % Use the first TGC waveform defined above
 Receive(1).mode = 0;
 Receive(1).bufnum = 1;
 Receive(1).framenum = 1;
 Receive(1).acqNum = 1;
-Receive(1).sampleMode = 'NS200BW';
+Receive(1).sampleMode = 'custom';
+Receive(1).decimSampleRate = 13;
 Receive(1).LowPassCoef = [];
 Receive(1).InputFilter = [];
 
@@ -166,12 +167,12 @@ end
 SeqControl(nsc).command = 'transferToHost';
 nsc = nsc + 1;
 SeqControl(nsc).command = 'triggerOut';
+SeqControl(nsc).argument = 0;
 nscTrig = nsc;
 nsc = nsc + 1;
 n = n+1;
 
 for ii = 2:NA
-    nsc
     Event(n) = Event(1);
     Event(n).rcv = ii;
     if ~HIFU

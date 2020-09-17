@@ -54,8 +54,8 @@ else
 end
 
 %% Show image for summary
-[img,xa,ya,za] = griddedElementBModeImage(gImg.RcvData,gImg.Receive,gs.powerRange,0);
-gsImg = griddedElementBModeImage(gsRaw.griddedElRaw.RcvData,gsRaw.griddedElRaw.Receive,gs.powerRange,0);
+[img,xa,ya,za] = griddedElementBModeImage(gImg.RcvData,gImg.Receive);
+gsImg = griddedElementBModeImage(gsRaw.griddedElRaw.RcvData,gsRaw.griddedElRaw.Receive);
 img(isnan(img)) = 0;
 gsImg(isnan(gsImg)) = 0;
 elements = transducerGeometry(0);
@@ -92,7 +92,7 @@ for ii = 1:6
         sp(ii) = axes('Position',[(ii-4)*width,0,width,height]);
     end
     [~,yIdx] = min(abs(ya-yFrames(ii)));
-    imshow(squeeze(img(:,yIdx,:)),[]);%,...
+    imshow(squeeze(img(:,yIdx,:)),[0,1/10*max(img(:))]);%,...
 %         'falsecolor','xdata',za,'ydata',xa);
     axis('equal')
     axis('tight')
@@ -121,7 +121,6 @@ set(tt,'FontSize',12)
 axes(sp2(6))
 tt = title('Back');
 set(tt,'FontSize',12)
-keyboard
 %% Gridded Element Results (distance)
 RcvData = gImg.RcvData;
 Receive = gImg.Receive;
@@ -259,7 +258,7 @@ for ii = 1:size(RcvData,2)
     totPower = totPower+power(ii);
     totS = totS+s;
 end
-
+keyboard
 %% Visualize total power on each element
 pctThreshold = 0.2;
 xTx = Trans.ElementPos(:,1);

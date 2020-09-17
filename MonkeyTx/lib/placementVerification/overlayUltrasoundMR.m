@@ -15,4 +15,4 @@ za = za*1e-3;
 usImgInterp = interp3(YA,XA,ZA,usImg,YM,XM,ZM);
 [~,yIdx] = min(abs(sys.uy));
 overlayImages2(squeeze(sys.aImg(:,yIdx,:)).',squeeze(usImgInterp(:,yIdx,:)).',...
-    [],[1/20*max(usImgInterp(:)),max(usImgInterp(:))],sys.ux,sys.uz,[],0.8);
+    [],[0*1/20*max(usImgInterp(:)),max(usImgInterp(:))],sys.ux,sys.uz,[],0.8);
