@@ -3,7 +3,7 @@ function [T,phImg,mgImg,tx,ty,tz,phHeader,mgHeader,treatmentTime] = loadTemperat
 [phImg,phHeader] = loadDicomDir([sys.mrPath,num2str(sys.sonication(sonicationNo).phaseSeriesNo,'%03d')]);
 [mgImg,mgHeader] = loadDicomDir([sys.mrPath,num2str(sys.sonication(sonicationNo).magSeriesNo,'%03d')]);
 
-phImg(mgImg<30) = 0;
+% phImg(mgImg<30) = 0;
 nSlices = howManySlices(phHeader);
 treatmentTime = findAcquisitionTime(phHeader);
 
@@ -16,6 +16,7 @@ tSys.path = [sys.mrPath,num2str(sys.sonication(sonicationNo).phaseSeriesNo,'%03d
 tSys.imgHeader = phHeader{nSlices+1};
 T = getTemperatureSeimens(tSys,nSlices,0);
 phImg = permute(phImg,dimOrderTx);
+mgImg = mgImg(:,:,1:nSlices);
 mgImg = permute(mgImg,dimOrderTx);
 T = permute(T,[dimOrderTx,4]);
 

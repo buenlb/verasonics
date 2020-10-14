@@ -61,18 +61,19 @@ addpath([verasonicsDir, 'MonkeyTx\lib\mrLib\thermometry\'])
 addpath([verasonicsDir, 'MonkeyTx\lib\mrLib\transducerLocalization\']);
 
 % Establish file names for storing results 
-goldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\invivo\20200814\Euler_goldStandard.mat';
-logFile ='C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20200917\Logs\Euler_20200910.mat';
-couplingFile = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20200917\UltrasoundData\WaterTank7.mat';
+goldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20201001\UltrasoundData\EulerGoldStandardComparison.mat';
+exVivoGoldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\exVivoGoldStandard.mat';
+logFile ='C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20201001\Logs\Gauss.mat';
+couplingFile = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20201001\UltrasoundData\Gauss_20201001_secondOnTable_.mat';
 sys.logFile = logFile;
 sys.goldStandard = goldStandard;
 sys.couplingFile = couplingFile;
 % sys.mrPath = 'C:\Users\Taylor\Documents\Data\MR\Thermometry\Phantom_20200629\images\20200629\';
-sys.mrPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20200910\Images\';
-sys.aSeriesNo = 20;
+sys.mrPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20201001\Images\';
+sys.aSeriesNo = 8;
 sys.invertTx = 0;
 sys.incomingDcms = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\IncomingImages\';
-
+return
 %% Check Coupling
 if ~exist(sys.couplingFile,'file')
     save('tmp.mat','sys');
@@ -96,15 +97,14 @@ sys = selectFocus(sys);
 save(sys.logFile,'sys');
 
 %% Sonicate
-sys = mrSonication(sys,10,20);
+sys = mrSonication(sys,10,22);
 save(sys.logFile,'sys');
 % Overlay result
 if isfield(sys.sonication(end),'phaseSeriesNo') & sys.sonication(end).phaseSeriesNo > 0
-    sys.nSlices = 10;
-    sys = overlayTemperatureAnatomy(sys);
-    sys.dynamic = sys.sonication(end).firstDynamic;
-    waitfor(orthogonalTemperatureViewsGui(sys));
-    sys = rmfield(sys,'tImg');
-    sys = rmfield(sys,'tHeader');
-    sys = rmfield(sys,'tInterp');
+    sys = processAndDisplaySonication(sys,length(sys.sonication));
 end
+
+%% Clear up memory to save result 
+sys = rmfield(sys,'tImg');
+sys = rmfield(sys,'tHeader');
+sys = rmfield(sys,'tInterp');

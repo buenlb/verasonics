@@ -258,7 +258,6 @@ for ii = 1:size(RcvData,2)
     totPower = totPower+power(ii);
     totS = totS+s;
 end
-keyboard
 %% Visualize total power on each element
 pctThreshold = 0.2;
 xTx = Trans.ElementPos(:,1);

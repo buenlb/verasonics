@@ -29,7 +29,7 @@ end
 
 % Set up time/distance vectors corresponding to data
 t = 1e6*(0:(Receive(1).endSample-1))/(Receive(1).ADCRate*1e6/Receive(1).decimFactor);
-d = t*1.5/2;
+d = t*1.49/2;
 
 % Determine ROI based on distOfInterest
 if ~exist('distOfInterest','var')
@@ -49,7 +49,7 @@ ze = d;
 [Ye,Xe,Ze] = meshgrid(ye,xe,ze);
 
 % Set up the array coordinate system
-xa = -90:dx:90;
+xa = -70:dx:70;
 ya = -56/2:dx:56/2;
 za = 0:dx:60;
 [Ya,Xa,Za] = meshgrid(ya,xa,za);

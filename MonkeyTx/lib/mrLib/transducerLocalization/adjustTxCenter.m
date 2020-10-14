@@ -1,4 +1,4 @@
-% sys = adjustTxCenter(sys,newCenter,type)
+    % sys = adjustTxCenter(sys,newCenter,type)
 % Adjust the transducer center in the struct sys with the center given in 
 % the variable newCenter.
 % 

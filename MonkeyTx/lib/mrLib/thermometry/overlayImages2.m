@@ -1,3 +1,7 @@
+% Overlay Images 2 overlays cImg on gImg using the colormap, map, to
+% interpret the data in gImg.
+% 
+% Usage: overlayImages2(gImg,cImg,gWindow,cWindow,xData,yData,ax,transparency,map)
 function overlayImages2(gImg,cImg,gWindow,cWindow,xData,yData,ax,transparency,map)
 %% Process Inputs
 defaultMap = 'winter';
@@ -47,7 +51,7 @@ if isempty(ax)
 end
 %% Gray Image
 axis(ax);
-imshow(gImg,gWindow,'xData',xData,'yData',yData,'parent',ax);
+imshow(gImg,gWindow,'xData',xData,'yData',yData,'parent',ax,'initialMagnification','fit');
 axis('equal')
 hold(ax,'on')
 
@@ -58,7 +62,7 @@ close(h);
 m = length(cmap);
 index = fix((cImg-min(cWindow))/(max(cWindow)-min(cWindow))*m)+1;
 rgb = ind2rgb(index,cmap);
-tPlot = imshow(rgb,'xData',xData,'yData',yData,'parent',ax);
+tPlot = imshow(rgb,'xData',xData,'yData',yData,'parent',ax,'initialMagnification','fit');
 axis('equal')
 
 %% Transparency

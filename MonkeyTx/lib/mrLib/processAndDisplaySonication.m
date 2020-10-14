@@ -24,12 +24,14 @@ if nargin < 2
 elseif nargin < 3
     maxT = 2;
 end
+sys.baseline = 1:5;
+sys = adjustFocus(sys,sys.sonication(sonicationNo).focalSpot,'US');
 
 %% Interpolate
 sys = overlayTemperatureAnatomy(sys,sonicationNo);
 
 %% Convert to true color image
-sys = draw3dTempOverlay(sys,[0,maxT]);
+sys = draw3dTempOverlay(sys,[0,maxT],sys.sonication(sonicationNo).firstDynamic);
 
 %% Display result in GUI
 orthogonalTemperatureViewsGui(sys);
