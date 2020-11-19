@@ -3,6 +3,8 @@ if nargin < 2
     maxT = 2;
 end
 sys.baseline = 1:5;
+sys.dynamic = 6;
+% sys.curSonicationNo = sonicationNo;
 %% Get the MR Data and describe it
 if nargin < 3
     sonication.duration = 0;
@@ -60,5 +62,5 @@ sys.tInterp = temporal;
 sys = draw3dTempOverlay(sys,[0.5,maxT],1);
 
 %% Display result in GUI
-sys.dynamic = 0;
+sys.dynamic = 1;
 orthogonalTemperatureViewsGui(sys);

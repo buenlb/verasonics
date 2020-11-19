@@ -22,7 +22,6 @@ if destPath(end)~= '/' || destPath(end)~= '\'
 end
 
 [img,header,~,~,~,fileNames] = loadDicomDir(sourcePath);
-
 for ii = 1:length(header)
     curSeries = header{ii}.SeriesNumber;
     if ii == 1

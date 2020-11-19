@@ -1,6 +1,9 @@
 
 function Trans = doppler256_MR(duration, voltage, focus)
-maxV = 30; % Maximum allowed voltage
+maxV = 25; % Maximum allowed voltage
+if duration > 5
+    error('Maximum duration is 5 seconds')
+end
 %% Set up path locations
 srcDirectory = setPaths();
 addpath([srcDirectory,'lib\mrLib'])

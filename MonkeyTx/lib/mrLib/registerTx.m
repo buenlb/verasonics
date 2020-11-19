@@ -39,7 +39,7 @@ if ~isfield(sys,'mrPath')
         error('User cancelled')
     end
 end
-aPath = [sys.mrPath,num2str(sys.aSeriesNo,'%03d'),'\'];
+aPath = [sys.mrPath,num2str(sys.aSeriesNo,'%03d'),'\']
 if ~exist(aPath,'dir')
     sortDicoms(sys.incomingDcms,sys.mrPath)
 end

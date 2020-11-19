@@ -60,19 +60,33 @@ addpath([verasonicsDir, 'lib'])
 addpath([verasonicsDir, 'MonkeyTx\lib\mrLib\thermometry\'])
 addpath([verasonicsDir, 'MonkeyTx\lib\mrLib\transducerLocalization\']);
 
-% Establish file names for storing results 
-goldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20201001\UltrasoundData\EulerGoldStandardComparison.mat';
+% Experiment Path
+sys.expPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20201014\';
+
+% Gold Standard Acoustic Imaging Files
 exVivoGoldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\exVivoGoldStandard.mat';
-logFile ='C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20201001\Logs\Gauss.mat';
-couplingFile = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20201001\UltrasoundData\Gauss_20201001_secondOnTable_.mat';
-sys.logFile = logFile;
-sys.goldStandard = goldStandard;
-sys.couplingFile = couplingFile;
-% sys.mrPath = 'C:\Users\Taylor\Documents\Data\MR\Thermometry\Phantom_20200629\images\20200629\';
-sys.mrPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20201001\Images\';
-sys.aSeriesNo = 8;
-sys.invertTx = 0;
+eulerGoldStandard1 = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\EulerGoldStandard1.mat';
+eulerGoldStandard2 = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\EulerGoldStandard2.mat';
+gaussGoldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\GaussGoldStandard.mat';
+sys.goldStandard = eulerGoldStandard2;
+
+% Coupling File
+couplingFile = 'Euler.mat';
+sys.couplingFile = [sys.expPath,'UltrasoundData\',couplingFile];
+
+% Log file
+logFile ='Euler3.mat';
+sys.logFile = [sys.expPath,'Logs\',logFile];
+
+% Imaging paths
+sys.mrPath = [sys.expPath,'Images'];
 sys.incomingDcms = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\IncomingImages\';
+
+% Anatomical Series
+sys.aSeriesNo = 65;
+
+% Invert Transducer
+sys.invertTx = 0;
 return
 %% Check Coupling
 if ~exist(sys.couplingFile,'file')
@@ -80,6 +94,8 @@ if ~exist(sys.couplingFile,'file')
     testArrayPlacement(sys.goldStandard,sys.couplingFile);
     load('tmp.mat');
     delete('tmp.mat');
+else
+    warning('Coupling file already exists - imaging not run.');
 end
 return
 %% Localize Transducer
@@ -97,7 +113,7 @@ sys = selectFocus(sys);
 save(sys.logFile,'sys');
 
 %% Sonicate
-sys = mrSonication(sys,10,22);
+sys = mrSonication(sys,5,20);
 save(sys.logFile,'sys');
 % Overlay result
 if isfield(sys.sonication(end),'phaseSeriesNo') & sys.sonication(end).phaseSeriesNo > 0
