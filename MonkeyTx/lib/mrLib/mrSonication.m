@@ -35,20 +35,14 @@ if success
     sonication.focalSpotMr = sys.focalSpotMr;
     sonication.description = input('Describe this sonication: ', 's');
     sonication.firstDynamic = input('What dynamic is the first dynamic?');
+    sonication.magSeriesNo = input('Magnitude Series Number: ');
+    sonication.phaseSeriesNo = sonication.magSeriesNo+1;
     userInput = input('Press enter when files are ready (input s to skip).','s');
     if ~strcmp(userInput, 's')
         try
-            [img,header,seriesNo] = sortDicoms(sys.incomingDcms, sys.mrPath);
-            sonication.phaseSeriesNo = seriesNo(2);
-            sonication.magSeriesNo = seriesNo(1);
-
-            sys.tImg = img{2};
-            sys.tMagImg = img{1};
-            sys.tHeader = header(2,:);
+            sortDicoms(sys.incomingDcms, sys.mrPath);
         catch
             % Just in case this errors - save the sonication
-            sonication.phaseSeriesNo = 0;
-            sonication.magSeriesNo = 0;
             if ~isfield(sys,'sonication')
                 sys.sonication = sonication;
             else
@@ -57,9 +51,6 @@ if success
             warning('Failure to load dicoms!')
             return
         end
-    else
-        sonication.phaseSeriesNo = 0;
-        sonication.magSeriesNo = 0;
     end
 
     if ~isfield(sys,'sonication')
@@ -69,8 +60,9 @@ if success
     end
 end
 try
-    save(sys.logFile,'sys');
+    saveState(sys);
 catch
+    disp('Something went wrong when saving the system.')
     keyboard
 end
 

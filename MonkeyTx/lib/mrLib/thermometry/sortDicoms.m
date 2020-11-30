@@ -6,36 +6,52 @@
 %   destPath: where to move files to
 % 
 % @OUTPUTS
-%   img: Image data from files that were moved
 %   header: headers corresponding to files that were moved
+%   seriesNo: Series that were moved
 % 
 % Taylor Webb
 % University of Utah
-function [imgOut,headerOut,seriesNo] = sortDicoms(sourcePath, destPath)
+function [header,seriesNo] = sortDicoms(sourcePath, destPath)
 
-if sourcePath(end)~= '/' || sourcePath(end)~= '\'
+if sourcePath(end)~= '/' && sourcePath(end)~= '\'
     sourcePath(end+1) = '\';
 end
 
-if destPath(end)~= '/' || destPath(end)~= '\'
+if destPath(end)~= '/' && destPath(end)~= '\'
     sourcePath(end+1) = '\';
 end
 
-[img,header,~,~,~,fileNames] = loadDicomDir(sourcePath);
+% [img,header,~,~,~,fileNames] = loadDicomDir(sourcePath);
+[header,fileNames] = readDicomHeaders(sourcePath);
+overwrite = 0;
+seriesNos = zeros(length(header),1);
 for ii = 1:length(header)
     curSeries = header{ii}.SeriesNumber;
-    if ii == 1
-        firstSeries = curSeries;
-    end
         
     if ~exist([destPath,num2str(curSeries,'%03d')],'dir')
         mkdir([destPath,num2str(curSeries,'%03d')]);
     end
-    instNumber = double(header{ii}.InstanceNumber);
-    movefile(fileNames{ii},[destPath,num2str(curSeries,'%03d'),'\img',num2str(header{ii}.InstanceNumber,'%04d'),'.dcm']);
-    imgOut{curSeries-firstSeries+1}(:,:,instNumber) = img(:,:,ii);
-    headerOut{curSeries-firstSeries+1,instNumber} = header{ii};
+    
+    % Unless user has already indicated to overwrite files, check if file exists
+    destName = [destPath,num2str(curSeries,'%03d'),'\img',num2str(header{ii}.InstanceNumber,'%04d'),'.dcm'];
+    if ~overwrite
+        if exist(destName, 'file')
+            answer = questdlg('The destination file already exists, continue?','File Exists!','Yes','Yes To All','No','No');
+            switch answer
+                case 'No'
+                    error('Destination file exists.')
+                case 'Yes To All'
+                    overwrite = 1;
+            end
+        end
+    end
+    movefile(fileNames{ii},destName);
     seriesNos(ii) = curSeries;
 end
 seriesNo = unique(seriesNos);
+disp('Results:')
+for ii = 1:length(seriesNo)
+    nFiles = sum(seriesNos == seriesNo(ii));
+    disp(['  Series: ', num2str(seriesNo(ii)), ': ', num2str(nFiles)])
+end
         
