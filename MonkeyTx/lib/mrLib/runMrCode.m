@@ -107,21 +107,17 @@ if exist(sys.logFile,'file')
 %     error('You must not overwrite an old log file!')
 end
 sys = registerTx(sys);
-save(sys.logFile,'sys');
+saveState(sys);
 
 %% Select Focus
 sys = selectFocus(sys);
-save(sys.logFile,'sys');
+saveState(sys);
 
 %% Sonicate
 sys = mrSonication(sys,5,20);
-save(sys.logFile,'sys');
+totalEnergy(sys);
+saveState(sys);
 % Overlay result
 if isfield(sys.sonication(end),'phaseSeriesNo') & sys.sonication(end).phaseSeriesNo > 0
     sys = processAndDisplaySonication(sys,length(sys.sonication));
 end
-
-%% Clear up memory to save result 
-sys = rmfield(sys,'tImg');
-sys = rmfield(sys,'tHeader');
-sys = rmfield(sys,'tInterp');

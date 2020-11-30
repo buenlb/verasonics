@@ -17,6 +17,20 @@ if sys.focalSpot(3)<0
 elseif sys.focalSpot(3)<30
     warning('Z component of focus is less than 30 mm')
 end
+
+maxDuration = 10;
+maxVoltage = 25;
+maxAllowedEnergy = 20^2*10;
+if duration*voltage^2>maxAllowedEnergy
+    error('You requested too much energy.')
+end
+if duration > maxDuration
+    error(['Max sonication duration is ', num2str(maxDuration)]);
+end
+if voltage > maxVoltage
+    error(['Max sonication voltage is ', num2str(maxVoltage)]);
+end
+
 evalin('base','save(''tmpBeforeSonication'',''sys'')')
 doppler256_MR(duration,voltage,sys.focalSpot*1e-3);
 
