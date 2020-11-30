@@ -7,6 +7,7 @@
 %   tWindow: A 2 X 1 vector representing the desired temperature window
 %       ([tMin, tMax])
 %   transp: Desired transparency (must be a value between 0 and 1)
+%   deNoised: A flag that determines which tInterp matrix to use.
 % 
 % @OUTPUTS
 %   cImg: The resulting color img which will have size [size(sys.aImg), 3]
@@ -15,12 +16,17 @@
 % University of Utah
 % September 2020
 
-function sys = draw3dTempOverlay(sys,tWindow,dynamics,transp)
+function sys = draw3dTempOverlay(sys,tWindow,dynamics,transp,deNoised)
 if nargin < 4
     transp = 1;
 elseif transp < 0 || transp > 1
     error('transp must be between 0 and 1.')
 end
+
+if ~exist('deNoised','var')
+    deNoised = 1;
+end
+
 d = waitbar(0,'Gray Image');
 tic
 if dynamics == 0
@@ -30,7 +36,11 @@ if dynamics == 0
 
     cMap = colormap('hot');
 
-    tImg = sys.tInterp;
+    if deNoised
+        tImg = sys.tInterp;
+    else
+        tImg = sys.tInterp_deNoised;
+    end
     tImg(tImg<tWindow(1)) = tWindow(1);
     tImg(tImg>tWindow(2)) = tWindow(2);
     tImg = round(((tImg-tWindow(1))/(diff(tWindow)))*size(cMap,1));
@@ -48,7 +58,11 @@ if dynamics == 0
     sys.colorTempImg = cImg;
     sys.tWindow = tWindow;
 else
-    tImg = mean(sys.tInterp(:,:,:,dynamics),4);
+    if deNoised
+        tImg = mean(sys.tInterp_deNoised(:,:,:,dynamics),4);
+    else
+        tImg = mean(sys.tInterp(:,:,:,dynamics),4);
+    end
     
     gImg = sys.aImg/max(sys.aImg(:));
 

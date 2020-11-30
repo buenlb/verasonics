@@ -6,7 +6,7 @@ end
 
 %% Find the expected peak
 acqTime = findAcquisitionTime(header);
-expectedPeakIdx = firstDynamic+ceil(sonicationDuration/acqTime);
+expectedPeakIdx = firstDynamic+round(sonicationDuration/acqTime);
 
 tDenoised = zeros(size(T));
 t = (0:(size(T,4)-1))*acqTime;

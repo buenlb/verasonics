@@ -60,20 +60,23 @@ end
 
 %% Temperature Data
 [T,tImg,tMagImg,tx,ty,tz,phHeader,~,acqTime] = loadTemperatureSonication(sys,sonicationNo);
-% T = denoiseThermometry(T,sys.sonication(sonicationNo).firstDynamic,sys.sonication(sonicationNo).duration,phHeader);
+T_deNoised = denoiseThermometry(T,sys.sonication(sonicationNo).firstDynamic,sys.sonication(sonicationNo).duration,phHeader);
 %% Interpolate temperature data onto anatomical data
 [tY,tX,tZ] = meshgrid(ty,tx,tz);
 [aY,aX,aZ] = meshgrid(ay,ax,az);
 
 d = waitbar(0,'Interpolating');
 tInterp = zeros([size(aX),size(T,4)]);
+tInterp_deNoised = zeros([size(aX),size(T,4)]);
 for ii = 1:size(T,4)
-    tInterp(:,:,:,ii) = interp3(tY,tX,tZ,T(:,:,:,ii),aY,aX,aZ);
+    tInterp(:,:,:,ii) = interp3(tY,tX,tZ,T(:,:,:,ii),aY,aX,aZ,'nearest');
+    tInterp_deNoised(:,:,:,ii) = interp3(tY,tX,tZ,T_deNoised(:,:,:,ii),aY,aX,aZ,'nearest');
     waitbar((ii)/size(T,4),d,['Interpolating... Dynamic: ', num2str(ii), ' of ', num2str(size(T,4))]);
 end
 close(d)
 %% Load results into sys
 sys.tInterp = tInterp;
+sys.tInterp_deNoised = tInterp_deNoised;
 sys.T = T;
 sys.tx = tx;
 sys.ty = ty;

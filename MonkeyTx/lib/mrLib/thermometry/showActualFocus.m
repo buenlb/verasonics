@@ -3,6 +3,8 @@ findMax = 0;
 plotFS = 0;
 plotMax = 0;
 plotTarget = 0;
+plotLeftLgnRoi = 0;
+plotRightLgnRoi = 0;
 if flags(1)
     plotFS = 1;
 end
@@ -18,6 +20,12 @@ if flags(3)
 end
 if flags(4)
     findMax = 1;
+end
+if flags(5)
+    plotLeftLgnRoi = 1;
+end
+if flags(6)
+    plotRightLgnRoi = 1;
 end
 
 %% Find the peak temperature within a range around the desired focus
@@ -55,7 +63,7 @@ tLims = [pbw*maxT,maxT];
 
 %% Use magnitude of anatomy image to clean up the result
 tmp = sys.tInterp(:,:,:,expectedPeakIdx);
-tmp(sys.aImg<10) = 0;
+tmp(sys.aImg<mean(sys.aImg(:))) = 0;
 sys.tInterp(:,:,:,expectedPeakIdx) = tmp;
 clear tmp
 
@@ -73,10 +81,22 @@ h.Units = 'Inches';
 h.Position = [1.7,0.4,2*xSize+ySize,zSize+1];
 h.InvertHardcopy = 'off';
 
+% Depending on flags, add in LGN ROIs
+curImg = squeeze(sys.aImg(:,yIdx,:));
+if plotLeftLgnRoi
+    edgeRoi = edge(squeeze(sys.leftLgnRoi(:,yIdx,:)));
+    curImg(edgeRoi) = max(curImg(:));
+end
+if plotRightLgnRoi
+    edgeRoi = edge(squeeze(sys.rightLgnRoi(:,yIdx,:)));
+    curImg(edgeRoi) = max(curImg(:));
+end
 mkSize = 4;
 ax1 = subplot(131);
 ax1.Units = 'Inches';
-overlayImages2(squeeze(sys.aImg(:,yIdx,:))',squeeze(sys.tInterp(:,yIdx,:,expectedPeakIdx))',[],tLims,sys.ux*1e3,sys.uz*1e3,ax1,0.5,'hot')
+overlayImages2(curImg',squeeze(sys.tInterp(:,yIdx,:,expectedPeakIdx))',[],tLims,sys.ux*1e3,sys.uz*1e3,ax1,0.5,'hot')
+
+% Depending on flags, plot focus, maximum, and target
 hold on
 if plotFS
     plot(sys.focalSpot(1),sys.focalSpot(3),'^w','markersize',mkSize)
@@ -95,7 +115,18 @@ ax1.Position = [0,0,xSize,zSize];
 
 ax2 = subplot(132);
 ax2.Units = 'Inches';
-overlayImages2(squeeze(sys.aImg(xIdx,:,:))',squeeze(sys.tInterp(xIdx,:,:,expectedPeakIdx))',[],tLims,sys.uy*1e3,sys.uz*1e3,ax2,0.5,'hot')
+
+% Depending on flags, add in LGN ROIs
+curImg = squeeze(sys.aImg(xIdx,:,:));
+if plotLeftLgnRoi
+    edgeRoi = edge(squeeze(sys.leftLgnRoi(xIdx,:,:)));
+    curImg(edgeRoi) = max(curImg(:));
+end
+if plotRightLgnRoi
+    edgeRoi = edge(squeeze(sys.rightLgnRoi(xIdx,:,:)));
+    curImg(edgeRoi) = max(curImg(:));
+end
+overlayImages2(curImg',squeeze(sys.tInterp(xIdx,:,:,expectedPeakIdx))',[],tLims,sys.uy*1e3,sys.uz*1e3,ax2,0.5,'hot')
 hold on
 if plotFS
     plot(sys.focalSpot(2),sys.focalSpot(3),'^w','markersize',mkSize)
@@ -120,7 +151,19 @@ makeFigureBig(h,18,18,'k');
 
 ax3 = subplot(133);
 ax3.Units = 'Inches';
-overlayImages2(squeeze(sys.aImg(:,:,zIdx))',squeeze(sys.tInterp(:,:,zIdx,expectedPeakIdx))',[],tLims,sys.ux*1e3,sys.uy*1e3,ax3,0.5,'hot')
+
+% Depending on flags, add in LGN ROIs
+curImg = squeeze(sys.aImg(:,:,zIdx));
+if plotLeftLgnRoi
+    edgeRoi = edge(squeeze(sys.leftLgnRoi(:,:,zIdx)));
+    curImg(edgeRoi) = max(curImg(:));
+end
+if plotRightLgnRoi
+    edgeRoi = edge(squeeze(sys.rightLgnRoi(:,:,zIdx)));
+    curImg(edgeRoi) = max(curImg(:));
+end
+
+overlayImages2(curImg',squeeze(sys.tInterp(:,:,zIdx,expectedPeakIdx))',[],tLims,sys.ux*1e3,sys.uy*1e3,ax3,0.5,'hot')
 hold on
 if plotFS
     plot(sys.focalSpot(1),sys.focalSpot(2),'^w','markersize',mkSize)

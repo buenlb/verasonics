@@ -3,4 +3,5 @@ MATFILES/*
 *.asv
 *.ASV
 *.snq
+guiFileOutput.mat
 dicmMatFile.mat

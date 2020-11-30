@@ -11,7 +11,7 @@ res = sys.aRes;
 tmplt3d = drawTransducer(size(img),txCenter,theta,res,1);
 tmplt2d = sum(tmplt3d,3);
 tmplt2d(tmplt2d > 1) = 1;
-zDist = 9.4e-3;
+zDist = 9.53e-3;
 zIdx = txCenter(3)+round(zDist/res(3));
 img2d = squeeze(img(:,:,zIdx));
 figure;

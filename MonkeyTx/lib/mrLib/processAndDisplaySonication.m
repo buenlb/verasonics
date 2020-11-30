@@ -33,7 +33,7 @@ sys = adjustFocus(sys,sys.sonication(sonicationNo).focalSpot,'US');
 sys = overlayTemperatureAnatomy(sys,sonicationNo);
 
 %% Convert to true color image
-sys = draw3dTempOverlay(sys,[0,maxT],sys.sonication(sonicationNo).firstDynamic);
+sys = draw3dTempOverlay(sys,[0,maxT],sys.sonication(sonicationNo).firstDynamic,1,1);
 
 %% Display result in GUI
 orthogonalTemperatureViewsGui(sys);
