@@ -63,7 +63,6 @@ for ii = 1:length(expectedLocationsX)
                     ((expectedLocationsY(ii)-fidLoc(ii,2))*res(2)).^2+...
                     ((x0(3)-fidLoc(ii,3))*res(3)).^2);
 end
-keyboard
 waitbar((ii)/length(expectedLocationsX),d);
 disp(['Mean error between initial estimate and single fiducial estimate: ', num2str(mean(err*1e3),2), ' mm.'])
 

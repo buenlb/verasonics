@@ -5,6 +5,7 @@ plotMax = 0;
 plotTarget = 0;
 plotLeftLgnRoi = 0;
 plotRightLgnRoi = 0;
+DENOISE = 0;
 if flags(1)
     plotFS = 1;
 end
@@ -26,6 +27,9 @@ if flags(5)
 end
 if flags(6)
     plotRightLgnRoi = 1;
+end
+if flags(7)
+    DENOISE = 1;
 end
 
 %% Find the peak temperature within a range around the desired focus
@@ -62,9 +66,14 @@ end
 tLims = [pbw*maxT,maxT];
 
 %% Use magnitude of anatomy image to clean up the result
-tmp = sys.tInterp(:,:,:,expectedPeakIdx);
+if DENOISE
+    tImage = sys.tInterp_deNoised;
+else
+    tImage = sys.tInterp;
+end
+tmp = tImage(:,:,:,expectedPeakIdx);
 tmp(sys.aImg<mean(sys.aImg(:))) = 0;
-sys.tInterp(:,:,:,expectedPeakIdx) = tmp;
+tImage(:,:,:,expectedPeakIdx) = tmp;
 clear tmp
 
 %% Display the result
@@ -94,7 +103,7 @@ end
 mkSize = 4;
 ax1 = subplot(131);
 ax1.Units = 'Inches';
-overlayImages2(curImg',squeeze(sys.tInterp(:,yIdx,:,expectedPeakIdx))',[],tLims,sys.ux*1e3,sys.uz*1e3,ax1,0.5,'hot')
+overlayImages2(curImg',squeeze(tImage(:,yIdx,:,expectedPeakIdx))',[],tLims,sys.ux*1e3,sys.uz*1e3,ax1,0.5,'hot')
 
 % Depending on flags, plot focus, maximum, and target
 hold on
@@ -111,7 +120,7 @@ if plotTarget
     plot(sys.pastTargets(:,1),sys.pastTargets(:,3),'*b','markersize',mkSize)
 end
 axis('tight')
-ax1.Position = [0,0,xSize,zSize];
+% ax1.Position = [0,0,xSize,zSize];
 
 ax2 = subplot(132);
 ax2.Units = 'Inches';
@@ -126,7 +135,7 @@ if plotRightLgnRoi
     edgeRoi = edge(squeeze(sys.rightLgnRoi(xIdx,:,:)));
     curImg(edgeRoi) = max(curImg(:));
 end
-overlayImages2(curImg',squeeze(sys.tInterp(xIdx,:,:,expectedPeakIdx))',[],tLims,sys.uy*1e3,sys.uz*1e3,ax2,0.5,'hot')
+overlayImages2(curImg',squeeze(tImage(xIdx,:,:,expectedPeakIdx))',[],tLims,sys.uy*1e3,sys.uz*1e3,ax2,0.5,'hot')
 hold on
 if plotFS
     plot(sys.focalSpot(2),sys.focalSpot(3),'^w','markersize',mkSize)
@@ -141,7 +150,8 @@ if plotTarget
     plot(sys.pastTargets(:,2),sys.pastTargets(:,3),'*b','markersize',mkSize)
 end
 axis('tight')
-ax2.Position = [xSize,0,ySize,zSize];
+% ax2.Position = [xSize,0,ySize,zSize];
+
 ttl = title(['Sonication: ', num2str(sys.curSonication),...
     ', Target: ', num2str(sys.sonication(sonicationNo).focalSpot(1)), ', ',...
     num2str(sys.sonication(sonicationNo).focalSpot(2)), ', ', num2str(sys.sonication(sonicationNo).focalSpot(3)),...
@@ -163,7 +173,7 @@ if plotRightLgnRoi
     curImg(edgeRoi) = max(curImg(:));
 end
 
-overlayImages2(curImg',squeeze(sys.tInterp(:,:,zIdx,expectedPeakIdx))',[],tLims,sys.ux*1e3,sys.uy*1e3,ax3,0.5,'hot')
+overlayImages2(curImg',squeeze(tImage(:,:,zIdx,expectedPeakIdx))',[],tLims,sys.ux*1e3,sys.uy*1e3,ax3,0.5,'hot')
 hold on
 if plotFS
     plot(sys.focalSpot(1),sys.focalSpot(2),'^w','markersize',mkSize)
@@ -178,7 +188,7 @@ if plotTarget
     plot(sys.pastTargets(:,1),sys.pastTargets(:,2),'*b','markersize',mkSize)
 end
 axis('tight')
-ax3.Position = [xSize+ySize,0,xSize,zSize];
+% ax3.Position = [xSize+ySize,0,xSize,zSize];
 
 ax4 = axes('Visible','off');
 colormap(ax4,'hot');
