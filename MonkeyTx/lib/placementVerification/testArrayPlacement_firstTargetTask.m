@@ -153,7 +153,7 @@ for ii = 1:length(blocks)
         s(d>gs.powerRange(2)) = 0;
         idx = findFrontEdge(s,threshold);
         if isnan(idx)
-            keyboard
+            
         else
             skDist(distIdx) = d(idx);
             distIdx = distIdx+1;
@@ -162,8 +162,9 @@ for ii = 1:length(blocks)
 end
 idx = find(abs(skDist-gs.skDist) > 1);
 if isempty(idx)
-    showPlots = questdlg(['All grids show good agreement on distance! Average error:',...
-        num2str(mean(abs(skDist-gs.skDist))), 'mm. Show traces?']);
+%     showPlots = questdlg(['All grids show good agreement on distance! Average error:',...
+%         num2str(mean(abs(skDist-gs.skDist))), 'mm. Show traces?']);
+    showPlots = 'Yes';
     if strcmp('Yes',showPlots)
         idx = 1:length(elementsOfInterest);
         showPlots = 1;
@@ -171,9 +172,10 @@ if isempty(idx)
         showPlots = 0;
     end
 else
-    showPlots = questdlg([num2str(length(idx)), ' show error greater than 1 mm! Average error:',...
-        num2str(mean(abs(skDist-gs.skDist))), 'mm. Show traces?'],...
-        'Distance Results','All','Only Errors','None','Only Errors');
+%     showPlots = questdlg([num2str(length(idx)), ' show error greater than 1 mm! Average error:',...
+%         num2str(mean(abs(skDist-gs.skDist))), 'mm. Show traces?'],...
+%         'Distance Results','All','Only Errors','None','Only Errors');
+    showPlots = 'None';
     if strcmp('All',showPlots)
         idx = 1:length(elementsOfInterest);
         showPlots = 1;
@@ -356,9 +358,9 @@ if ~isempty(idx)
     h.Position = [h.Position(1)+h.Position(3)/2,h.Position(2:4)];
     drawnow
     
-    showPlots = questdlg(['Current Power/GS Power: ', num2str(totPower/gs.totPower,2),...
-        '. ', num2str(length(idx)), ' elements exceed threshold! Show Offending Elements?']);
-    
+%     showPlots = questdlg(['Current Power/GS Power: ', num2str(totPower/gs.totPower,2),...
+%         '. ', num2str(length(idx)), ' elements exceed threshold! Show Offending Elements?']);
+    showPlots = 'No';
     if strcmp('Yes',showPlots)
         gsReceive = gsRaw.singleElRaw.Receive;
         gsRcvData = gsRaw.singleElRaw.RcvData;
