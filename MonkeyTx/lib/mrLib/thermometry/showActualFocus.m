@@ -101,7 +101,7 @@ if plotRightLgnRoi
     curImg(edgeRoi) = max(curImg(:));
 end
 mkSize = 4;
-ax1 = subplot(131);
+ax1 = axes();
 ax1.Units = 'Inches';
 overlayImages2(curImg',squeeze(tImage(:,yIdx,:,expectedPeakIdx))',[],tLims,sys.ux*1e3,sys.uz*1e3,ax1,0.5,'hot')
 
@@ -120,9 +120,9 @@ if plotTarget
     plot(sys.pastTargets(:,1),sys.pastTargets(:,3),'*b','markersize',mkSize)
 end
 axis('tight')
-% ax1.Position = [0,0,xSize,zSize];
+ax1.Position = [0,0,xSize,zSize];
 
-ax2 = subplot(132);
+ax2 = axes();
 ax2.Units = 'Inches';
 
 % Depending on flags, add in LGN ROIs
@@ -150,7 +150,7 @@ if plotTarget
     plot(sys.pastTargets(:,2),sys.pastTargets(:,3),'*b','markersize',mkSize)
 end
 axis('tight')
-% ax2.Position = [xSize,0,ySize,zSize];
+ax2.Position = [xSize,0,ySize,zSize];
 
 ttl = title(['Sonication: ', num2str(sys.curSonication),...
     ', Target: ', num2str(sys.sonication(sonicationNo).focalSpot(1)), ', ',...
@@ -159,7 +159,7 @@ ttl = title(['Sonication: ', num2str(sys.curSonication),...
 ttl.Color = 'w';
 makeFigureBig(h,18,18,'k');
 
-ax3 = subplot(133);
+ax3 = axes();
 ax3.Units = 'Inches';
 
 % Depending on flags, add in LGN ROIs
@@ -188,7 +188,7 @@ if plotTarget
     plot(sys.pastTargets(:,1),sys.pastTargets(:,2),'*b','markersize',mkSize)
 end
 axis('tight')
-% ax3.Position = [xSize+ySize,0,xSize,zSize];
+ax3.Position = [xSize+ySize,0,xSize,zSize];
 
 ax4 = axes('Visible','off');
 colormap(ax4,'hot');

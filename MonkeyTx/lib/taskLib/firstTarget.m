@@ -18,6 +18,8 @@
 
 %% Clear the workspace and add necessary paths
 clear all; close all; clc;
+% cd 'C:\Users\Verasonics\Documents\Vantage-4.4.0-2012091800';
+activate;
 
 addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\');
 addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\taskLib');
@@ -53,6 +55,7 @@ while ~received
     % Determine what to do with the message
     switch msg
         case 'SKULL'
+            disp('Starting Skull Image')
             fprintf(pt,'SKULL');
             % Image Skull
             fName = fscanf(pt);
@@ -60,15 +63,32 @@ while ~received
                 fName = fscanf(pt);
             end
             fName = fName(1:end-1);
-            % VSX clears variables so we need to store them
-            save tmpBeforeVSX.mat
-            testArrayPlacement_firstTargetTask(goldStd,[expPath,fName]);
-            load tmpBeforeVSX.mat
-            delete('tmpBeforeVSX.mat')
-            % Let server know that the process is complete.
-            disp('Skull Image Complete');
+            fNameOrig = fName;
             fprintf(pt,fName);
-        case 'INIT'
+            rescan = 1;
+            scanIdx = 0;
+            while rescan
+                % VSX clears variables so we need to store them
+                save tmpBeforeVSX.mat
+                if scanIdx == 0
+                    [gsParams,gs,cr] = testArrayPlacement_firstTargetTask(goldStd,[expPath,fName],[],1);
+                else
+                    [gsParams,gs,cr] = testArrayPlacement_firstTargetTask(goldStd,[expPath,fName,num2str(scanIdx+1)],[],1);
+                end
+                load tmpBeforeVSX.mat
+                delete('tmpBeforeVSX.mat')
+                % Let server know that the process is complete.
+                disp('Skull Image Complete');
+                imgs = struct('gs',gs,'cr',cr,'gsParams',gsParams,...
+                    'goldStd',goldStd,'expPath',expPath,'fName',fName);
+
+                waitfor(verifyPreTask(imgs));
+                rs = load('guiOutput.mat');
+                rescan = rs.rescan;
+                
+                scanIdx = scanIdx+1;
+            end
+            
             received = 1;
         case 'TERMINATE'
             fprintf(pt,'TERMINATE');
@@ -88,8 +108,12 @@ fclose(pt);
 % parameters such as the proper focal target and element intensities. These
 % will be used by doppler256_neuromodulate to sonicate the LGN at the
 % timing established by the server.
-setupVisualTaskSonication([expPath,fName]);
+setupVisualTaskSonication([expPath,fNameOrig]);
 
 %% Launch VSX
-filename = 'doppler256_neuromodulate.mat';
+save tmpBeforeVSX.mat
+filename = 'doppler256_neuromodulate2.mat';
 VSX;
+load tmpBeforeVSX.mat
+%% Take a final coupling Image
+testArrayPlacement_firstTargetTask(goldStd,[expPath,fNameOrig,'_final'],[],1);

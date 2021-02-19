@@ -107,8 +107,8 @@ assignin('base','Resource', Resource);
 Control = evalin('base','Control');
 Control(1).Command = 'update&Run';
 Control(1).Parameters = {'TX'};
-% Control(2).Command = 'set&Run';
-% Control(2).Parameters = {'TPC',5,'hv',voltage};
+Control(2).Command = 'set&Run';
+Control(2).Parameters = {'TPC',5,'hv',voltage};
 assignin('base','Control', Control);
 
 disp(['Sonicating ', side, ' LGN'])
