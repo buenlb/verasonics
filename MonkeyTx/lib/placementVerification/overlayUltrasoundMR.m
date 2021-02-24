@@ -8,7 +8,7 @@ xa = xa*1e-3;
 ya = ya*1e-3;
 za = za*1e-3;
 
-usImg = log(usImg);
+usImg = log10(usImg);
 
 elements = transducerGeometry(0);
 % h = figure;

@@ -1,5 +1,5 @@
 function [keepPoint, err] = fitThermometryCurve(t,T,firstDynamic,expectedPeakIdx)
-if T(expectedPeakIdx) <= T(firstDynamic) || T(expectedPeakIdx) <= 0 || mean(T(expectedPeakIdx:expectedPeakIdx+2)) <= mean(T(1:firstDynamic)) || T(expectedPeakIdx+1) <=0
+if T(expectedPeakIdx) <= T(firstDynamic-1) || T(expectedPeakIdx) <= 0 || mean(T(expectedPeakIdx:expectedPeakIdx+2)) <= mean(T(1:firstDynamic)) || T(expectedPeakIdx+1) <=0
     keepPoint = false;
     err = inf;
     return

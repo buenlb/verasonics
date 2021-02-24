@@ -29,7 +29,7 @@ end
 
 % Set up time/distance vectors corresponding to data
 t = 1e6*(0:(Receive(1).endSample-1))/(Receive(1).ADCRate*1e6/Receive(1).decimFactor);
-d = t*1.49/2;
+d = t*1.57/2;
 
 % Determine ROI based on distOfInterest
 if ~exist('distOfInterest','var')

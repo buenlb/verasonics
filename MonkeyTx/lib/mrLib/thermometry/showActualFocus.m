@@ -5,6 +5,7 @@ plotMax = 0;
 plotTarget = 0;
 plotLeftLgnRoi = 0;
 plotRightLgnRoi = 0;
+denoise = 0;
 if flags(1)
     plotFS = 1;
 end
@@ -26,6 +27,9 @@ if flags(5)
 end
 if flags(6)
     plotRightLgnRoi = 1;
+end
+if flags(7)
+    denoise = 1;
 end
 
 %% Find the peak temperature within a range around the desired focus
@@ -80,6 +84,8 @@ h = figure;
 h.Units = 'Inches';
 h.Position = [1.7,0.4,2*xSize+ySize,zSize+1];
 h.InvertHardcopy = 'off';
+ax1 = axes();
+ax1.Units = 'Inches';
 
 % Depending on flags, add in LGN ROIs
 curImg = squeeze(sys.aImg(:,yIdx,:));
@@ -92,10 +98,11 @@ if plotRightLgnRoi
     curImg(edgeRoi) = max(curImg(:));
 end
 mkSize = 4;
-ax1 = subplot(131);
-ax1.Units = 'Inches';
-overlayImages2(curImg',squeeze(sys.tInterp(:,yIdx,:,expectedPeakIdx))',[],tLims,sys.ux*1e3,sys.uz*1e3,ax1,0.5,'hot')
-
+if denoise
+    overlayImages2(curImg',squeeze(sys.tInterp_deNoised(:,yIdx,:,expectedPeakIdx))',[],tLims,sys.ux*1e3,sys.uz*1e3,ax1,0.5,'hot')
+else
+    overlayImages2(curImg',squeeze(sys.tInterp(:,yIdx,:,expectedPeakIdx))',[],tLims,sys.ux*1e3,sys.uz*1e3,ax1,0.5,'hot')
+end
 % Depending on flags, plot focus, maximum, and target
 hold on
 if plotFS
@@ -112,8 +119,10 @@ if plotTarget
 end
 axis('tight')
 ax1.Position = [0,0,xSize,zSize];
+makeFigureBig(h,18,18,'k');
 
-ax2 = subplot(132);
+% Ax 2
+ax2 = axes();
 ax2.Units = 'Inches';
 
 % Depending on flags, add in LGN ROIs
@@ -126,7 +135,11 @@ if plotRightLgnRoi
     edgeRoi = edge(squeeze(sys.rightLgnRoi(xIdx,:,:)));
     curImg(edgeRoi) = max(curImg(:));
 end
-overlayImages2(curImg',squeeze(sys.tInterp(xIdx,:,:,expectedPeakIdx))',[],tLims,sys.uy*1e3,sys.uz*1e3,ax2,0.5,'hot')
+if denoise
+    overlayImages2(curImg',squeeze(sys.tInterp_deNoised(xIdx,:,:,expectedPeakIdx))',[],tLims,sys.uy*1e3,sys.uz*1e3,ax2,0.5,'hot')
+else
+    overlayImages2(curImg',squeeze(sys.tInterp(xIdx,:,:,expectedPeakIdx))',[],tLims,sys.uy*1e3,sys.uz*1e3,ax2,0.5,'hot')
+end
 hold on
 if plotFS
     plot(sys.focalSpot(2),sys.focalSpot(3),'^w','markersize',mkSize)
@@ -149,7 +162,8 @@ ttl = title(['Sonication: ', num2str(sys.curSonication),...
 ttl.Color = 'w';
 makeFigureBig(h,18,18,'k');
 
-ax3 = subplot(133);
+% Ax 3
+ax3 = axes();
 ax3.Units = 'Inches';
 
 % Depending on flags, add in LGN ROIs
@@ -162,8 +176,11 @@ if plotRightLgnRoi
     edgeRoi = edge(squeeze(sys.rightLgnRoi(:,:,zIdx)));
     curImg(edgeRoi) = max(curImg(:));
 end
-
-overlayImages2(curImg',squeeze(sys.tInterp(:,:,zIdx,expectedPeakIdx))',[],tLims,sys.ux*1e3,sys.uy*1e3,ax3,0.5,'hot')
+if denoise
+    overlayImages2(curImg',squeeze(sys.tInterp_deNoised(:,:,zIdx,expectedPeakIdx))',[],tLims,sys.ux*1e3,sys.uy*1e3,ax3,0.5,'hot')
+else
+    overlayImages2(curImg',squeeze(sys.tInterp(:,:,zIdx,expectedPeakIdx))',[],tLims,sys.ux*1e3,sys.uy*1e3,ax3,0.5,'hot')
+end
 hold on
 if plotFS
     plot(sys.focalSpot(1),sys.focalSpot(2),'^w','markersize',mkSize)
@@ -188,7 +205,7 @@ c.Position = [xSize*2+ySize-0.75,0.2,0.222,zSize-0.4];
 c.Color = 'w';
 caxis(tLims);
 makeFigureBig(h,18,18,'k');
-
+keyboard
 if exist('saveName','var')
     print(h,saveName,'-dpng');
 end

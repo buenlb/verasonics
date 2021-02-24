@@ -101,6 +101,7 @@ end
 axes(sp(2));
 tt = title('Current Data');
 tt.Position = [15.5,0.0105,0];
+keyboard
 
 axes(sp2(2));
 tt = title('Overlay of Current Data to Gold Standard Data');
@@ -185,7 +186,7 @@ if showPlots
     gsReceive = gsRaw.griddedElRaw.Receive;
     gsRcvData = gsRaw.griddedElRaw.RcvData;
     h = figure;
-    set(h,'position',[1364          162         556        954])
+%     set(h,'position',[1364          162         556        954])
     for ii = 1:length(idx)
         curIdx = blIdx(idx(ii));
         s = zeros(size(RcvData(Receive(ii).startSample:Receive(ii).endSample,blocks{1}(1))));
@@ -215,8 +216,8 @@ if showPlots
         ax.ColorOrderIndex = 1;
         plot([skDist(idx(ii)),skDist(idx(ii))],[0,max(s)],'--',...
             [gs.skDist(idx(ii)),gs.skDist(idx(ii))],[0,max(s)],'--','linewidth',2)
-        plotElementLocation(ax,[gs.powerRange(2)-5,max([0.75*max(sGs),0.75*max(s)])],...
-            5,blocks{curIdx});
+%         plotElementLocation(ax,[gs.powerRange(2)-5,max([0.75*max(sGs),0.75*max(s)])],...
+%             5,blocks{curIdx});
         ylabel('a.u.')
         axis([gs.powerRange',0,max([max(s),max(sGs)])])
         if ii == length(idx)
@@ -227,7 +228,7 @@ if showPlots
         title(['Err: ', num2str(abs(skDist(idx(ii))-gs.skDist(idx(ii))),2)])
         if ii == 1
             lgd = legend('Current','Gold Standard','location','northwest');
-            set(lgd,'position', [0.0276    0.9303    0.3435    0.0545]);
+%             set(lgd,'position', [0.0276    0.9303    0.3435    0.0545]);
         end
         makeFigureBig(h);
     end

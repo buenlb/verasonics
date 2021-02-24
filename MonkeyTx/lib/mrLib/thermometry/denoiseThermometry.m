@@ -1,9 +1,8 @@
-function tDenoised = denoiseThermometry(T,firstDynamic,sonicationDuration,header)
+function tDenoised = denoiseThermometry(T,firstDynamic,sonicationDuration,header,tMagImg)
 tic
 if nargin < 2
     firstDynamic = 4;
 end
-
 %% Find the expected peak
 acqTime = findAcquisitionTime(header);
 expectedPeakIdx = firstDynamic+round(sonicationDuration/acqTime);
@@ -20,7 +19,7 @@ for ii = 1:size(T,1)
             if max(abs(curT)) == 0
                 continue
             else
-                if(fitThermometryCurve(t,curT,firstDynamic,expectedPeakIdx))
+                if(fitThermometryCurve(t,curT,firstDynamic-1,expectedPeakIdx))
                     tDenoised(ii,jj,kk,:) = curT;
                 end
             end
@@ -31,3 +30,5 @@ for ii = 1:size(T,1)
 end
 close(d);
 toc
+
+tDenoised(tMagImg<mean(tMagImg(:))) = 0;

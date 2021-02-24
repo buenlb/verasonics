@@ -60,7 +60,7 @@ end
 
 %% Temperature Data
 [T,tImg,tMagImg,tx,ty,tz,phHeader,~,acqTime] = loadTemperatureSonication(sys,sonicationNo);
-T_deNoised = denoiseThermometry(T,sys.sonication(sonicationNo).firstDynamic,sys.sonication(sonicationNo).duration,phHeader);
+T_deNoised = denoiseThermometry(T,sys.sonication(sonicationNo).firstDynamic,sys.sonication(sonicationNo).duration,phHeader,tMagImg);
 %% Interpolate temperature data onto anatomical data
 [tY,tX,tZ] = meshgrid(ty,tx,tz);
 [aY,aX,aZ] = meshgrid(ay,ax,az);
@@ -82,6 +82,7 @@ sys.tx = tx;
 sys.ty = ty;
 sys.tz = tz;
 sys.tImg = tImg;
+sys.tMagImg = tMagImg;
 sys.dynamicLength = acqTime;
 sys.curSonication = sonicationNo;
 

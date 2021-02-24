@@ -1,31 +1,34 @@
-sonNo = 4;
-logFile = 'C:\Users\Taylor\Documents\Data\MR\Thermometry\20201014\Logs\Euler3.mat';
+sonNo = 2;
+% logFile = 'C:\Users\Taylor\Documents\Data\MR\Thermometry\20201014\Logs\Euler3.mat';
 % logFile = 'C:\Users\Taylor\Documents\Data\MR\Thermometry\20201014\Logs\NormalizedPositions\Euler_20200910.mat';
+logFile = 'C:\Users\Taylor\Documents\Data\MR\Thermometry\20201202\Logs\Euler_20201202.mat';
 load(logFile);
 orientation = 'axial';
 % sys.sonication(1).phaseSeriesNo = 68;
 % sys.sonication(1).magSeriesNo = 67;
 % sys.sonication(2).phaseSeriesNo = 70;
 % sys.sonication(2).magSeriesNo = 69;
-sys.sonication(3).phaseSeriesNo = 76;
-sys.sonication(3).magSeriesNo = 75;
-sys.sonication(4) = sys.sonication(3);
-sys = adjustFocus(sys,[11,-1,67],'US');
-sys.sonication(4).focalSpot = sys.focalSpot;
-sys.sonication(4).focalSpotMr = sys.focalSpotMr;
-sys.sonication(4).focalSpotIdx = sys.focalSpotIdx;
-sys.sonication(4).phaseSeriesNo = 74;
-sys.sonication(4).magSeriesNo = 73;
+% sys.sonication(3).phaseSeriesNo = 76;
+% sys.sonication(3).magSeriesNo = 75;
+% sys.sonication(4) = sys.sonication(3);
+% sys = adjustFocus(sys,[11,-1,67],'US');
+% sys.sonication(4).focalSpot = sys.focalSpot;
+% sys.sonication(4).focalSpotMr = sys.focalSpotMr;
+% sys.sonication(4).focalSpotIdx = sys.focalSpotIdx;
+% sys.sonication(4).phaseSeriesNo = 74;
+% sys.sonication(4).magSeriesNo = 73;
 % sys.sonication(6).phaseSeriesNo = 40;
 % sys.sonication(6).magSeriesNo = 39;
 sys.mrPath = 'C:\Users\Taylor\Documents\Data\MR\Thermometry\20201014\Images\';
 % sys.mrPath = 'C:\Users\Taylor\Documents\Data\MR\Thermometry\20200910\Images\';
+sys.mrPath = 'C:\Users\Taylor\Documents\Data\MR\Thermometry\20201202\Images\';
+sys.expPath = 'C:\Users\Taylor\Documents\Data\MR\Thermometry\20201202\';
 [T,tImg,tMagImg,tx,ty,tz,phHeader] = loadTemperatureSonication(sys,sonNo);
 
 %%
-T = denoiseThermometry(T,6,sys.sonication(sonNo).duration,phHeader);
+T = denoiseThermometry(T,sys.sonication(sonNo).firstDynamic,sys.sonication(sonNo).duration,phHeader);
 
-curT = T(:,:,:,7);
+curT = T(:,:,:,sys.sonication(sonNo).firstDynamic+1);
 curT(tMagImg<mean(tMagImg(:))) = 0;
 %%
 [~,thIdx(1)] = min(abs(sys.sonication(sonNo).focalSpotMr(1)*1e-3-tx));
@@ -126,15 +129,15 @@ st = st(bstIdx);
 
 [maxT2,idx] = max(curT(roi));
 [a,b,c] = ind2sub(size(curT),st.PixelIdxList(idx));
-maxUS2 = thermometry2usCoords(sys,[tx(a),ty(b),tz(c)])
+maxUS2 = thermometry2usCoords(sys,[tx(a),ty(b),tz(c)]);
 
 %%
 res = struct('sonication', sys.sonication(sonNo),'logfile',logFile,'sonNo',sonNo,...
     'roi',roi,'cm',cm,'st',st,'cmUs',cmUs,'maxUS',maxUS,'tx',tx,'ty',ty,'tz',tz,...
     'maxUS2',maxUS2,'maxT',maxT,'maxT2',maxT2);
 
-if exist('leftLGN','var')
-    leftLGN(end+1) = res;
-else 
-    leftLGN = res;
-end
+% if exist('leftLGN','var')
+%     leftLGN(end+1) = res;
+% else 
+%     leftLGN = res;
+% end
