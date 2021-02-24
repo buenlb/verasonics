@@ -13,7 +13,7 @@
 % December 2020
 % 
 
-function doppler256_neuromodulate(duration, voltages, phases, PRF, duty, fName)
+function doppler256_neuromodulate_test(duration, voltages, phases, PRF, duty, fName)
 maxV = 30; % Maximum allowed voltage
 %% Set up path locations
 srcDirectory = setPaths();
@@ -52,7 +52,7 @@ Resource.Parameters.verbose = 1;
 Resource.Parameters.phases = phases;
 Resource.Parameters.voltages = voltages;
 Resource.Parameters.simulateMode = 0;
-Resource.Parameters.startEvent = 1;
+% Resource.Parameters.startEvent = 1;
 
 %% Create a log struct to save results
 Resource.Parameters.logFileName = fName;
@@ -132,6 +132,13 @@ Process(1).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'srcframenum',1,...
 'dstbuffer','none'};
 
+% Process(2).classname = 'External';
+% Process(2).method = 'MATLABPause';
+% Process(2).Parameters = {'srcbuffer','receive',... % name of buffer to process.
+% 'srcbufnum',1,...
+% 'srcframenum',1,...
+% 'dstbuffer','none'};
+
 %% Set TPC 5
 n = 1;
 nsc = 1;
@@ -154,10 +161,35 @@ Event(n).tx = 0;
 Event(n).rcv = 0;
 Event(n).recon = 0;
 Event(n).process = 1;
-Event(n).seqControl = nsc;
-SeqControl(nsc).command = 'sync';
-nsc = nsc+1;
+Event(n).seqControl = 0;
 serverEvent = n;
+n = n+1;
+
+%% Return to MATLAB to update parameters
+Event(n).info = 'Return to MATLAB';
+Event(n).tx = 0;
+Event(n).rcv = 0;
+Event(n).recon = 0;
+Event(n).process = 0;
+Event(n).seqControl = nsc;
+    SeqControl(nsc).command = 'returnToMatlab';
+    nsc = nsc+1;
+n = n+1;
+
+%% Give the system time to update the parameters amd make sure the hardware 
+% sequencer doesn't start the sonication until the parameters are up to
+% date
+Event(n).info = 'Wait and sync';
+Event(n).tx = 0;
+Event(n).rcv = 0;
+Event(n).recon = 0;
+Event(n).process = 0;
+Event(n).seqControl = [nsc,nsc+1];
+    SeqControl(nsc).command = 'noop';
+    SeqControl(nsc).argument = 500e3;
+    nsc = nsc+1;
+    SeqControl(nsc).command = 'sync';
+    nsc = nsc+1;
 n = n+1;
 
 %% Sonicate
@@ -184,6 +216,7 @@ for ii = 2:numTransmits
     n = n+1;
 end
 
+%% Jump Back to the beginning
 Event(n).info = 'Return to beginning';
 Event(n).tx = 0; % use 1st TX structure.
 Event(n).rcv = 0; % no receive
@@ -194,13 +227,13 @@ Event(n).seqControl = nsc;
     SeqControl(nsc).argument = serverEvent;
     SeqControl(nsc).condition = 'exitAfterJump';
     nsc = nsc + 1;
-    SeqControl(nsc).command = 'sync';
-    SeqControl(nsc).argument = 2.1e9;
-    nsc = nsc + 1;
+%     SeqControl(nsc).command = 'sync';
+%     SeqControl(nsc).argument = 2.1e9;
+%     nsc = nsc + 1;
 n = n+1;
 
 
-% Save all the structures to a .mat file.
+%% Save all the structures to a .mat file.
 scriptName = mfilename('fullpath');
 svName = matFileName(scriptName);
 save(svName);

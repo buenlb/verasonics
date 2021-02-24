@@ -48,8 +48,8 @@
 
 clear all; close all; clc;
 %% Setup
-% verasonicsDir = 'C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\';
-verasonicsDir = 'C:\Users\Taylor\Documents\Projects\verasonics\verasonics\';
+verasonicsDir = 'C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\';
+% verasonicsDir = 'C:\Users\Taylor\Documents\Projects\verasonics\verasonics\';
 % Add relevant paths to give access to library functions
 
 addpath([verasonicsDir, 'MonkeyTx\lib'])
@@ -62,29 +62,30 @@ addpath([verasonicsDir, 'MonkeyTx\lib\mrLib\thermometry\'])
 addpath([verasonicsDir, 'MonkeyTx\lib\mrLib\transducerLocalization\']);
 
 % Experiment Path
-sys.expPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20201014\';
+sys.expPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20201202\';
 
 % Gold Standard Acoustic Imaging Files
 exVivoGoldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\exVivoGoldStandard.mat';
 eulerGoldStandard1 = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\EulerGoldStandard1.mat';
 eulerGoldStandard2 = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\EulerGoldStandard2.mat';
+eulerGoldStandard3 = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20201014\UltrasoundData\Euler_1143_Re-placedx2_blanket_1.5_GS.mat';
 gaussGoldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\GaussGoldStandard.mat';
-sys.goldStandard = eulerGoldStandard2;
+sys.goldStandard = eulerGoldStandard3;
 
 % Coupling File
-couplingFile = 'Euler.mat';
+couplingFile = 'Euler_0925.mat';
 sys.couplingFile = [sys.expPath,'UltrasoundData\',couplingFile];
 
 % Log file
-logFile ='Euler3.mat';
+logFile ='Euler_20201202.mat';
 sys.logFile = [sys.expPath,'Logs\',logFile];
 
 % Imaging paths
-sys.mrPath = [sys.expPath,'Images'];
+sys.mrPath = [sys.expPath,'Images\'];
 sys.incomingDcms = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\IncomingImages\';
 
 % Anatomical Series
-sys.aSeriesNo = 65;
+sys.aSeriesNo = 16;
 
 % Invert Transducer
 sys.invertTx = 0;
@@ -107,6 +108,10 @@ if exist(sys.logFile,'file')
 %     error('You must not overwrite an old log file!')
 end
 sys = registerTx(sys);
+saveState(sys);
+
+%% Segment LGN
+sys = segmentLGNs(sys);
 saveState(sys);
 
 %% Select Focus

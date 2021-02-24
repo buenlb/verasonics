@@ -13,8 +13,8 @@
 % December 2020
 % 
 
-function doppler256_neuromodulate(duration, voltages, phases, PRF, duty, fName)
-maxV = 30; % Maximum allowed voltage
+function doppler256_neuromodulate2(duration, voltages, phases, PRF, duty, fName)
+maxV = 20; % Maximum allowed voltage
 %% Set up path locations
 srcDirectory = setPaths();
 addpath([srcDirectory,'lib\mrLib'])
@@ -58,7 +58,7 @@ Resource.Parameters.startEvent = 1;
 Resource.Parameters.logFileName = fName;
 Resource.Parameters.priorSonication = [];
 Resource.Parameters.log = struct('Date',date,'rightSonications',0,...
-    'leftSonications',0,'totalSonications',0,'priorSonication',[]);
+    'leftSonications',0,'totalSonications',0,'priorSonication',[],'Parameters',Resource.Parameters);
 
 %% Set up longer pulses
 % HIFU % The Resource.HIFU.externalHifuPwr parameter must be specified in a
@@ -154,9 +154,9 @@ Event(n).tx = 0;
 Event(n).rcv = 0;
 Event(n).recon = 0;
 Event(n).process = 1;
-Event(n).seqControl = nsc;
-SeqControl(nsc).command = 'sync';
-nsc = nsc+1;
+Event(n).seqControl = 0;
+% SeqControl(nsc).command = 'sync';
+% nsc = nsc+1;
 serverEvent = n;
 n = n+1;
 
@@ -194,9 +194,9 @@ Event(n).seqControl = nsc;
     SeqControl(nsc).argument = serverEvent;
     SeqControl(nsc).condition = 'exitAfterJump';
     nsc = nsc + 1;
-    SeqControl(nsc).command = 'sync';
-    SeqControl(nsc).argument = 2.1e9;
-    nsc = nsc + 1;
+%     SeqControl(nsc).command = 'sync';
+%     SeqControl(nsc).argument = 2.1e9;
+%     nsc = nsc + 1;
 n = n+1;
 
 

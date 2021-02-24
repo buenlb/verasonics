@@ -66,9 +66,14 @@ end
 tLims = [pbw*maxT,maxT];
 
 %% Use magnitude of anatomy image to clean up the result
-tmp = sys.tInterp(:,:,:,expectedPeakIdx);
+if DENOISE
+    tImage = sys.tInterp_deNoised;
+else
+    tImage = sys.tInterp;
+end
+tmp = tImage(:,:,:,expectedPeakIdx);
 tmp(sys.aImg<mean(sys.aImg(:))) = 0;
-sys.tInterp(:,:,:,expectedPeakIdx) = tmp;
+tImage(:,:,:,expectedPeakIdx) = tmp;
 clear tmp
 
 %% Display the result
@@ -121,6 +126,7 @@ axis('tight')
 ax1.Position = [0,0,xSize,zSize];
 makeFigureBig(h,18,18,'k');
 
+
 % Ax 2
 ax2 = axes();
 ax2.Units = 'Inches';
@@ -155,6 +161,7 @@ if plotTarget
 end
 axis('tight')
 ax2.Position = [xSize,0,ySize,zSize];
+
 ttl = title(['Sonication: ', num2str(sys.curSonication),...
     ', Target: ', num2str(sys.sonication(sonicationNo).focalSpot(1)), ', ',...
     num2str(sys.sonication(sonicationNo).focalSpot(2)), ', ', num2str(sys.sonication(sonicationNo).focalSpot(3)),...
@@ -181,6 +188,7 @@ if denoise
 else
     overlayImages2(curImg',squeeze(sys.tInterp(:,:,zIdx,expectedPeakIdx))',[],tLims,sys.ux*1e3,sys.uy*1e3,ax3,0.5,'hot')
 end
+
 hold on
 if plotFS
     plot(sys.focalSpot(1),sys.focalSpot(2),'^w','markersize',mkSize)

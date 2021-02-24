@@ -13,8 +13,8 @@
 % December 2020
 % 
 
-function doppler256_neuromodulate(duration, voltages, phases, PRF, duty, fName)
-maxV = 30; % Maximum allowed voltage
+function doppler256_neuromodulate2(duration, voltages, phases, PRF, duty, fName)
+maxV = 20; % Maximum allowed voltage
 %% Set up path locations
 srcDirectory = setPaths();
 addpath([srcDirectory,'lib\mrLib'])
@@ -126,7 +126,7 @@ TGC(1).Waveform = computeTGCWaveform(TGC);
 
 %% External Function
 Process(1).classname = 'External';
-Process(1).method = 'waitForServer';
+Process(1).method = 'waitForServer2';
 Process(1).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'srcbufnum',1,...
 'srcframenum',1,...
@@ -154,9 +154,9 @@ Event(n).tx = 0;
 Event(n).rcv = 0;
 Event(n).recon = 0;
 Event(n).process = 1;
-Event(n).seqControl = nsc;
-SeqControl(nsc).command = 'sync';
-nsc = nsc+1;
+Event(n).seqControl = 0;
+% SeqControl(nsc).command = 'sync';
+% nsc = nsc+1;
 serverEvent = n;
 n = n+1;
 
@@ -167,21 +167,30 @@ Event(n).rcv = 0; % no receive
 Event(n).recon = 0; % no reconstruction.
 Event(n).process = 0; % no processing
 Event(n).seqControl = [nsc,nsc+1];
-    SeqControl(nsc).command = 'pause';
-    SeqControl(nsc).condition = 'extTrigger';
-    SeqControl(nsc).argument = 17;
-    nsc = nsc + 1;
     SeqControl(nsc).command = 'timeToNextAcq';
     SeqControl(nsc).argument = 1/PRF*1e6;
     nscTime2Acq = nsc;
+    nsc = nsc + 1;
+    SeqControl(nsc).command = 'triggerOut';
+    SeqControl(nsc).argument = 0;
+    nscTrig = nsc;
     nsc = nsc + 1;
     firstSonicationIdx = n;
 n = n+1;
 
 for ii = 2:numTransmits
-    Event(n) = Event(firstSonicationIdx);
-    Event(n).seqControl = nscTime2Acq;
-    n = n+1;
+    if ii == numTransmits
+        Event(n) = Event(firstSonicationIdx);
+        Event(n).seqControl = nsc;
+        SeqControl(nsc).command = 'timeToNextAcq';
+        SeqControl(nsc).argument = 3e6;
+        nsc = nsc+1;
+        n = n+1;
+    else
+        Event(n) = Event(firstSonicationIdx);
+        Event(n).seqControl = nscTime2Acq;
+        n = n+1;
+    end
 end
 
 Event(n).info = 'Return to beginning';
@@ -194,9 +203,9 @@ Event(n).seqControl = nsc;
     SeqControl(nsc).argument = serverEvent;
     SeqControl(nsc).condition = 'exitAfterJump';
     nsc = nsc + 1;
-    SeqControl(nsc).command = 'sync';
-    SeqControl(nsc).argument = 2.1e9;
-    nsc = nsc + 1;
+%     SeqControl(nsc).command = 'sync';
+%     SeqControl(nsc).argument = 2.1e9;
+%     nsc = nsc + 1;
 n = n+1;
 
 

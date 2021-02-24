@@ -107,6 +107,9 @@ axes(sp2(2));
 tt = title('Overlay of Current Data to Gold Standard Data');
 tt.Position = [15.5,0.0105,0];
 
+axes(sp2(5));
+title('Current: Green, Prior: Purple');
+
 axes(sp(1))
 tt = title('Front');
 set(tt,'FontSize',12)
