@@ -1,9 +1,7 @@
 % target = right.target;
 % load('C:\Users\Taylor\Documents\Data\MR\Thermometry\20201014\Logs\NormalizedPositions\rightLGN');
 % load('C:\Users\Taylor\Documents\Data\MR\Thermometry\20201014\rightLGN');
-load('')
-tmp = load('');
-target(end+1:end+2) = tmp.target;
+% load('C:\Users\Taylor\Documents\Data\MR\Thermometry\20201014\Logs\NormalizedPositions\rightLGN_deNoised.mat')
 h1 = figure;
 hold on
 ax1 = gca;
@@ -14,7 +12,7 @@ ax = gca;
 
 clear plt
 for ii = 1:length(target)
-    disp(['Sonication ', num2str(ii)]);
+    disp(['Sonication ', num2str(target(ii).sonNo)]);
     disp(['  Requested Focus: ', num2str(target(ii).sonication.focalSpot(1)), ', ',num2str(target(ii).sonication.focalSpot(2)), ', ',num2str(target(ii).sonication.focalSpot(3)), ', ']);
     disp(['  Center Of Mass: ', num2str(1e3*target(ii).cmUs(1),3), ', ',num2str(1e3*target(ii).cmUs(2),3), ', ',num2str(1e3*target(ii).cmUs(3),3), ', ']);
     disp(['  Voxel of Max Intensity: ', num2str(1e3*target(ii).maxUS2(1),3), ', ',num2str(1e3*target(ii).maxUS2(2),3), ', ',num2str(1e3*target(ii).maxUS2(3),3), ', ']);

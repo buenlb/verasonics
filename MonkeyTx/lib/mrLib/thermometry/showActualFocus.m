@@ -66,7 +66,7 @@ end
 tLims = [pbw*maxT,maxT];
 
 %% Use magnitude of anatomy image to clean up the result
-if DENOISE
+if denoise
     tImage = sys.tInterp_deNoised;
 else
     tImage = sys.tInterp;
@@ -213,7 +213,7 @@ c.Position = [xSize*2+ySize-0.75,0.2,0.222,zSize-0.4];
 c.Color = 'w';
 caxis(tLims);
 makeFigureBig(h,18,18,'k');
-keyboard
+
 if exist('saveName','var')
     print(h,saveName,'-dpng');
 end
