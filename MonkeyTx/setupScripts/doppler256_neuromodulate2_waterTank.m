@@ -13,7 +13,7 @@
 % December 2020
 % 
 
-function doppler256_neuromodulate2(duration, voltages, phases, PRF, duty, fName)
+function doppler256_neuromodulate2_waterTank(duration, voltages, phases, PRF, duty, fName)
 maxV = 20; % Maximum allowed voltage
 %% Set up path locations
 srcDirectory = setPaths();
@@ -61,9 +61,6 @@ Resource.Parameters.startEvent = 1;
 %% Create a log struct to save results
 Resource.Parameters.logFileName = fName;
 Resource.Parameters.priorSonication = [];
-Resource.Parameters.DutyCycle = duty;
-Resource.Parameters.PulseRepFreq = PRF;
-Resource.Parameters.Duration = duration;
 Resource.Parameters.log = struct('Date',date,'rightSonications',0,...
     'leftSonications',0,'totalSonications',0,'priorSonication',[],'Parameters',Resource.Parameters);
 
