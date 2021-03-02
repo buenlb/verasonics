@@ -8,9 +8,9 @@ srcDirectory = setPaths();
 txSn = 'JAB800'; % Serial number of transducer - necessary for correct geometry
 % txSn = 'IHG989';
 frequency = 0.65; % Frequency in MHz
-focus = [12,5,59]; % Focal location in mm. x is the long axis of the array, y is the short axis, and z is depth
-% nCycles = 10*frequency*1e6; % number of cycles with which to excite Tx (can integer multiples of 1/2)
-nCycles = 195000;
+focus = [-10,6.5,60.5]; % Focal location in mm. x is the long axis of the array, y is the short axis, and z is depth
+% nCycles = 5; % number of cycles with which to excite Tx (can integer multiples of 1/2)
+nCycles = round(300e-3*650e3);
 ioChannel = 124;
 NA = 1;
 
@@ -155,19 +155,15 @@ Event(n).tx = 1; % use 1st TX structure.
 Event(n).rcv = 1; % use 1st Rcv structure.
 Event(n).recon = 0; % no reconstruction.
 Event(n).process = 0; % no processing
-if ~HIFU
     Event(n).seqControl = [nsc,nsc+1,nsc+2];
     SeqControl(nsc).command = 'timeToNextAcq';
-    SeqControl(nsc).argument = 1e5;
+    SeqControl(nsc).argument = 3e6;
     nscTime2Aq = nsc;
     nsc = nsc + 1;
-else
-    Event(n).seqControl = [nsc,nsc+1];
-end
-SeqControl(nsc).command = 'transferToHost';
-nsc = nsc + 1;
-SeqControl(nsc).command = 'triggerOut';
-SeqControl(nsc).argument = 0;
+    SeqControl(nsc).command = 'transferToHost';
+    nsc = nsc + 1;
+    SeqControl(nsc).command = 'triggerOut';
+    SeqControl(nsc).argument = 0;
 nscTrig = nsc;
 nsc = nsc + 1;
 n = n+1;
@@ -221,8 +217,8 @@ if ~HIFU
     % SeqControl(4).argument = 2;
     % SeqControl(5).command = 'sync';
     % n = n+1;
-
-    Event(n).info = 'Jump back to Event 1.';
+end
+Event(n).info = 'Jump back to Event 1.';
     Event(n).tx = 0; % no TX structure.
     Event(n).rcv = 0; % no Rcv structure.
     Event(n).recon = 0; % no reconstruction.
@@ -235,7 +231,6 @@ if ~HIFU
     else
         SeqControl(nsc).argument = 1;
     end
-end
 % Save all the structures to a .mat file.
 scriptName = mfilename('fullpath');
 svName = matFileName(scriptName);

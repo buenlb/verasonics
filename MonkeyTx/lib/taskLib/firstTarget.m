@@ -9,7 +9,7 @@
 %       server to confirm that the Verasonics machine is ready for
 %       sonication
 %   E:L Sonicate left LGN with parameters for Euler
-%   E:R Sonicate right LGN with parameters for Euler
+%   E:R Sonicate right LGN with parameters for Eule  r
 %   TERMINATE: Task complete, close communication.
 % 
 % Taylor Webb
