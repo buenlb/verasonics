@@ -57,7 +57,8 @@ makeFigureBig(h);
 
 figure(h1)
 % Plot the LGN
-curSys = load('C:\Users\Taylor\Documents\Data\MR\Thermometry\20201014\Logs\segmentedLGN\Euler1.mat');
+% curSys = load('C:\Users\Taylor\Documents\Data\MR\Thermometry\20201014\Logs\segmentedLGN\Euler1.mat');
+curSys = load('C:\Users\Taylor\Documents\Data\MR\Thermometry\20201202\Logs\Euler_20201202.mat');
 idx = find(curSys.sys.rightLgnRoi);
 for ii = 1:length(idx)
     [a,b,c] = ind2sub(size(curSys.sys.aImg),idx(ii));
@@ -81,7 +82,15 @@ plt(end+1) = plot3(x,y,z,'k.','linewidth',2,'markersize',105);
 % plot3(-12,3,61,'kx','linewidth',3,'markersize',12)
 for ii = 2:length(target)+1
 %     label{ii} = [num2str(target(ii-1).sonication.focalSpot(1)), ', ', num2str(target(ii-1).sonication.focalSpot(2))];
-    label{ii} = [num2str(target(ii-1).sonication.focalSpot(2)), ' mm posterior'];
+    if ii == 2
+        label{ii} = 'Current Right';
+    elseif ii == 10
+        label{ii} = 'Current Left';
+    elseif target(ii-1).sonication.focalSpot(1) < 0
+        label{ii} = 'Left';
+    else
+        label{ii} = 'Right';
+    end
 end
 label{end+1} = 'LGN';
 label{1} = 'x, y target (mm)';

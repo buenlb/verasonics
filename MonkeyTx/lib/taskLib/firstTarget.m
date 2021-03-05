@@ -71,18 +71,18 @@ while ~received
                 % VSX clears variables so we need to store them
                 save tmpBeforeVSX.mat
                 if scanIdx == 0
-                    [gsParams,gs,cr] = testArrayPlacement_firstTargetTask(goldStd,[expPath,fName],[],1);
+                    curFname = [expPath,fName];
+                    [gsParams,gs,cr] = testArrayPlacement_firstTargetTask(goldStd,curFname,[],1);
                 else
-                    [gsParams,gs,cr] = testArrayPlacement_firstTargetTask(goldStd,[expPath,fName,num2str(scanIdx+1)],[],1);
+                    curFname = [expPath,fName,num2str(scanIdx+1)];
+                    [gsParams,gs,cr] = testArrayPlacement_firstTargetTask(goldStd,curFname,[],1);
                 end
                 load tmpBeforeVSX.mat
                 delete('tmpBeforeVSX.mat')
                 % Let server know that the process is complete.
                 disp('Skull Image Complete');
-                imgs = struct('gs',gs,'cr',cr,'gsParams',gsParams,...
-                    'goldStd',goldStd,'expPath',expPath,'fName',fName);
-
-                waitfor(verifyPreTask(imgs));
+                
+                waitfor(verifyPreTask(goldStd,curFname));
                 rs = load('guiOutput.mat');
                 rescan = rs.rescan;
                 

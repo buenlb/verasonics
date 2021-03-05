@@ -18,26 +18,30 @@
 %       max(pwErr) < 30%
 %   distErr: Distance error (mm) computed at 6 locations
 %   powErr: Power error (percent) computed at the same 6 locations
+%   totErrPow: Power error (percent) averaged across all elements
+%   gsSignals: signals used in the above computation for the gold standard
+%       data
+%   crSignals: Signals used in the above computation for the current data
+%   gsSkullIdx: Estimated index of skull reflection for gold standard data
+%   crSkullIdx: Estimated index of skull reflection for current data
 % 
 % Taylor Webb
 % University of Utah
 
-function [pass,distErr,powErr] = checkCoupling(gs,cr,singleElement)
+function [pass,distErr,powErr,totErrPow,gsSignals,crSignals,gsSkullIdx,crSkullIdx,d,elementsOfInterest] = checkCoupling(gs,cr,singleElement)
 
 if nargin < 3
     singleElement = 0;
 end
 
 maxErrDist = 2.3;
-meanErrDist = 1.2;
-maxErrPow = 30;
-meanErrPow = 20;
+meanErrDist = 1.15;
+maxErrPow = 50;
+meanErrPow = 30;
 
 gsParams = load(gs);
-cr = load(cr);
-gs = load(gsParams.fName);
 
-[gsRaw,crRaw,~,d] = getRawTraces(gs,cr,singleElement);
+[gsRaw,crRaw,~,d] = getRawTraces(gsParams.fName,cr,singleElement);
 
 if ~singleElement
     gridSize = 3;
@@ -46,22 +50,38 @@ else
 end
 blocks = selectElementBlocks(gridSize);
 axIdx = 1;
-if singleElement
+if ~singleElement
     elementsOfInterest = gsParams.elementsOfInterest;
 else
     elementsOfInterest = [74,79,124,125,194,199];
 end
+
+powErr = zeros(1,length(elementsOfInterest));
+distErr = zeros(1,length(elementsOfInterest));
+crSkullIdx = zeros(1,length(elementsOfInterest));
+gsSkullIdx = zeros(1,length(elementsOfInterest));
+crSignals = zeros(size(crRaw,1),length(elementsOfInterest));
+gsSignals = zeros(size(crRaw,1),length(elementsOfInterest));
 for ii = 1:length(blocks)
     centerElement = blocks{ii}(ceil(gridSize^2/2));
     if ismember(centerElement,elementsOfInterest)
-        curCr = crRaw(:,ii);
-        curGs = gsRaw(:,ii);
+        if singleElement
+            idx = [centerElement-9:centerElement-7,centerElement-1:centerElement+1,centerElement+7:centerElement+9];
+            curCr = mean(crRaw(:,idx),2);
+            curGs = mean(gsRaw(:,idx),2);
+        else
+            curCr = crRaw(:,ii);
+            curGs = gsRaw(:,ii);
+        end
 
         curCr(d>gsParams.powerRange(2)) = 0;
         curCr(d<gsParams.powerRange(1)) = 0;
 
         curGs(d>gsParams.powerRange(2)) = 0;
         curGs(d<gsParams.powerRange(1)) = 0;
+
+        crSignals(:,axIdx) = curCr;
+        gsSignals(:,axIdx) = curGs;
 
         % Determine distance error
         idxGs = find(curGs/max(curGs)>0.5);
@@ -72,14 +92,18 @@ for ii = 1:length(blocks)
             idxGs = idxGs(1);
         end
 
-        idxCr = find(curCr/max(curCr)>0.5);
-        if isempty(idxCr)
-            msgbox('WARNING: No signal exceeded threshold!')
+        tmp = curCr-curGs(idxGs);
+        idx = find(diff(sign(tmp)));
+        if isempty(idx)
             idxCr = 1;
         else
-            idxCr = idxCr(1);
+            [~,tmpIdx] = min(abs(idx-idxGs));
+            idxCr = idx(tmpIdx);
         end
-
+        
+        crSkullIdx(axIdx) = idxCr;
+        gsSkullIdx(axIdx) = idxGs;
+        
         distErr(axIdx) = abs(d(idxGs)-d(idxCr));
         powErrTmp = max(curCr)/max(curGs);
         if powErrTmp > 1
@@ -87,17 +111,30 @@ for ii = 1:length(blocks)
         else
             powErr(axIdx) = 1-powErrTmp;
         end
-        
+
         axIdx = axIdx+1;
     end
 end
 
+%% Find total average
+curCr = crRaw;
+curGs = gsRaw;
+curCr(d>gsParams.powerRange(2) | d<gsParams.powerRange(1),:) = 0;
+curGs(d>gsParams.powerRange(2) | d<gsParams.powerRange(1),:) = 0;
+
+curPw = max(mean(curCr,2));
+gsPw = max(mean(curGs,2));
+if curPw > gsPw
+    totErrPow = 1-gsPw/curPw;
+else
+    totErrPow = 1-curPw/gsPw;
+end
 if mean(distErr) <= meanErrDist && max(distErr) <= maxErrDist && ...
-        100*mean(powErr) <= meanErrPow && 100*max(powErr) <= maxErrPow
+        100*totErrPow <= meanErrPow && 100*max(powErr) <= maxErrPow
     pass = true;
 else
     pass = false;
 end
 
-disp(['Mean Error: ', num2str(mean(distErr),2), ' mm; Max Error: ', num2str(max(distErr),2),' mm',...
-    '; Mean Pressure Difference: ', num2str(100*mean(powErr),2), '%; Max Pressure Difference: ', num2str(100*max(powErr),2),'%']);
+disp(['Mean Error: ', num2str(mean(distErr),2), ' mm; Max Error: ', num2str(max(distErr),2),' mm'])
+disp(['Mean Pressure Difference: ', num2str(100*mean(powErr),2), '%; Max Pressure Difference: ', num2str(100*max(powErr),2),'%; Total Pressure Difference: ', num2str(100*totErrPow,2),'%']);
