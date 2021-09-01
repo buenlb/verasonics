@@ -14,30 +14,66 @@
 %   zE: Euclidian z location of each element in m
 
 function [Trans,xE,yE,zE,corners] = transducerGeometry(plotGeometry,sn)
-r = 65; % Radius of curvature
-h = 4.2*(8-1)-0.2; % y dimension length
-nX = 32; % Number of elements in the long dimension
-nY = 8; % Number of elements in the short dimension
-d = 4; % element length in mm
 
 if ~exist('sn','var')
     warning('You did not provide a serial number. Assuming JAB800')
     sn = 'JAB800';
 end
 
-curvedDistance = (32-1)*4.2-0.2; % Distance spanned by elements along the x dimension
-theta1 = (curvedDistance/(2*pi*r))*pi; % Angle subtended by half of the array.
-c = 1540e3; % Speed of sound in mm/s
-f = 650e3; % Center frequency
-lambda = c/f; % Wavelength in mm 
-
-th = linspace(-theta1,theta1,nX);
-x = r*sin(th);
-z = -r*cos(th)+r;
 switch sn
     case 'JAB800'
+        r = 65; % Radius of curvature
+        nX = 32; % Number of elements in the long dimension
+        nY = 8; % Number of elements in the short dimension
+        d = 4; % element length in mm
+        
+        h = 4.2*(nY-1)-0.2; % y dimension length
+        curvedDistance = (32-1)*4.2-0.2; % Distance spanned by elements along the x dimension
+        theta1 = (curvedDistance/(2*pi*r))*pi; % Angle subtended by half of the array.
+        c = 1540e3; % Speed of sound in mm/s
+        f = 650e3; % Center frequency
+        lambda = c/f; % Wavelength in mm 
+
+        th = linspace(-theta1,theta1,nX);
+        x = r*sin(th);
+        z = -r*cos(th)+r;
+
         y = linspace(h/2,-h/2,nY);
     case 'IHG989'
+        r = 65; % Radius of curvature
+        nX = 32; % Number of elements in the long dimension
+        nY = 8; % Number of elements in the short dimension
+        d = 4; % element length in mm
+        
+        h = 4.2*(nY-1)-0.2; % y dimension length
+        curvedDistance = (nX-1)*4.2-0.2; % Distance spanned by elements along the x dimension
+        theta1 = (curvedDistance/(2*pi*r))*pi; % Angle subtended by half of the array.
+        c = 1540e3; % Speed of sound in mm/s
+        f = 650e3; % Center frequency
+        lambda = c/f; % Wavelength in mm 
+
+        th = linspace(-theta1,theta1,nX);
+        x = r*sin(th);
+        z = -r*cos(th)+r;
+        
+        y = linspace(-h/2,h/2,nY);
+    case 'JEC482'
+        r = 57; % Radius of curvature
+        nX = 43; % Number of elements in the long dimension
+        nY = 6; % Number of elements in the short dimension
+        h = 4.2*(nY-1)-0.2; % y dimension length
+        d = 4; % element length in mm
+        
+        curvedDistance = (nX-1)*4.2-0.2; % Distance spanned by elements along the x dimension
+        theta1 = (curvedDistance/(2*pi*r))*pi; % Angle subtended by half of the array.
+        c = 1540e3; % Speed of sound in mm/s
+        f = 650e3; % Center frequency
+        lambda = c/f; % Wavelength in mm 
+
+        th = linspace(-theta1,theta1,nX);
+        x = r*sin(th);
+        z = -r*cos(th)+r;
+        
         y = linspace(-h/2,h/2,nY);
     otherwise
         error('You must specify a serial number!')
@@ -61,6 +97,15 @@ for ii = 1:nX
         idx = idx+1;
     end
 end
+% JEC482 is a 6x43 element array but that is 258 elements. The last two
+% elements, therefore, don't actually exist. This removes them
+if strcmp(sn,'JEC482')
+    AZ = AZ(1:256);
+    X = X(1:256);
+    Y = Y(1:256);
+    Z = Z(1:256);
+end
+
 EL = zeros(size(AZ));
 
 xE = X;
@@ -74,6 +119,7 @@ Y = Y/lambda;
 
 if plotGeometry
     figure(1);
+    hold on
     plot3(X,Y,Z,'*');
     xlabel('X');
     ylabel('Y');

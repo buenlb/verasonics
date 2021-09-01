@@ -18,6 +18,17 @@
 %         delayVector: List of all possible delays
 %         ch: 1 for a leftward choice, 0 for a rightward choice, nan if no
 %           choice was made
+%         loc: visual location of the target
+%         task: 0 for a timing task, 1 for the brightness task
+%       Sonication Parameters: Note that these may not correspond perfectly
+%           with the Verasonics system since updates are only sent to that
+%           system after the completion of a block of sonications
+%         leftVoltage: requested voltage for left LGN.
+%         rightVoltage: requested voltage for right LGN.
+%         dc: duty cycle
+%         prf: pulse repetition frequency
+%         leftLocation: requested target for left LGN
+%         rightLocation: requested target for right LGN
 %   axs: vector pointing to the three axes used to make the plot. Not
 %       returned if plotResults is 0
 % 
@@ -29,8 +40,9 @@ function tData = processTaskData(fName)
 if nargin < 2
     plotResults = 0;
 end
-
-trialData = load(fName);
+tic
+trialData = load(fName,'trial_data');
+toc
 trial_data = trialData.trial_data;
 
 % Sometimes it populates a trial that doesn't finish. If this is the case,
@@ -42,9 +54,19 @@ end
 % Set up variables
 lgn = zeros(size(trial_data));
 result = lgn;
+taskType = lgn;
 delay = lgn;
+brightnessOffset = lgn;
 delayVector = [];
+brightnessOffsetVector = [];
+correctDelay = lgn;
+leftVoltage = lgn;
+rightVoltage = lgn;
+dc = lgn;
+prf = lgn;
 ch = lgn;
+leftLocation = zeros(length(lgn),3);
+rightLocation = zeros(length(lgn),3);
 
 % Loop through struct
 for ii = 1:length(trial_data)
@@ -88,6 +110,59 @@ for ii = 1:length(trial_data)
     if ~ismember(delay(ii),delayVector) && ~isnan(delay(ii))
         delayVector(end+1) = delay(ii); %#ok<AGROW>
     end
+    
+    if isfield(trial_data{ii}.us,'trData')
+        brightnessOffset(ii) = trial_data{ii}.us.trData.brightnessOffset;
+        if ~ismember(brightnessOffset(ii),brightnessOffsetVector) && ~isnan(brightnessOffset(ii))
+            brightnessOffsetVector(end+1) = brightnessOffset(ii); %#ok<AGROW>
+        end
+    else
+        brightnessOffset(ii) = 0;
+        brightnessOffsetVector = 0;
+    end
+    
+    timing(ii) = processTiming(trial_data{ii});
+    
+    loc(:,:,ii) = trial_data{ii}.targ_pos;
+    
+    if isfield(trial_data{ii}.us,'trData')
+        if strcmp(trial_data{ii}.us.trData.task,'brightness')
+            taskType(ii) = 1;
+        elseif strcmp(trial_data{ii}.us.trData.task,'timing')
+            taskType(ii) = 0;
+        else
+            error('Unrecognized Task Type!')
+        end
+    else % If trData isn't a field this task was run using one of the timing only scripts
+        taskType(ii) = 0;
+    end
+    
+    if isfield(trial_data{ii},'leftVoltage')
+        leftVoltage(ii) = trial_data{ii}.leftVoltage;
+        rightVoltage(ii) = trial_data{ii}.rightVoltage;
+        dc(ii) = trial_data{ii}.us_duty;
+        prf(ii) = trial_data{ii}.us_prf;
+        leftLocation(ii,:) = trial_data{ii}.leftLGN;
+        rightLocation(ii,:) = trial_data{ii}.rightLGN;
+    else
+        leftVoltage(ii) = nan;
+        rightVoltage(ii) = nan;
+        dc(ii) = nan;
+        prf(ii) = nan;
+        leftLocation(ii,:) = nan;
+        rightLocation(ii,:) = nan;
+    end
+    
+    if abs(abs(delay(ii))-1e3*abs(trial_data{ii}.event_time(4)-trial_data{ii}.event_time(3))) > 7 % the frame period is about 8.3 ms so if it is greater than 9 ms it is off by a frame or more.
+        correctDelay(ii) = false;
+    else
+        correctDelay(ii) = true;
+    end    
+    
 end
 
-tData = struct('ch',ch,'delay',delay,'delayVector',delayVector,'lgn',lgn,'result',result);
+tData = struct('ch',ch,'delay',delay,'delayVector',delayVector,'lgn',lgn,...
+    'result',result,'timing',timing,'loc',loc,'task',taskType,...
+    'leftVoltage',leftVoltage,'rightVoltage',rightVoltage,'dc',dc,'prf',prf,...
+    'leftLocation',leftLocation,'rightLocation',rightLocation,'correctDelay',correctDelay,...
+    'brightnessOffset',brightnessOffset,'brightnessOffsetVector',brightnessOffsetVector);
