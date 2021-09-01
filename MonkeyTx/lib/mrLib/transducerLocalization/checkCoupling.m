@@ -92,7 +92,7 @@ for ii = 1:length(blocks)
             idxGs = idxGs(1);
         end
 
-        tmp = curCr-curGs(idxGs);
+        tmp = curCr-max(curCr)/max(curGs)*curGs(idxGs);
         idx = find(diff(sign(tmp)));
         if isempty(idx)
             idxCr = 1;
@@ -104,7 +104,7 @@ for ii = 1:length(blocks)
         crSkullIdx(axIdx) = idxCr;
         gsSkullIdx(axIdx) = idxGs;
         
-        distErr(axIdx) = abs(d(idxGs)-d(idxCr));
+        distErr(axIdx) = (d(idxGs)-d(idxCr));
         powErrTmp = max(curCr)/max(curGs);
         if powErrTmp > 1
             powErr(axIdx) = powErrTmp-1;
@@ -124,13 +124,14 @@ curGs(d>gsParams.powerRange(2) | d<gsParams.powerRange(1),:) = 0;
 
 curPw = max(mean(curCr,2));
 gsPw = max(mean(curGs,2));
-if curPw > gsPw
-    totErrPow = 1-gsPw/curPw;
-else
-    totErrPow = 1-curPw/gsPw;
-end
+totErrPow = (curPw-gsPw)/gsPw;
+% if curPw > gsPw
+%     totErrPow = 1-gsPw/curPw;
+% else
+%     totErrPow = 1-curPw/gsPw;
+% end
 if mean(distErr) <= meanErrDist && max(distErr) <= maxErrDist && ...
-        100*totErrPow <= meanErrPow && 100*max(powErr) <= maxErrPow
+        100*totErrPow <= meanErrPow% && 100*max(powErr) <= maxErrPow
     pass = true;
 else
     pass = false;

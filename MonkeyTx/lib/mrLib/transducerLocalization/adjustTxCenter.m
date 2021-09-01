@@ -1,4 +1,4 @@
-    % sys = adjustTxCenter(sys,newCenter,type)
+% sys = adjustTxCenter(sys,newCenter,type)
 % Adjust the transducer center in the struct sys with the center given in 
 % the variable newCenter.
 % 
@@ -16,7 +16,10 @@
 % University of Utah
 % August 2020
 
-function sys = adjustTxCenter(sys,newCenter,type)
+function sys = adjustTxCenter(sys,newCenter,type,plot)
+if ~exist('plot','var')
+    plot = 1;
+end
 switch type
     case 'idx'
         sys.txCenterIdx = newCenter;
@@ -34,4 +37,6 @@ sys.ux = sys.ux-sys.ux(sys.txCenterIdx(1));
 sys.uy = sys.uy-sys.uy(sys.txCenterIdx(2));
 sys.uz = sys.uz-sys.uz(sys.txCenterIdx(3));
 
-sys.txImg = displayTxLoc(sys);
+if plot
+    sys.txImg = displayTxLoc(sys);
+end

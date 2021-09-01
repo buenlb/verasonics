@@ -8,6 +8,8 @@
 %       ([tMin, tMax])
 %   transp: Desired transparency (must be a value between 0 and 1)
 %   deNoised: A flag that determines which tInterp matrix to use.
+%   gImgMax: a scalare by which to multiply the gray image when determining
+%       the dynamic range. Defaults to 1.
 % 
 % @OUTPUTS
 %   cImg: The resulting color img which will have size [size(sys.aImg), 3]
@@ -16,11 +18,17 @@
 % University of Utah
 % September 2020
 
-function sys = draw3dTempOverlay(sys,tWindow,dynamics,transp,deNoised)
+function sys = draw3dTempOverlay(sys,tWindow,dynamics,transp,deNoised,gImgMax)
 if nargin < 4
     transp = 1;
 elseif transp < 0 || transp > 1
     error('transp must be between 0 and 1.')
+end
+
+if ~exist('gImgMax','var')
+    gImgMax = 1;
+elseif gImgMax > 1 || gImgMax < 0
+    error('gImgMax must be between 0 and 1.');
 end
 
 if ~exist('deNoised','var')
@@ -30,11 +38,11 @@ end
 d = waitbar(0,'Gray Image');
 tic
 if dynamics == 0
-    grayValue = sys.aImg/max(sys.aImg(:));
+    grayValue = sys.aImg/max(gImgMax*sys.aImg(:));
     gImg = repmat(grayValue,[1,1,1,size(sys.tInterp,4)]);
     % grayValue = 1/sqrt(3)*intensity;
 
-    cMap = colormap('hot');
+    cMap = colormap('winter');
 
     if deNoised
         tImg = sys.tInterp;
@@ -64,9 +72,9 @@ else
         tImg = mean(sys.tInterp(:,:,:,dynamics),4);
     end
     
-    gImg = sys.aImg/max(sys.aImg(:));
+    gImg = sys.aImg/max(gImgMax*sys.aImg(:));
 
-    cMap = colormap('hot');
+    cMap = colormap('winter');
 
     tImg(tImg<tWindow(1)) = tWindow(1);
     tImg(tImg>tWindow(2)) = tWindow(2);

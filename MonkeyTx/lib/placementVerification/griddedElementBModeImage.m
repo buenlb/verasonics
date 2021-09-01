@@ -78,7 +78,7 @@ for ii = 1:length(blocks)
         keyboard
     end
     s = sTot;
-
+    
     sExpanded = zeros(size(Xe));
     for jj = 1:length(xe)
         for kk = 1:length(ye)
