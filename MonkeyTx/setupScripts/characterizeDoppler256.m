@@ -7,11 +7,11 @@ srcDirectory = setPaths();
 %%
 txSn = 'JAB800'; % Serial number of transducer - necessary for correct geometry
 % txSn = 'IHG989';
-frequency = 0.65; % Frequency in MHz
-focus = [-10,6.5,60.5]; % Focal location in mm. x is the long axis of the array, y is the short axis, and z is depth
+frequency = 0.85; % Frequency in MHz
+focus = [0,0,65]; % Focal location in mm. x is the long axis of the array, y is the short axis, and z is depth
 % nCycles = 5; % number of cycles with which to excite Tx (can integer multiples of 1/2)
 nCycles = round(300e-3*650e3);
-ioChannel = 124;
+ioChannel = 256;
 NA = 1;
 
 % Specify system parameters
@@ -47,8 +47,8 @@ if HIFU
     Resource.HIFU.psType = 'QPX600DP'; % set to 'QPX600DP' to match supply being used
 
     TPC(5).hv = 1.6;
-    maxV = 60;
-    maxCycles = 12*frequency*1e6;
+    maxV = 75;
+    maxCycles = 12*0.65*1e6;
     for ii = 1:5
         TPC(ii).maxHighVoltage = maxV;
         TPC(ii).highVoltageLimit = maxV;
@@ -84,7 +84,7 @@ TW(1).Parameters = [Trans.frequency,0.67,nCycles*2,1]; % A, B, C, D
 % Specify TX structure array.
 TX(1).waveform = 1; % use 1st TW structure.
 TX(1).focus = 0;
-TX(1).Apod = ones(1,256);
+TX(1).Apod = zeros(1,256);
 TX(1).Apod(ioChannel) = 1;
 % TX(1).Apod(ioChannel) = 1;
 
@@ -100,6 +100,7 @@ elements.z = zTx*1e-3;
 elements = steerArray(elements,focus*1e-3,frequency);
 delays = [elements.t]';
 TX(1).Delay = delays;
+% TX(1).Delay = zeros(1,256);
 
 % Specify TGC Waveform structure.
 TGC(1).CntrlPts = ones(1,8)*1023;

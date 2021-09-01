@@ -65,4 +65,5 @@ elements.t = t;
 if plotPhaseResults
     plotElementValues(elements.x*1e3,elements.y*1e3,elements.z*1e3,t,'jet');
     title('Phase (N Cycles Delayed)');
+    drawnow
 end

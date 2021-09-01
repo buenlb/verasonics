@@ -4,10 +4,8 @@
 % @INPUTS
 %   duration: Sonication duration in seconds.
 %   volages: peak voltage applied to each element in volts
-%   target: target location in mm
 %   PRF: Pulse repitition frequency in Hz
 %   duty: desired duty cycle (%)
-%   frequency: Frequency in MHz
 %   fName: Full path in which to save log file
 % 
 % Taylor Webb
@@ -15,19 +13,20 @@
 % December 2020
 % 
 
-function doppler256_neuromodulate2(duration, voltage, target, PRF, duty, frequency, fName)
-maxV = 50; % Maximum allowed voltage
+function doppler256_neuromodulate2(duration, voltages, phases, PRF, duty, fName)
+maxV = 20; % Maximum allowed voltage
 %% Set up path locations
 srcDirectory = setPaths();
 addpath([srcDirectory,'lib\mrLib'])
 
 %% Setup sonication properties
+frequency = 0.65; % Frequency in MHz
 T = 1/(frequency*1e6);
 nCycles = round(duration/T); % number of cycles with which to excite Tx (can integer multiples of 1/2)
 
 %% error check
-for ii = 1:length(voltage)
-    if voltage(ii) > maxV
+for ii = 1:length(voltages)
+    if voltages(ii) > maxV
         error(['Voltage is limited to ', num2str(maxV), ' volts'])
     end
 end
@@ -54,7 +53,8 @@ Resource.Parameters.numRcvChannels = 256; % change to 64 for Vantage 64 or 64LE
 Resource.Parameters.connector = 0; % trans. connector to use (V256).
 Resource.Parameters.speedOfSound = 1490; % speed of sound in m/sec
 Resource.Parameters.verbose = 1;
-Resource.Parameters.voltages = voltage;
+Resource.Parameters.phases = phases;
+Resource.Parameters.voltages = voltages;
 Resource.Parameters.simulateMode = 0;
 Resource.Parameters.startEvent = 1;
 
@@ -64,9 +64,9 @@ Resource.Parameters.priorSonication = [];
 Resource.Parameters.DutyCycle = duty;
 Resource.Parameters.PulseRepFreq = PRF;
 Resource.Parameters.Duration = duration;
-Resource.Parameters.log = struct('Date',datetime,'targets',target,'voltages',voltage,'Parameters',Resource.Parameters,'frequency',frequency);
-log = Resource.Parameters.log;
-save(Resource.Parameters.logFileName,'log')
+Resource.Parameters.log = struct('Date',date,'rightSonications',0,...
+    'leftSonications',0,'totalSonications',0,'priorSonication',[],'Parameters',Resource.Parameters);
+
 %% Set up longer pulses
 % HIFU % The Resource.HIFU.externalHifuPwr parameter must be specified in a
 % script using TPC Profile 5 with the HIFU option, to inform the system
@@ -89,7 +89,7 @@ Resource.HIFU.extPwrComPortID = 'COM5';
 
 Resource.HIFU.psType = 'QPX600DP'; % set to 'QPX600DP' to match supply being used
 
-TPC(5).hv = voltage(1);
+TPC(5).hv = voltages(1);
 for ii = 1:5
     TPC(ii).maxHighVoltage = maxV;
     TPC(ii).highVoltageLimit = maxV;
@@ -102,7 +102,6 @@ Media.MP(1,:) = [0,0,100,1.0]; % [x, y, z, reflectivity]
 
 % Specify Trans structure array.
 Trans = transducerGeometry(0);
-Trans.frequency = frequency;
 Trans.units = 'mm';
 Trans.maxHighVoltage = maxV;
 
@@ -124,17 +123,6 @@ TX(1).Apod = ones(1,256);
 % badElements = load('C:\Users\Verasonics\Downloads\elementsOff.mat');
 % TX(1).Apod(badElements.unconnected) = 0;
 
-xTx = Trans.ElementPos(:,1);
-yTx = Trans.ElementPos(:,2);
-zTx = Trans.ElementPos(:,3);
-
-elements.x = xTx*1e-3;
-elements.y = yTx*1e-3;
-elements.z = zTx*1e-3;
-
-% Find the phases for the first focal spot
-elements = steerArray(elements,target*1e-3,frequency);
-phases{1} = [elements.t]';
 % delays = zeros(size(delays));
 TX(1).Delay = phases{1};
 

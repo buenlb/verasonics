@@ -48,8 +48,8 @@
 
 clear all; close all; clc;
 %% Setup
-% verasonicsDir = 'C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\';
-verasonicsDir = 'C:\Users\Taylor\Documents\Projects\verasonics\verasonics\';
+verasonicsDir = 'C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\';
+% verasonicsDir = 'C:\Users\Taylor\Documents\Projects\verasonics\verasonics\';
 % Add relevant paths to give access to library functions
 
 addpath([verasonicsDir, 'MonkeyTx\lib'])

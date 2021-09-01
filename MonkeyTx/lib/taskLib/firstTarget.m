@@ -27,6 +27,7 @@ addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\placeme
 addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\lib\');
 addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\MATFILES\');
 addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\setupScripts\');
+addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\mrLib\transducerLocalization\');
 
 %% User defined inputs
 expPath = 'C:\Users\Verasonics\Documents\firstTargetData\';
@@ -54,27 +55,61 @@ while ~received
     
     % Determine what to do with the message
     switch msg
-        case 'SKULL'
-            disp('Starting Skull Image')
-            fprintf(pt,'SKULL');
-            % Image Skull
+        case 'INIT'
+            disp('Getting initial parameters')
+            fprintf(pt,'INIT');
+            
             fName = fscanf(pt);
             while isempty(fName)
                 fName = fscanf(pt);
             end
             fName = fName(1:end-1);
-            fNameOrig = fName;
             fprintf(pt,fName);
+            
+            % Get duty cycle, duration, and PRF
+            dc = receiveDoubleFromServer(pt);
+            prf = receiveDoubleFromServer(pt);
+            duration = receiveDoubleFromServer(pt);
+            frequency = receiveDoubleFromServer(pt);
+            
+            % Get first target and voltage.
+            [voltage, target] = receiveFocusFromServer(pt);
+            
+            disp('Initializing with parameters:')
+            disp(['  Focus: <', num2str(target(1)), ',',num2str(target(2)), ',',num2str(target(3)), '>'])
+            disp(['  Voltage: ', num2str(voltage), ' V'])
+            disp(['  PRF: ', num2str(prf), ' Hz'])
+            disp(['  Duty: ', num2str(dc), '%'])
+            disp(['  Freqency: ', num2str(frequency), 'MHz'])
+            disp(['  Duration: ', num2str(duration), ' ms'])
+            disp(['  Saving in: ', fName])
+            
+            doppler256_neuromodulate2(duration*1e-3,voltage,target,prf,dc,frequency,[expPath,fName,'_log']);
+        case 'SKIPSKULL'
+            fprintf(pt,'SKIPSKULL');
+            fNameOrig = fName;
+            received = 1;
+        case 'SKULL'
+            disp('Starting Skull Image')
+            fprintf(pt,'SKULL');
+            % Image Skull
+            if ~exist('fName','var')
+                fprintf(pt,'ERR: INIT must be run before SKULL');
+                fclose(pt);
+                error('INIT must be run before SKULL')
+            end
+            fNameOrig = fName;
             rescan = 1;
             scanIdx = 0;
             while rescan
                 % VSX clears variables so we need to store them
-                save tmpBeforeVSX.mat
                 if scanIdx == 0
                     curFname = [expPath,fName];
+                    save tmpBeforeVSX.mat
                     [gsParams,gs,cr] = testArrayPlacement_firstTargetTask(goldStd,curFname,[],1);
                 else
                     curFname = [expPath,fName,num2str(scanIdx+1)];
+                    save tmpBeforeVSX.mat
                     [gsParams,gs,cr] = testArrayPlacement_firstTargetTask(goldStd,curFname,[],1);
                 end
                 load tmpBeforeVSX.mat
@@ -103,12 +138,6 @@ while ~received
     end
 end
 fclose(pt);
-%% Create VSX struct. 
-% The file setupVisualTaskSonication is expected to have all the necessary
-% parameters such as the proper focal target and element intensities. These
-% will be used by doppler256_neuromodulate to sonicate the LGN at the
-% timing established by the server.
-setupVisualTaskSonication([expPath,fNameOrig]);
 
 %% Launch VSX
 save tmpBeforeVSX.mat

@@ -92,7 +92,7 @@ for ii = 1:length(blocks)
             idxGs = idxGs(1);
         end
 
-        tmp = curCr-curGs(idxGs);
+        tmp = curCr-max(curCr)/max(curGs)*curGs(idxGs);
         idx = find(diff(sign(tmp)));
         if isempty(idx)
             idxCr = 1;
