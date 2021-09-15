@@ -38,6 +38,13 @@ gs = load(goldStd);
 if ~isfield(gs,'fName')
     error('Invalid gold standard file')
 end
+if ~isfield(gs,'txSn')
+	warning('Serial number not found in gold standard image, assuming JAB800');
+	txSn = 'JAB800';
+else
+    txSn = gs.txSn;
+end
+disp(['Using TxSn: ', txSn])
 gsRaw = load(gs.fName);
 
 if exist('fName','var') && ~isempty(fName)
@@ -50,8 +57,8 @@ else
         end
     end
     
-    [singleElRaw,griddedElRaw] = imageSkull();
-    save(svName,'singleElRaw','griddedElRaw')
+    [singleElRaw,griddedElRaw] = imageSkull(txSn);
+    save(svName,'singleElRaw','griddedElRaw','txSn')
     crData.griddedElRaw = griddedElRaw;
     crData.singleElRaw = singleElRaw;
 end

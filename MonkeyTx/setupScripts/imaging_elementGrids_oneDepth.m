@@ -31,10 +31,10 @@ Resource.Parameters.focalSpotsX = focalSpotsX;
 Resource.Parameters.focalSpotsY = focalSpotsY;
 Resource.Parameters.focalSpotsZ = focalSpotsZ;
 
-blocks = selectElementBlocks(gridSize);
+blocks = selectElementBlocks(gridSize,'JAB800');
 
 %% Specify Trans structure array.
-Trans = transducerGeometry(0);
+Trans = transducerGeometry(0,'JAB800');
 Trans.units = 'mm';
 Trans.maxHighVoltage = 56;
 Trans.frequency = frequency;

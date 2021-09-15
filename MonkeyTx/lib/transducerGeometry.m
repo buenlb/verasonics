@@ -74,7 +74,7 @@ switch sn
         x = r*sin(th);
         z = -r*cos(th)+r;
         
-        y = linspace(-h/2,h/2,nY);
+        y = linspace(h/2,-h/2,nY);
     otherwise
         error('You must specify a serial number!')
 end
@@ -150,7 +150,7 @@ directivity = cos(th);
 
 %% Set up Transducer struct
 Trans = struct('name','custom','frequency',f/1e6,'type',2,'units','mm',...
-    'numelements',nX*nY,'ElementPos',elementPositions,'ElementSens',directivity,...
+    'numelements',length(X),'ElementPos',elementPositions,'ElementSens',directivity,...
     'connType',1,'spacing',3.2/lambda,'maxHighVoltage',10, 'Connector',(1:256)',...
     'impedance',175);
 

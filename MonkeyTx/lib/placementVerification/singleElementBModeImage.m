@@ -11,6 +11,8 @@
 %       distOfInterest(1) and distOfInterest(2) is displayed. Distances are
 %       computed by assuming a speed of sound in water of 1492 m/s.
 %       distOfInterest should be given in mm.
+%	txSn: serial number of transducer used to acquire data. Defaults to
+%		JAB800;
 %   plotResult: If plotResult is true the resulting image is displayed.
 % 
 % @OUTPUTS
@@ -23,9 +25,13 @@
 % University of Utah
 % March 2020
 
-function [sArray,xa,ya,za] = singleElementBModeImage(RcvData,Receive,distOfInterest,plotResult)
+function [sArray,xa,ya,za] = singleElementBModeImage(RcvData,Receive,distOfInterest,txSn,plotResult)
 if ~exist('plotResult','var')
     plotResult = 0;
+end
+if ~exist('txSn','var')
+	warning('Serial number not passed to griddedElementBModeImage, assuming JAB800');
+	txSn = 'JAB800';
 end
 
 % Set up time/distance vectors corresponding to data
@@ -34,6 +40,8 @@ d = t*1.492/2;
 
 % Determine ROI based on distOfInterest
 if ~exist('distOfInterest','var')
+    distOfInterest = [d(1),d(end)];
+elseif isempty(distOfInterest)
     distOfInterest = [d(1),d(end)];
 elseif length(distOfInterest) == 1
     distOfInterest = [distOfInterest, d(end)];
@@ -56,7 +64,7 @@ za = 10:dx:60;
 [Ya,Xa,Za] = meshgrid(ya,xa,za);
 
 %% Interpolate data from element coordinate system to array coordinates
-elements = transducerGeometry(0);   
+elements = transducerGeometry(0,txSn);   
 sArray = zeros(size(Xa));
 nElements = sArray;
 for ii = 1:size(elements.ElementPos,1)

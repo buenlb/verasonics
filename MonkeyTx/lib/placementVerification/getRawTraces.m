@@ -26,6 +26,15 @@ function [gsRaw,crRaw,t,d] = getRawTraces(gs,cr,singleElement)
 gs = load(gs);
 cr = load(cr);
 
+if isfield(cr,'txSn')
+	txSn = cr.txSn;
+elseif isfield(gs,'txSn')
+    txSn = gs.txSn;
+else
+	warning('No Serial Number found, assuming JAB800');
+	txSn = 'JAB800';
+end
+
 if ~singleElement
     gs = gs.griddedElRaw;
     cr = cr.griddedElRaw;
@@ -36,8 +45,8 @@ else
     gridSize = 1;
 end
 
-blocks = selectElementBlocks(gridSize);
-Trans = transducerGeometry(0);
+blocks = selectElementBlocks(gridSize,txSn);
+Trans = transducerGeometry(0,txSn);
 
 t = 1e6*(0:(cr.Receive(1).endSample-1))/(cr.Receive(1).ADCRate*1e6/cr.Receive(1).decimFactor);
 d = t*1.492/2+cr.Receive(1).startDepth*cr.Resource.Parameters.speedOfSound/(Trans.frequency*1e6)*1e3;

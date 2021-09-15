@@ -62,7 +62,7 @@ addpath([verasonicsDir, 'MonkeyTx\lib\mrLib\thermometry\'])
 addpath([verasonicsDir, 'MonkeyTx\lib\mrLib\transducerLocalization\']);
 
 % Experiment Path
-sys.expPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20201202\';
+sys.expPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\test_20210913\';
 
 % Gold Standard Acoustic Imaging Files
 exVivoGoldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\exVivoGoldStandard.mat';
@@ -70,14 +70,17 @@ eulerGoldStandard1 = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\Eule
 eulerGoldStandard2 = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\EulerGoldStandard2.mat';
 eulerGoldStandard3 = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20201014\UltrasoundData\Euler_1143_Re-placedx2_blanket_1.5_GS.mat';
 gaussGoldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\GaussGoldStandard.mat';
-sys.goldStandard = eulerGoldStandard3;
+sys.goldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\test_20210913\UltrasoundData\exVivoSkull1_gs.mat';
+
+% Set the transducer you are using
+sys.txSn = 'JEC482';
 
 % Coupling File
-couplingFile = 'Euler_0925.mat';
+couplingFile = 'exVivoSkull6.mat';
 sys.couplingFile = [sys.expPath,'UltrasoundData\',couplingFile];
 
 % Log file
-logFile ='Euler_20201202.mat';
+logFile ='test_20210914.mat';
 sys.logFile = [sys.expPath,'Logs\',logFile];
 
 % Imaging paths
@@ -89,16 +92,27 @@ sys.aSeriesNo = 16;
 
 % Invert Transducer
 sys.invertTx = 0;
-return
+
+msgbox(['You have selected transducer: ', sys.txSn]);
+
 %% Check Coupling
-if ~exist(sys.couplingFile,'file')
+rescan = 1;
+scIdx = 1;
+while rescan
     save('tmp.mat','sys');
-    testArrayPlacement(sys.goldStandard,sys.couplingFile);
+    testArrayPlacement_firstTargetTask(sys.goldStandard,sys.couplingFile,[],0);
     load('tmp.mat');
     delete('tmp.mat');
-else
-    warning('Coupling file already exists - imaging not run.');
+    waitfor(verifyPreTask(sys.goldStandard,sys.couplingFile));
+
+    rs = load('guiOutput.mat');
+    rescan = rs.rescan;
+    if rescan
+        scIdx = scIdx+1;
+        sys.couplingFile = [sys.couplingFile(1:end-4),'_',num2str(scIdx),'.mat'];
+    end
 end
+
 return
 %% Localize Transducer
 if exist(sys.logFile,'file')

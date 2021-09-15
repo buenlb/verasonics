@@ -13,7 +13,11 @@
 % University of Utah
 % March 2020
 
-function [singleElRaw,griddedElRaw] = imageSkull()
+function [singleElRaw,griddedElRaw] = imageSkull(txSn)
+if nargin == 0
+    txSn = 'JAB800';
+    warning('No Serial number passed, assuming JAB800')
+end
 %% Run single element transmit/receive
 disp('Single Element:');
 disp('  Acquiring Data...')
@@ -32,7 +36,12 @@ singleElRaw = struct('RcvData',RcvData,'Receive',Receive,'TX',TX,'Resource',Reso
 %% Run gridded transmit/receive
 disp(['Gridded Element (elapsed time = ', num2str(toc), '):']);
 disp('  Acquiring Data...');
-filename = 'imaging_elementGrids_oneDepth.mat';
+switch txSn
+    case 'JAB800'
+        filename = 'imaging_elementGrids_oneDepth.mat';
+    case 'JEC482'
+        filename = 'imaging_elementGrids_oneDepth_JEC482.mat';
+end
 assignin('base','filename',filename);
 evalin('base','VSX');
 

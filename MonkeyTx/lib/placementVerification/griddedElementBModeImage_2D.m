@@ -22,7 +22,15 @@
 % University of Utah
 % March 2020
 
-function [sArray,xa,ya,za] = griddedElementBModeImage_2D(RcvData,Receive,distOfInterest,plotResult)
+function [sArray,xa,ya,za] = griddedElementBModeImage_2D(RcvData,Receive,distOfInterest,txSn,plotResult)
+if ~exist('plotResult','var')
+    plotResult = 0;
+end
+if ~exist('txSn','var')
+	warning('Serial number not passed to griddedElementBModeImage_2D, assuming JAB800');
+	txSn = 'JAB800';
+end
+
 %% Set up grids
 gridSize = 3;
 blocks = selectElementBlocks(gridSize);
@@ -44,7 +52,7 @@ ze = d;
 [Ze,Xe] = meshgrid(ze,xe);
 
 %% Interpolate data from element coordinate system to array coordinates
-elements = transducerGeometry(0);
+elements = transducerGeometry(0,txSn);
 
 sArray = zeros(size(Xa,1),8-(gridSize-1),size(Xa,2));
 nElements = sArray;

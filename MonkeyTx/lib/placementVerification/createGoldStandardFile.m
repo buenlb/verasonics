@@ -3,11 +3,18 @@ data = load(fName);
 sImg = data.singleElRaw;
 gImg = data.griddedElRaw;
 
+if isfield(data,'txSn')
+	txSn = data.txSn;
+else
+	warning('No Serial Number found, assuming JAB800');
+	txSn = 'JAB800';
+end
+
 %% Use single element image to determine power returned to each element
 RcvData = sImg.RcvData;
 Receive = sImg.Receive;
 Resource = sImg.Resource;
-Trans = transducerGeometry(0);
+Trans = transducerGeometry(0,txSn);
 
 t = 1e6*(0:(Receive(1).endSample-1))/(Receive(1).ADCRate*1e6/Receive(1).decimFactor);
 d = t*1.492/2+Receive(1).startDepth*Resource.Parameters.speedOfSound/(Trans.frequency*1e6)*1e3;
@@ -45,14 +52,20 @@ Resource = gImg.Resource;
 t = 1e6*(0:(Receive(1).endSample-1))/(Receive(1).ADCRate*1e6/Receive(1).decimFactor);
 d = t*1.492/2+Receive(1).startDepth*Resource.Parameters.speedOfSound/(Trans.frequency*1e6)*1e3;
 
-elementsOfInterest = [66,71,124,132,186,191];
+if strcmp(txSn,'JAB800')
+    elementsOfInterest = [66,71,124,132,186,191];
+elseif strcmp(txSn,'JEC482')
+    elementsOfInterest = [81,82,129,130,177,178];
+else
+    error(['Unrecognized Tx:', txSn])
+end
 gridSize = 3;
-blocks = selectElementBlocks(gridSize);
+blocks = selectElementBlocks(gridSize,txSn);
 distIdx = 1;
 skDist = zeros(size(elementsOfInterest));
 threshold = 5e3;
 for ii = 1:length(blocks)
-    centerElement = blocks{ii}(ceil(gridSize^2/2));
+    centerElement = blocks{ii}(ceil(gridSize^2/2))
     if ismember(centerElement,elementsOfInterest)
         s = zeros(size(Receive(ii).startSample:Receive(ii).endSample,blocks{ii}(1)));
         for jj = 1:gridSize^2
@@ -85,4 +98,4 @@ if ~exist('tmplt','var')
     error('You didn''t select a signal template!');
 end
 %% Save results in specified location.
-save(svName,'skDist','power','mxPower','powerRange','fName','elementsOfInterest','totPower','totS','tmplt');
+save(svName,'skDist','power','mxPower','powerRange','fName','elementsOfInterest','totPower','totS','tmplt','txSn');
