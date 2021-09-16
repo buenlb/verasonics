@@ -8,7 +8,7 @@ theta = sys.txTheta;
 res = sys.aRes;
 
 %% Show images
-tmplt3d = drawTransducer(size(img),txCenter,theta,res,1);
+tmplt3d = drawTransducer(size(img),txCenter,theta,res,1,sys.txSn);
 tmplt2d = sum(tmplt3d,3);
 tmplt2d(tmplt2d > 1) = 1;
 zDist = 9.53e-3;

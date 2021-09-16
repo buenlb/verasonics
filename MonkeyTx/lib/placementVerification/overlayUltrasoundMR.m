@@ -3,7 +3,7 @@ function overlayUltrasoundMR(sys)
 data = load(sys.couplingFile);
 gImg = data.griddedElRaw;
 
-[usImg,xa,ya,za] = griddedElementBModeImage(gImg.RcvData,gImg.Receive);
+[usImg,xa,ya,za] = griddedElementBModeImage(gImg.RcvData,gImg.Receive,[],sys.txSn);
 xa = xa*1e-3;
 ya = ya*1e-3;
 za = za*1e-3;
@@ -27,7 +27,7 @@ elements = transducerGeometry(0,sys.txSn);
 [YM,XM,ZM] = meshgrid(sys.uy,sys.ux,sys.uz);
 
 usImgInterp = interp3(YA,XA,ZA,usImg,YM,XM,ZM);
-usImgInterp(sys.txImg>0) = max(usImgInterp(:));
+% usImgInterp(sys.txImg>0) = max(usImgInterp(:));
 
 ov = figure;
 subplot(121)

@@ -1,8 +1,12 @@
 
-function Trans = doppler256_MR(duration, voltage, focus)
+function Trans = doppler256_MR(duration, voltage, focus, offElements)
 maxV = 25; % Maximum allowed voltage
 if duration > 5
     error('Maximum duration is 5 seconds')
+end
+
+if ~exist('offElements','var')
+    offElements = [];
 end
 %% Set up path locations
 srcDirectory = setPaths();
@@ -99,8 +103,9 @@ end
 TX(1).waveform = 1; % use 1st TW structure.
 TX(1).focus = 0;
 TX(1).Apod = ones(1,256);
-badElements = load('C:\Users\Verasonics\Downloads\elementsOff.mat');
-TX(1).Apod(badElements.unconnected) = 0;
+TX(1).Apod(offElements) = 0;
+% badElements = load('C:\Users\Verasonics\Downloads\elementsOff.mat');
+% TX(1).Apod(badElements.unconnected) = 0;
 
 xTx = Trans.ElementPos(:,1);
 yTx = Trans.ElementPos(:,2);

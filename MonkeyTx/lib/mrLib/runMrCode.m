@@ -76,11 +76,11 @@ sys.goldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\test_2
 sys.txSn = 'JEC482';
 
 % Coupling File
-couplingFile = 'exVivoSkull6.mat';
+couplingFile = 'exVivoSkull8.mat';
 sys.couplingFile = [sys.expPath,'UltrasoundData\',couplingFile];
 
 % Log file
-logFile ='test_20210914.mat';
+logFile ='test_20210914_2.mat';
 sys.logFile = [sys.expPath,'Logs\',logFile];
 
 % Imaging paths
@@ -93,13 +93,15 @@ sys.aSeriesNo = 16;
 % Invert Transducer
 sys.invertTx = 0;
 
+sys.offElements = [];
+
 msgbox(['You have selected transducer: ', sys.txSn]);
 
 %% Check Coupling
 rescan = 1;
 scIdx = 1;
 while rescan
-    save('tmp.mat','sys');
+    save('tmp.mat','sys','scIdx');
     testArrayPlacement_firstTargetTask(sys.goldStandard,sys.couplingFile,[],0);
     load('tmp.mat');
     delete('tmp.mat');
@@ -133,10 +135,10 @@ sys = selectFocus(sys);
 saveState(sys);
 
 %% Sonicate
-sys = mrSonication(sys,5,20);
+sys = mrSonication(sys,0.2,1.65);
 totalEnergy(sys);
 saveState(sys);
 % Overlay result
-if isfield(sys.sonication(end),'phaseSeriesNo') & sys.sonication(end).phaseSeriesNo > 0
+if isfield(sys.sonication(end),'phaseSeriesNo') && sys.sonication(end).phaseSeriesNo > 0
     sys = processAndDisplaySonication(sys,length(sys.sonication));
 end

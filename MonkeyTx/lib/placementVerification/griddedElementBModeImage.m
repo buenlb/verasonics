@@ -71,7 +71,7 @@ sArray = zeros(size(Xa));
 nElements = sArray;
 for ii = 1:length(blocks)
     disp(['Block ', num2str(ii), ' of ', num2str(length(blocks))])
-    centerElement = elements.ElementPos(blocks{ii}(ceil(gridSize/2)),:);
+    centerElement = elements.ElementPos(blocks{ii}(ceil(gridSize^2/2)),:);
     [Xar,Yar,Zar] = array2elementCoords(Xa,Ya,Za,centerElement);
     
     sTot = zeros(size(Receive(ii).startSample:Receive(ii).endSample))';
@@ -94,6 +94,17 @@ for ii = 1:length(blocks)
     
     curS = interp3(Ye,Xe,Ze,sExpanded,Yar,Xar,Zar,'nearest',0);
     sArray = sArray + curS;
+    
+%     figure(9)
+%     [~,idx] = max(curS(:));
+%     [~,idx,~] = ind2sub(size(curS),idx);
+%     imshow(squeeze(curS(:,idx,:)),[],'initialmagnification','fit');
+%     title(['block ',num2str(ii)]);
+%     waitforbuttonpress
+%     
+%     if ii == 1 || ii == 162
+%         keyboard
+%     end
     
     nElements(curS~=0) = nElements(curS~=0)+1;
     
