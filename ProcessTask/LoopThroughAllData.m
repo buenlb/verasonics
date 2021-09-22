@@ -36,7 +36,11 @@ for ii = 1:length(files)
             voltage(tskIdx) = curData.voltage(oldIdx);
             prf(tskIdx) = curData.prf(oldIdx);
             freq(tskIdx) = curData.freq(oldIdx);
+            try
             targets{tskIdx} = curData.targets{oldIdx};
+            catch
+                tagets{tskIdx} = [0 0 0];
+            end
             passFinal(tskIdx) = curData.passFinal(oldIdx);
             passInitial(tskIdx) = curData.passInitial(oldIdx);
             tData(tskIdx) = curData.tData(oldIdx);
@@ -153,6 +157,7 @@ passed(end-1:end) = true;
 % idx = idx(1:end-1);
 % idx = 3;
 % idx = idx(end-3);
+idx = find(dc==10 & freq == 0.65 & passed);
 ch = [];
 lgn = [];
 delay = [];
@@ -217,6 +222,8 @@ ch = [];
 lgn = [];
 delay = [];
 result = [];
+task = [];
+correctDelay = [];
 for ii = 1:length(idx)
 %     catIdx = ceil(length(tData(idx(ii)).ch)/2):length(tData(idx(ii)).ch);
     catIdx = 1:length(tData(idx(ii)).ch);
@@ -229,8 +236,10 @@ for ii = 1:length(idx)
     lgn = cat(1,tData(idx(ii)).lgn(catIdx),lgn);
     delay = cat(1,tData(idx(ii)).delay(catIdx),delay);
     result = cat(1,tData(idx(ii)).result(catIdx),result);
+    task = cat(1,tData(idx(ii)).task(catIdx),task);
+    correctDelay = cat(1,tData(idx(ii)).correctDelay(catIdx),correctDelay);
 end
-tData100 = struct('ch',ch,'delay',delay,'delayVector',sort(unique(delay)),'lgn',lgn,'result',result);
+tData100 = struct('ch',ch,'delay',delay,'delayVector',sort(unique(delay)),'lgn',lgn,'result',result,'task',task,'correctDelay',correctDelay);
 axs = plotTaskResults(tData100,0,1);
 axes(axs(1));
 title('100% Duty')

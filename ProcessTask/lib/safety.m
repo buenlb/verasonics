@@ -9,10 +9,18 @@ accuracy = zeros(size(tData));
 h = figure;
 ax2 = gca;
 idx = 1;
+notFound = 1;
+notFoundTiming = 1;
 for ii = 1:length(tData)
-    delay = tData(ii).delay(tData(ii).lgn==0);
-    ch = tData(ii).ch(tData(ii).lgn==0);
+    delay = tData(ii).delay(tData(ii).lgn==0 & tData(ii).task==0);
+    if notFoundTiming && min(abs(delay(abs(delay)>0))) < 10
+        notFoundTiming = false;
+        shortDelayIdx = idx;
+    end
+    ch = tData(ii).ch(tData(ii).lgn==0 & tData(ii).task==0);
     if length(ch)<250 || max(abs(delay))>100
+        accuracy(idx) = nan;
+        idx = idx+1;
         continue;
     end
     delay = delay(~isnan(ch));
@@ -22,6 +30,10 @@ for ii = 1:length(tData)
     
     result = tData(ii).result;
     accuracy(idx) = sum(result==1)/sum(result==1 | result==0);
+    if notFound && length(unique(tData(ii).task))>1
+        changeIdx = idx;
+        notFound = false;
+    end
     idx = idx+1;
 end
 
@@ -84,13 +96,15 @@ h = figure;
 ax = gca;
 plot(sNumber,100*accuracy,'kx','markersize',6,'linewidth',0.5);
 hold on
+plt = plot([changeIdx,changeIdx],[min(accuracy),100],'b--',[shortDelayIdx,shortDelayIdx],[min(accuracy),100],'r--');
 ax.ColorOrderIndex = 1;
-plot(sNumber,yHat,'k--','linewidth',2)
+% plot(sNumber,yHat,'k--','linewidth',2)
 xlabel('Session Number')
 ylabel('Accuracy (%)')
-axis([1,length(accuracy),80,100])
+axis([1,length(accuracy),70,100])
+legend(plt,'Introduced Brightness','Shorter Delays');
 h.Position = [680   746   560   232];
-text(20,81,['p=',num2str(p),',r=',num2str(lm.Rsquared.Ordinary)]);
+% text(20,81,['p=',num2str(p),',r=',num2str(lm.Rsquared.Ordinary)]);
 makeFigureBig(h);
 
 

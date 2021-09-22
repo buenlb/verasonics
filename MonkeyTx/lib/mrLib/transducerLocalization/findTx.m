@@ -72,6 +72,8 @@ x0(1) = round(xDist/res(1)*cos(theta)+fidLoc(1,1));
 x0(2) = round(xDist/res(2)*sin(theta)+fidLoc(1,2));
 x0(3) = round(mean(fidLoc(:,3)))-round(zDist/res(3));
 txCenter = x0;
+[me,err1,err2,err3] = compareCentroids(img,txCenter,theta,res,xDist,yDist,zDist);
+disp(['Estimated Error: [',num2str(err1*1e3,2),',',num2str(err2*1e3,2),',',num2str(err3*1e3,2),'], mean: ', num2str(me*1e3,2)])
 return
 
 close(d);
