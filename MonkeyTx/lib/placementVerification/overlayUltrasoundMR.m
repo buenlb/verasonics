@@ -33,7 +33,7 @@ ov = figure;
 subplot(121)
 [~,yIdx] = min(abs(sys.uy));
 overlayImages2(squeeze(sys.aImg(:,yIdx,:)).',squeeze(usImgInterp(:,yIdx,:)).',...
-        [0,1/2*max(sys.aImg(:))],[1.5/2*max(usImg(:)),max(usImg(:))],sys.ux,sys.uz,[],0.5);
+        [0,1/2*max(sys.aImg(:))],[1.55/2*max(usImg(:)),max(usImg(:))],sys.ux,sys.uz,[],0.5);
 title('Coronal')
 
 subplot(122)
@@ -41,6 +41,7 @@ subplot(122)
 overlayImages2(squeeze(sys.aImg(xIdx,:,:)).',squeeze(usImgInterp(xIdx,:,:)).',...
         [0,1/2*max(sys.aImg(:))],[1.5/2*max(usImg(:)),max(usImg(:))],sys.uy,sys.uz,[],0.5);
 title('Sagittal')    
+keyboard
 % 
 % subplot(223)
 % [~,zIdx] = min(abs(sys.uz-40e-3));
