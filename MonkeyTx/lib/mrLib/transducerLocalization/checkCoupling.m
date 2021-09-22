@@ -41,6 +41,13 @@ meanErrPow = 30;
 
 gsParams = load(gs);
 
+if isfield(gsParams,'txSn')
+    txSn = gsParams.txSn;
+else
+	warning('No Serial Number found, assuming JAB800');
+	txSn = 'JAB800';
+end
+
 [gsRaw,crRaw,~,d] = getRawTraces(gsParams.fName,cr,singleElement);
 
 if ~singleElement
@@ -48,7 +55,7 @@ if ~singleElement
 else
     gridSize = 1;
 end
-blocks = selectElementBlocks(gridSize);
+blocks = selectElementBlocks(gridSize,txSn);
 axIdx = 1;
 if ~singleElement
     elementsOfInterest = gsParams.elementsOfInterest;

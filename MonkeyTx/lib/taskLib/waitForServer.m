@@ -14,55 +14,39 @@
 % University of Utah
 % August 2020
 
-function side = waitForServer(RData)
+function msg = waitForServer(RData)
 Resource = evalin('base','Resource');
 TX = evalin('base','TX');
 TPC = evalin('base','TPC');
+Trans = evalin('base','Trans');
 
-pt = serial('COM1');
-fopen(pt);
 received = 0;
 
-%% Add previous successful sonication to log
-if ~isempty(Resource.Parameters.priorSonication)
-    Resource.Parameters.log.totalSonications = Resource.Parameters.log.totalSonications + 1;
-    if Resource.Parameters.priorSonication == 'R'
-        Resource.Parameters.log.rightSonications = Resource.Parameters.log.rightSonications + 1;
-    elseif Resource.Parameters.priorSonication == 'L'
-        Resource.Parameters.log.leftSonications = Resource.Parameters.log.leftSonications + 1;
-    else
-        error(['Unknown sonication type for prior sonication: ',...
-                Resource.Parameters.priorSonication]);
-    end
-    
-    log = Resource.Parameters.log;
-    save(Resource.Parameters.logFileName, 'log');
+if ~isfield(Resource.Parameters,'verasonicsPort')
+    Resource.Parameters.verasonicsPort = serial('COM1');
+    fopen(Resource.Parameters.verasonicsPort);
+    fprintf(Resource.Parameters.verasonicsPort,'INIT');0
 end
+pt = Resource.Parameters.verasonicsPort;
 
 %% Communicate with server
-% If this is the first sonication, let the server know that the skull image
-% is complete and we are ready for sonication.
-if Resource.Parameters.log.totalSonications == 0
-    fprintf(pt,'INIT');
-end
-
 disp('Waiting for instruction from server');
 
 while ~received
     % Scan until a message is received. The while loop essentially makes an
     % infinite time-out though the system will print a warning for each
     % time through the loop once the message is finally received.
-    side = fscanf(pt);
-    while isempty(side)
-        side = fscanf(pt);
+    msg = fscanf(pt);
+    while isempty(msg)
+        msg = fscanf(pt);
     end
     
     % Serial strings are terminated with a newline, remove it for
     % simplicity.
-    side = side(1:end-1);
+    msg = msg(1:end-1);
     
     % Determine what to do with the message
-    switch side
+    switch msg
         case 'INIT'
             fprintf(pt,'INIT');
             disp('Initialized');
@@ -72,33 +56,46 @@ while ~received
             disp('Finished')
             closeVSX();
             return
-        case 'E:L'
-            phs = Resource.Parameters.phases{1};
-            voltage = Resource.Parameters.voltages(1);
+        case 'FOCUS'
+            fprintf(pt,'FOCUS')
+            [voltage,target] = receiveFocusFromServer(pt);
+            disp('New Focal Spot:')
+            disp(['  Focus: <', num2str(target(1)), ',',num2str(target(2)), ',',num2str(target(3)), '>'])
+            disp(['  Voltage: ', num2str(voltage), ' V'])
+            Resource.Parameters.log.voltages(end+1) = voltage;
+            Resource.Parameters.log.targets(end+1,:) = target;
+            if length(Resource.Parameters.log.Date) == 1
+                date = cell(1);
+                date{1} = Resource.Parameters.log.Date;
+                date{2} = datetime;
+                Resource.Parameters.log.Date = date;
+            else
+                Resource.Parameters.log.Date{end+1} = datetime;
+            end
+            log = Resource.Parameters.log;
+            save(Resource.Parameters.logFileName,'log');
             received = 1;
-            fprintf(pt,'E:L');
-            fclose(pt);
-            Resource.Parameters.priorSonication = 'L';
-            disp('Preparing to sonicate Left LGN');
-        case 'E:R'
-            phs = Resource.Parameters.phases{2};
-            voltage = Resource.Parameters.voltages(2);
-            received = 1;
-            fprintf(pt,'E:R');
-            fclose(pt);
-            Resource.Parameters.priorSonication = 'R';
-            disp('Preparing to sonicate Right LGN');
         otherwise
             fprintf(pt,'ERR');
             fclose(pt);
-            error(['Received invalid message from server; ', side])
+            error(['Received invalid message from server; ', msg])
     end
 end
+
+xTx = Trans.ElementPos(:,1);
+yTx = Trans.ElementPos(:,2);
+zTx = Trans.ElementPos(:,3);
+elements.x = xTx*1e-3;
+elements.y = yTx*1e-3;
+elements.z = zTx*1e-3;
+
+% Find the phases for the first focal spot
+elements = steerArray(elements,target*1e-3,Trans.frequency,0);
+phs = [elements.t]';
 
 TX(1).Delay = phs;
 TPC(5).hv = voltage;
 setTpcProfileHighVoltage(voltage,5);
-disp(['Setting TPC(5).hv = ', num2str(voltage)]);
 %% Update and run in base
 assignin('base','TX', TX);
 assignin('base','TPC', TPC);
@@ -110,5 +107,3 @@ Control(1).Parameters = {'TX'};
 Control(2).Command = 'set&Run';
 Control(2).Parameters = {'TPC',5,'hv',voltage};
 assignin('base','Control', Control);
-
-disp(['Sonicating ', side, ' LGN'])

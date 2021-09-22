@@ -33,6 +33,13 @@ gs = load(goldStd);
 if ~isfield(gs,'fName')
     error('Invalid gold standard file')
 end
+if ~isfield(gs,'txSn')
+	warning('Serial number not found in gold standard image, assuming JAB800');
+	txSn = 'JAB800';
+else
+    txSn = gs.txSn;
+end
+disp(['Using TxSn: ', txSn])
 gsRaw = load(gs.fName);
 
 if exist('fName','var')
@@ -47,18 +54,18 @@ else
         end
     end
     
-    [singleElRaw,griddedElRaw] = imageSkull();
-    save(svName,'singleElRaw','griddedElRaw')
+    [singleElRaw,griddedElRaw] = imageSkull(txSn);
+    save(svName,'singleElRaw','griddedElRaw','txSn')
     sImg = singleElRaw;
     gImg = griddedElRaw;
 end
 
 %% Show image for summary
-[img,xa,ya,za] = griddedElementBModeImage(gImg.RcvData,gImg.Receive);
-gsImg = griddedElementBModeImage(gsRaw.griddedElRaw.RcvData,gsRaw.griddedElRaw.Receive);
+[img,xa,ya,za] = griddedElementBModeImage(gImg.RcvData,gImg.Receive,[],txSn);
+gsImg = griddedElementBModeImage(gsRaw.griddedElRaw.RcvData,gsRaw.griddedElRaw.Receive,[],txSn);
 img(isnan(img)) = 0;
 gsImg(isnan(gsImg)) = 0;
-elements = transducerGeometry(0);
+elements = transducerGeometry(0,txSn);
 h = figure;
 set(h,'position',[2          42        958        954]);
 h2 = figure;
@@ -71,7 +78,7 @@ yFrames = yFrames(2:end-1);
 width = 0.30;
 height = 0.45;
 
-for ii = 1:6
+for ii = 1:length(yFrames)
     figure(h2)
     if ii < 4
         sp2(ii) = axes('Position',[(ii-1)*width,0.5,width,height]);
@@ -101,7 +108,6 @@ end
 axes(sp(2));
 tt = title('Current Data');
 tt.Position = [15.5,0.0105,0];
-keyboard
 
 axes(sp2(2));
 tt = title('Overlay of Current Data to Gold Standard Data');
@@ -129,7 +135,7 @@ set(tt,'FontSize',12)
 RcvData = gImg.RcvData;
 Receive = gImg.Receive;
 Resource = gImg.Resource;
-Trans = transducerGeometry(0);
+Trans = transducerGeometry(0,txSn);
 t = 1e6*(0:(Receive(1).endSample-1))/(Receive(1).ADCRate*1e6/Receive(1).decimFactor);
 d = t*1.492/2+Receive(1).startDepth*Resource.Parameters.speedOfSound/(Trans.frequency*1e6)*1e3;
 
@@ -240,7 +246,7 @@ end
 %% Single Element Results (power)
 Receive = sImg.Receive;
 Resource = sImg.Resource;
-Trans = transducerGeometry(0);
+Trans = transducerGeometry(0,txSn);
 RcvData = sImg.RcvData;
 
 t = 1e6*(0:(Receive(1).endSample-1))/(Receive(1).ADCRate*1e6/Receive(1).decimFactor);

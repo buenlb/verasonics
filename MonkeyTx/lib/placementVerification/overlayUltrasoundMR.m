@@ -10,7 +10,7 @@ za = za*1e-3;
 
 usImg = log10(usImg);
 
-elements = transducerGeometry(0);
+elements = transducerGeometry(0,sys.txSn);
 % h = figure;
 % set(h,'position',[1         161        1920         963]);
 % h2 = figure;

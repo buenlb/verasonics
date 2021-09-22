@@ -8,6 +8,8 @@
 %      (created by createGoldStandardFile.m). Must have the range of
 %      distances in which the skull could be found and a template for a
 %      matched filter search of the signal.
+%	txSn: serial number of transducer used to acquire data. Defaults to
+%		JAB800;
 %   plotResult: If plotResult is true the resulting image is displayed.
 % 
 % @OUTPUTS
@@ -18,9 +20,13 @@
 % University of Utah
 % March 2020
 
-function [sArray,skullLoc,xa,ya,za] = skullSurfaceGrid(RcvData,Receive,gs,plotResult)
-if nargin < 4
-    plotResult = 1;
+function [sArray,skullLoc,xa,ya,za] = skullSurfaceGrid(RcvData,Receive,gs,txSn,plotResult)
+if ~exist('plotResult','var')
+    plotResult = 0;
+end
+if ~exist('txSn','var')
+	warning('Serial number not passed to griddedElementBModeImage, assuming JAB800');
+	txSn = 'JAB800';
 end
 %% Set up grids
 gridSize = 3;
@@ -44,7 +50,7 @@ ze = d;
 [Ze,Xe] = meshgrid(ze,xe);
 
 %% Interpolate data from element coordinate system to array coordinates
-elements = transducerGeometry(0);
+elements = transducerGeometry(0,txSn);
 sArray = zeros(size(Xa,1),8-(gridSize-1),size(Xa,2));
 nElements = sArray;
 tmplt = double(gs.tmplt);

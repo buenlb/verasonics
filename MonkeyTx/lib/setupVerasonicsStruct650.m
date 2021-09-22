@@ -10,7 +10,7 @@
 %   yE: Euclidian y location of each element
 %   zE: Euclidian z location of each element
 
-function [Trans,xE,yE,zE] = transducerGeometry(plotGeometry)
+function [Trans,xE,yE,zE] = transducerGeometry2(plotGeometry)
 r = 65; % Radius of curvature
 h = 4.2*(8-1)-0.2; % y dimension length
 nX = 32; % Number of elements in the long dimension

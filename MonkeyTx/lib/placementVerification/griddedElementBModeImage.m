@@ -22,10 +22,16 @@
 % University of Utah
 % March 2020
 
-function [sArray,xa,ya,za] = griddedElementBModeImage(RcvData,Receive,distOfInterest,plotResult)
+function [sArray,xa,ya,za] = griddedElementBModeImage(RcvData,Receive,distOfInterest,txSn,plotResult)
 if ~exist('plotResult','var')
     plotResult = 0;
 end
+
+if ~exist('txSn','var')
+	warning('Serial number not passed to griddedElementBModeImage, assuming JAB800');
+	txSn = 'JAB800';
+end
+	
 
 % Set up time/distance vectors corresponding to data
 t = 1e6*(0:(Receive(1).endSample-1))/(Receive(1).ADCRate*1e6/Receive(1).decimFactor);
@@ -33,6 +39,8 @@ d = t*1.57/2;
 
 % Determine ROI based on distOfInterest
 if ~exist('distOfInterest','var')
+    distOfInterest = [d(1),d(end)];
+elseif  isempty(distOfInterest)
     distOfInterest = [d(1),d(end)];
 elseif length(distOfInterest) == 1
     distOfInterest = [distOfInterest, d(end)];
@@ -56,10 +64,9 @@ za = 0:dx:60;
 
 % Set up grids
 gridSize = 3;
-blocks = selectElementBlocks(gridSize);
-
+blocks = selectElementBlocks(gridSize,txSn);
 %% Interpolate data from element coordinate system to array coordinates
-elements = transducerGeometry(0);
+elements = transducerGeometry(0,txSn);
 sArray = zeros(size(Xa));
 nElements = sArray;
 for ii = 1:length(blocks)
@@ -78,7 +85,6 @@ for ii = 1:length(blocks)
         keyboard
     end
     s = sTot;
-    
     sExpanded = zeros(size(Xe));
     for jj = 1:length(xe)
         for kk = 1:length(ye)

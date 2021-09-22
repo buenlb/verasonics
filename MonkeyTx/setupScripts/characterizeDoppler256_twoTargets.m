@@ -9,7 +9,8 @@ srcDirectory = setPaths();
 % txSn = 'IHG989';
 txSn = 'JEC482';
 frequency = 0.65; % Frequency in MHz
-focus = [10,5,63]; % Focal location in mm. x is the long axis of the array, y is the short axis, and z is depth
+focus2 = [-15,0,62]; % Focal location in mm. x is the long axis of the array, y is the short axis, and z is depth
+focus = [10,5,63];
 nCycles = 5; % number of cycles with which to excite Tx (can integer multiples of 1/2)
 % nCycles = round(300e-3*650e3);
 ioChannel = 256;
@@ -103,6 +104,11 @@ delays = [elements.t]';
 TX(1).Delay = delays;
 % TX(1).Delay = zeros(1,256);
 
+elements = steerArray(elements,focus2*1e-3,frequency);
+delays = [elements.t]';
+TX(2) = TX(1);
+TX(2).Delay = delays;
+
 % Specify TGC Waveform structure.
 TGC(1).CntrlPts = ones(1,8)*1023;
 TGC(1).rangeMax = 200;
@@ -154,19 +160,116 @@ end
 % Specify sequence events.
 Event(n).info = 'Acquire RF Data.';
 Event(n).tx = 1; % use 1st TX structure.
-Event(n).rcv = 1; % use 1st Rcv structure.
+Event(n).rcv = 0; % use 1st Rcv structure.
 Event(n).recon = 0; % no reconstruction.
 Event(n).process = 0; % no processing
-    Event(n).seqControl = [nsc,nsc+1,nsc+2];
+    Event(n).seqControl = [nsc,nsc+1];
     SeqControl(nsc).command = 'timeToNextAcq';
-    SeqControl(nsc).argument = 800;
+    SeqControl(nsc).argument = 28;
     nscTime2Aq = nsc;
-    nsc = nsc + 1;
-    SeqControl(nsc).command = 'transferToHost';
     nsc = nsc + 1;
     SeqControl(nsc).command = 'triggerOut';
     SeqControl(nsc).argument = 0;
 nscTrig = nsc;
+nsc = nsc + 1;
+n = n+1;
+
+Event(n).info = 'Acquire RF Data.';
+Event(n).tx = 2; % use 1st TX structure.
+Event(n).rcv = 0; % use 1st Rcv structure.
+Event(n).recon = 0; % no reconstruction.
+Event(n).process = 0; % no processing
+    Event(n).seqControl = [nsc];
+    SeqControl(nsc).command = 'timeToNextAcq';
+    SeqControl(nsc).argument = 28;
+nsc = nsc + 1;
+n = n+1;
+
+Event(n).info = 'Acquire RF Data.';
+Event(n).tx = 1; % use 1st TX structure.
+Event(n).rcv = 0; % use 1st Rcv structure.
+Event(n).recon = 0; % no reconstruction.
+Event(n).process = 0; % no processing
+    Event(n).seqControl = [nsc];
+    SeqControl(nsc).command = 'timeToNextAcq';
+    SeqControl(nsc).argument = 28;
+nsc = nsc + 1;
+n = n+1;
+
+Event(n).info = 'Acquire RF Data.';
+Event(n).tx = 2; % use 1st TX structure.
+Event(n).rcv = 0; % use 1st Rcv structure.
+Event(n).recon = 0; % no reconstruction.
+Event(n).process = 0; % no processing
+    Event(n).seqControl = [nsc];
+    SeqControl(nsc).command = 'timeToNextAcq';
+    SeqControl(nsc).argument = 28;
+nsc = nsc + 1;
+n = n+1;
+
+Event(n).info = 'Acquire RF Data.';
+Event(n).tx = 1; % use 1st TX structure.
+Event(n).rcv = 0; % use 1st Rcv structure.
+Event(n).recon = 0; % no reconstruction.
+Event(n).process = 0; % no processing
+    Event(n).seqControl = [nsc];
+    SeqControl(nsc).command = 'timeToNextAcq';
+    SeqControl(nsc).argument = 28;
+nsc = nsc + 1;
+n = n+1;
+
+Event(n).info = 'Acquire RF Data.';
+Event(n).tx = 2; % use 1st TX structure.
+Event(n).rcv = 0; % use 1st Rcv structure.
+Event(n).recon = 0; % no reconstruction.
+Event(n).process = 0; % no processing
+    Event(n).seqControl = [nsc];
+    SeqControl(nsc).command = 'timeToNextAcq';
+    SeqControl(nsc).argument = 28;
+nsc = nsc + 1;
+n = n+1;
+
+Event(n).info = 'Acquire RF Data.';
+Event(n).tx = 1; % use 1st TX structure.
+Event(n).rcv = 0; % use 1st Rcv structure.
+Event(n).recon = 0; % no reconstruction.
+Event(n).process = 0; % no processing
+    Event(n).seqControl = [nsc];
+    SeqControl(nsc).command = 'timeToNextAcq';
+    SeqControl(nsc).argument = 28;
+nsc = nsc + 1;
+n = n+1;
+
+Event(n).info = 'Acquire RF Data.';
+Event(n).tx = 2; % use 1st TX structure.
+Event(n).rcv = 0; % use 1st Rcv structure.
+Event(n).recon = 0; % no reconstruction.
+Event(n).process = 0; % no processing
+    Event(n).seqControl = [nsc];
+    SeqControl(nsc).command = 'timeToNextAcq';
+    SeqControl(nsc).argument = 28;
+nsc = nsc + 1;
+n = n+1;
+
+Event(n).info = 'Acquire RF Data.';
+Event(n).tx = 1; % use 1st TX structure.
+Event(n).rcv = 0; % use 1st Rcv structure.
+Event(n).recon = 0; % no reconstruction.
+Event(n).process = 0; % no processing
+    Event(n).seqControl = [nsc];
+    SeqControl(nsc).command = 'timeToNextAcq';
+    SeqControl(nsc).argument = 28;
+nsc = nsc + 1;
+n = n+1;
+
+Event(n).info = 'Acquire RF Data.';
+Event(n).tx = 2; % use 1st TX structure.
+Event(n).rcv = 0; % use 1st Rcv structure.
+Event(n).recon = 0; % no reconstruction.
+Event(n).process = 0; % no processing
+    Event(n).seqControl = [nsc];
+    SeqControl(nsc).command = 'timeToNextAcq';
+    SeqControl(nsc).argument = 0.5e6;
 nsc = nsc + 1;
 n = n+1;
 
