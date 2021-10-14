@@ -1,12 +1,52 @@
-function [sessionAvg,cChoices] = plotContraChoices(tData,varargin)
+function [sessionAvg,cChoices,lLgn,rLgn,ctl] = plotContraChoices(tData,varargin)
+
+if isempty(tData)
+    sessionAvg = nan;
+    cChoices = nan;
+    lLgn = nan;
+    rLgn = nan;
+    ctl = nan;
+    return
+end
+
+validDelays = [];
+if exist('varargin','var')
+    skip = 0;
+    for ii = 1:length(varargin)
+        if skip
+            skip = 0;
+            continue
+        end
+        switch varargin{ii}
+            case 'xlabels'
+                xlabels = varargin{ii+1};
+                skip = 1;
+            case 'yaxis'
+                yrange = varargin{ii+1};
+                skip = 1;
+            case 'delays'
+                validDelays = varargin{ii+1};
+                skip = 1;
+            otherwise
+                error([varargin{ii}, ' is not a valid property.'])
+        end
+    end
+end
 
 h = figure;
 hold on;
 ax = gca;
 cChoices = cell(1,length(tData));
 sessionAvg = zeros(1,length(tData));
+lLgn = zeros(size(tData));
+rLgn = lLgn;
+ctl = rLgn;
 for ii = 1:length(tData)
     curT = tData(ii);
+    
+    if ~isempty(validDelays)
+        curT.ch(~ismember(curT.delay,validDelays)) = nan;
+    end
 
     correctContra = sum(~isnan(curT.ch) & ((curT.lgn == -1 & curT.delay < 0) | (curT.lgn == 1 & curT.delay > 0)));
     correctIntra = sum(~isnan(curT.ch) & ((curT.lgn == -1 & curT.delay > 0) | (curT.lgn == 1 & curT.delay < 0)));
@@ -38,26 +78,10 @@ for ii = 1:length(tData)
     
     cChoices{ii} = contraChoices(~isnan(contraChoices));
     sessionAvg(ii) = mean(contraChoices,'omitnan');
-end
-
-if exist('varargin','var')
-    skip = 0;
-    for ii = 1:length(varargin)
-        if skip
-            skip = 0;
-            continue
-        end
-        switch varargin{ii}
-            case 'xlabels'
-                xlabels = varargin{ii+1};
-                skip = 1;
-            case 'yaxis'
-                yrange = varargin{ii+1};
-                skip = 1;
-            otherwise
-                error([varargin{ii}, ' is not a valid property.'])
-        end
-    end
+    
+    lLgn(ii) = mean(curT.ch(~isnan(curT.ch) & curT.lgn==-1 & curT.task==0));
+    rLgn(ii) = mean(curT.ch(~isnan(curT.ch) & curT.lgn==1 & curT.task==0));
+    ctl(ii) = mean(curT.ch(~isnan(curT.ch) & curT.lgn==0 & curT.task==0));
 end
 
 curIdx = 1;

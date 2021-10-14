@@ -8,9 +8,21 @@ addpath('C:\Users\Taylor\Documents\Projects\verasonics\verasonics\ProcessTask\li
 addpath('C:\Users\Taylor\Documents\Projects\verasonics\verasonics\lib\');
 
 %% Set the paths
-taskPath = 'C:\Users\Taylor\Documents\Data\Task\';
-couplingPath = 'C:\Users\Taylor\Documents\Data\Task\Coupling\';
-gsCouplingFile = 'C:\Users\Taylor\Documents\Papers\MacaqueMethods\figs\gs_Euler_0925.mat';
+monk = 'EULER';
+switch monk
+    case 'EULER'
+        taskPath = 'C:\Users\Taylor\Documents\Data\Task\';
+        couplingPath = 'C:\Users\Taylor\Documents\Data\Task\Coupling\';
+        gsCouplingFile = 'C:\Users\Taylor\Documents\Papers\MacaqueMethods\figs\gs_Euler_0925.mat';
+        fileNameLength = 12;
+    case 'Boltzmann'
+        taskPath = 'C:\Users\Taylor\Documents\Data\Task\Boltzmann\';
+        couplingPath = 'C:\Users\Taylor\Documents\Data\Task\Boltzmann\Coupling\';
+        gsCouplingFile = 'C:\Users\Taylor\Documents\Data\Task\Boltzmann\Coupling\gs_boltzmann.mat';
+        fileNameLength = 16;
+    otherwise
+        error('Monk not recognized!')
+end
 
 if exist([taskPath,'currentData.mat'],'file')
     curData = load([taskPath,'currentData.mat']);
@@ -18,7 +30,7 @@ if exist([taskPath,'currentData.mat'],'file')
 else
     curData = [];
 end
-files = dir([taskPath,'Euler*.mat']);
+files = dir([taskPath,'*.mat']);
 passFinal = [];
 passInitial = [];
 tskIdx = 1;
@@ -36,6 +48,9 @@ for ii = 1:length(files)
             voltage(tskIdx) = curData.voltage(oldIdx);
             prf(tskIdx) = curData.prf(oldIdx);
             freq(tskIdx) = curData.freq(oldIdx);
+            distErr(tskIdx) = curData.distErr(oldIdx);
+            powErr(tskIdx) = curData.powErr(oldIdx);
+            totPowErr(tskIdx) = curData.totPowErr(oldIdx);
             try
             targets{tskIdx} = curData.targets{oldIdx};
             catch
@@ -117,8 +132,46 @@ for ii = 1:length(files)
     toc
     tskIdx = tskIdx+1;
     
-    save([taskPath,'currentData.mat'],'tData','dc','prf','voltage','processedFiles','passInitial','passFinal','freq','targets');
+    save([taskPath,'currentData.mat'],'tData','dc','prf','voltage','processedFiles','passInitial','passFinal','freq','targets','distErr','powErr','totPowErr');
 end
+
+%% Combine sessions on the same day
+nSessions = length(dc);
+curIdx = 1;
+for ii = 2:nSessions
+    idx1 = find(processedFiles{ii-1} == '\');
+    idx1 = idx1(end)+1;
+    idx2 = find(processedFiles{ii} == '\');
+    idx2 = idx2(end)+1;
+    if strcmp(processedFiles{ii-1}(idx1:(idx1+fileNameLength)),processedFiles{ii}(idx2:(idx2+fileNameLength)))
+        disp(['Combining Sessions ', num2str(ii-1), ' and ', num2str(ii),'!'])
+        combineIdx(curIdx) = ii;     
+        newT(curIdx) = combineSessions([ii-1,ii],tData);
+        tData(ii-1) = newT(curIdx);
+        curIdx = curIdx+1;
+    end
+end
+tDataOld = tData;
+
+
+keepIdx = true(size(tData));
+keepIdx(combineIdx) = false;
+
+keepIdxFinal = true(size(tData));
+keepIdxFinal(combineIdx-1) = false;
+
+tData = tData(keepIdx);
+dc = dc(keepIdx);
+processedFiles = processedFiles(keepIdx);
+prf = prf(keepIdx);
+voltage = voltage(keepIdx);
+passInitial = passInitial(keepIdx);
+passFinal = passFinal(keepIdxFinal);
+freq = freq(keepIdx);
+targets = targets(keepIdx);
+distErr = distErr(keepIdx);
+powErr = powErr(keepIdx);
+totPowErr = totPowErr(keepIdx);
 
 %% Error checking
 for ii = 1:length(tData)
@@ -148,46 +201,16 @@ end
 %%
 passed = passFinal;
 passed(isnan(passed)) = false;
-passed(end-1:end) = true;
+passed(1:end) = true;
 
-% passed = true(size(passed));
-% passed(1:16) = false;
-% 10% Duty
-% idx = length(dc);
-% idx = idx(1:end-1);
-% idx = 3;
-% idx = idx(end-3);
 idx = find(dc==10 & freq == 0.65 & passed);
-ch = [];
-lgn = [];
-delay = [];
-result = [];
-target = [];
-task = [];
-correctDelay = [];
-for ii = 1:length(idx)
-%     catIdx = ceil(length(tData(idx(ii)).ch)/2):length(tData(idx(ii)).ch);
-%     if length(tData(idx(ii)).ch) < 400
-%         continue
-%     end
-%     catIdx = 1:length(tData(idx(ii)).ch);
-    catIdx = logical(~tData(idx(ii)).task);
-%     catIdx = find(tData(idx(ii)).loc(1,1,:)<-7);
-    
-    ch = cat(1,tData(idx(ii)).ch(catIdx),ch);
-    lgn = cat(1,tData(idx(ii)).lgn(catIdx),lgn);
-    delay = cat(1,tData(idx(ii)).delay(catIdx),delay);
-    result = cat(1,tData(idx(ii)).result(catIdx),result);
-    target = cat(3,tData(idx(ii)).loc(:,:,catIdx),target);
-    task = cat(1,tData(idx(ii)).task(catIdx),task);
-    correctDelay = cat(1,tData(idx(ii)).correctDelay(catIdx),correctDelay);
-end
-tData10 = struct('ch',ch,'delay',delay,'delayVector',sort(unique(delay)),'lgn',lgn,'result',result,'loc',target,'task',task,'correctDelay',correctDelay);
+tData10 = combineSessions(idx,tData);
+
 zeroDelay(tData10,1);
+
 axs = plotTaskResults(tData10,0,1);
 axes(axs(1));
 title('10% Duty')
-ch10 = ch;
 %% 50% Duty
 idx = find(dc==50 & passed & freq==0.48 & voltage > 30);
 % idx = idx(1:end-3)

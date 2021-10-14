@@ -19,6 +19,9 @@ for ii = 1:nargin
             case 'yaxis'
                 yrange = varargin{ii+1};
                 skip = 1;
+            case 'barColors'
+                barColors = varargin{ii+1};
+                skip = 1;
             otherwise
                 error([varargin{ii}, ' is not a valid property.'])
         end
@@ -28,6 +31,12 @@ for ii = 1:nargin
         sems(curIdx) = std(varargin{ii})/sqrt(length(varargin{ii}));
         inputIdx(curIdx) = ii;
         curIdx = curIdx+1;
+    end
+end
+
+if exist('barColors','var')
+    if length(avgs) ~= size(barColors,1)
+        error('Number of barColors must equal number of averages');
     end
 end
 
@@ -60,7 +69,10 @@ for ii = 1:length(avgs)
     eb = errorbar(ii,avgs(ii)-compareTo,sems(ii));
     set(eb,'linestyle','none','Color','k');
     ax.ColorOrderIndex = ii;
-    bar(ii,avgs(ii)-compareTo);
+    b = bar(ii,avgs(ii)-compareTo);
+    if exist('barColors','var')
+        b.FaceColor = barColors(ii,:);
+    end
 end
 if exist('xlabels','var')
     ax.XTick = 1:length(avgs);

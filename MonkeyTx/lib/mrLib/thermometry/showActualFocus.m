@@ -50,6 +50,7 @@ roi(R<=radiusOfInterest) = true;
 
 curT = squeeze(sys.T(:,:,:,expectedPeakIdx));
 [maxT,maxIdx] = max(curT(roi));
+
 idx = find(roi);
 [xIdx,yIdx,zIdx] = ind2sub(size(curT),idx(maxIdx));
 

@@ -4,8 +4,9 @@ bOn = find(diff(dig)>0);
 bOff = find(diff(dig)<0);
 
 if length(bOn)~=length(bOff)
-    keyboard
-    error('Number of ons not equal to number of offs!')
+    warning('Number of ons not equal to number of offs!')
+    num = nan;
+    return
 end
 
 binNum = [];

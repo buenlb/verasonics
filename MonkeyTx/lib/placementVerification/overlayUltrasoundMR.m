@@ -41,7 +41,7 @@ subplot(122)
 overlayImages2(squeeze(sys.aImg(xIdx,:,:)).',squeeze(usImgInterp(xIdx,:,:)).',...
         [0,1/2*max(sys.aImg(:))],[1.5/2*max(usImg(:)),max(usImg(:))],sys.uy,sys.uz,[],0.5);
 title('Sagittal')    
-keyboard
+
 % 
 % subplot(223)
 % [~,zIdx] = min(abs(sys.uz-40e-3));

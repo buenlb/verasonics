@@ -65,9 +65,6 @@ T_deNoised = denoiseThermometry(T,sys.sonication(sonicationNo).firstDynamic,sys.
 [tY,tX,tZ] = meshgrid(ty,tx,tz);
 [aY,aX,aZ] = meshgrid(ay,ax,az);
 
-T = tMagImg;
-T = repmat(T,[1,1,1,15]);
-
 d = waitbar(0,'Interpolating');
 tInterp = zeros([size(aX),size(T,4)]);
 tInterp_deNoised = zeros([size(aX),size(T,4)]);

@@ -134,7 +134,7 @@ set(h,'position',[98         368        1708         456]);
 ax3 = axes();
 ax3.Position = [0.47,0,00.43,0.2];
 hold on
-text(ax2.XLim(1),0,'N Trials','Rotation',90)
+text(ax2.XLim(1)-1/20*(ax2.XLim(2)-ax2.XLim(1)),0,'N Trials','Rotation',90)
 for ii = 1:length(delayVector)
     text(delayVector(ii),0.75,num2str(sum(~isnan(leftCh) & leftDelay == delayVector(ii))),'Color',ax3.ColorOrder(1,:))
     text(delayVector(ii),0.45,num2str(sum(~isnan(rightCh) & rightDelay == delayVector(ii))),'Color',ax3.ColorOrder(2,:))

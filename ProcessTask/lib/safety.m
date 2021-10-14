@@ -96,15 +96,19 @@ h = figure;
 ax = gca;
 plot(sNumber,100*accuracy,'kx','markersize',6,'linewidth',0.5);
 hold on
-plt = plot([changeIdx,changeIdx],[min(accuracy),100],'b--',[shortDelayIdx,shortDelayIdx],[min(accuracy),100],'r--');
+if exist('changeIdx','var')
+    plt = plot([changeIdx,changeIdx],[min(accuracy),100],'b--',[shortDelayIdx,shortDelayIdx],[min(accuracy),100],'r--');
+end
 ax.ColorOrderIndex = 1;
-% plot(sNumber,yHat,'k--','linewidth',2)
+plot(sNumber,yHat,'k--','linewidth',2)
 xlabel('Session Number')
 ylabel('Accuracy (%)')
-axis([1,length(accuracy),70,100])
-legend(plt,'Introduced Brightness','Shorter Delays');
+axis([1,length(accuracy),85,100])
+if exist('changeIdx','var')
+    legend(plt,'Introduced Brightness','Shorter Delays');
+end
 h.Position = [680   746   560   232];
-% text(20,81,['p=',num2str(p),',r=',num2str(lm.Rsquared.Ordinary)]);
+text(20,81,['p=',num2str(p),',r=',num2str(lm.Rsquared.Ordinary)]);
 makeFigureBig(h);
 
 

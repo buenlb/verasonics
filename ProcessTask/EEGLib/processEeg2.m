@@ -4,10 +4,10 @@ addpath('C:\Users\Taylor\Documents\Projects\verasonics\verasonics\ProcessTask')
 
 BANDPASS = 0;
 
-fNameBase = ['Euler_',date.year(end-1:end),date.month,date.day];
+fNameBase = ['boltzmannTask_',date.year(end-1:end),date.month,date.day];
 
 [t,eeg,dig,alg] = concatIntan(expPath,fNameBase);
-
+keyboard
 %% Find Task Indices
 [taskIdx,trNum] = findTaskIdx(t,dig(2,:));
 trNum = trNum-1;
@@ -71,7 +71,7 @@ end
 % save([expPath,fNameBase,'_filtered'],'eeg','eegFiltCorrected','t','dig','alg');
 
 %% Process task data
-fName = [taskPath,'Euler',date.year,date.month,date.day];
+fName = [taskPath,'Boltzmann',date.year,date.month,date.day,'.mat'];
 trialD = load(fName);
 if ~isfield(trialD.trial_data{end},'us')
     trialD.trial_data = trialD.trial_data(1:end-1);
@@ -85,7 +85,7 @@ leftEegIdx = 2;
 
 % Length of eeg signal to keep (seconds*sampling frequency)
 Fs = 20e3;
-eegLength = round(1000e-3*Fs);
+eegLength = round(1200e-3*Fs);
 
 % Set up variables
 eegRight = zeros(length(trialD.trial_data),eegLength);
@@ -127,7 +127,7 @@ for ii = 1:length(trialD.trial_data)
 
             % Find the time in which to record the EEG. Go back 50 ms since
             % the time stamps won't be instantaneous.
-            fTargetIdx = round(fTargetTime*Fs+taskIdx(idx)-50e-3*Fs):round(fTargetTime*Fs+taskIdx(idx)+eegLength-1-50e-3*Fs);
+            fTargetIdx = round(fTargetTime*Fs+taskIdx(idx)-200e-3*Fs):round(fTargetTime*Fs+taskIdx(idx)+eegLength-1-200e-3*Fs);
 
             if fTargetIdx(end)>length(t)
                 continue

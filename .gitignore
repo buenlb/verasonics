@@ -3,6 +3,8 @@ MATFILES/*
 *.asv
 *.ASV
 *.snq
+*.png
+*.fig
 guiFileOutput.mat
 tmpBeforeSonication.mat
 dicmMatFile.mat

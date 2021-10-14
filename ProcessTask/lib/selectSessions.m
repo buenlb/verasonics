@@ -1,6 +1,6 @@
 % selectSessions(dc,freq,voltage,dcCond,freqCond,voltCond,passed)
 
-function idx = selectSessions(taskData,threshold,dc,freq,voltage,dcCond,freqCond,voltCond,passed,task)
+function idx = selectSessions(taskData,threshold,delay,dc,freq,voltage,dcCond,freqCond,voltCond,passed,task)
 
 if ~exist('task','var')
     task = 0;
@@ -30,5 +30,5 @@ end
 curCond = curCond & passed;
 
 idx = find(curCond);
-remove = removeSmallSessions(taskData(idx),threshold,task);
+remove = removeSmallSessions(taskData(idx),threshold,task,delay);
 idx = idx(~remove);
