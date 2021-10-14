@@ -40,7 +40,7 @@ if ~isfield(gs,'fName')
 end
 if ~isfield(gs,'txSn')
 	warning('Serial number not found in gold standard image, assuming JAB800');
-	txSn = 'JAB800';
+	txSn = input('Serial Number:' , 's');
 else
     txSn = gs.txSn;
 end

@@ -32,7 +32,7 @@ if voltage > maxVoltage
 end
 
 evalin('base','save(''tmpBeforeSonication'',''sys'')')
-doppler256_MR(duration,voltage,sys.focalSpot*1e-3);
+doppler256_MR(duration,voltage,sys.focalSpot*1e-3,sys.offElements,sys.txSn);
 
 evalin('base', 'clearvars -except sys')
 evalin('base', 'filename = ''doppler256_MR.mat''');

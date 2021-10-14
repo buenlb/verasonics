@@ -117,7 +117,7 @@ estimatedCenter = load('guiFileOutput');
 delete('guiFileOutput.mat')
 sys.userEstimateOfTxLocation = estimatedCenter.txCenter;
 
-[txCenter,theta] = findTx(img,res,estimatedCenter.txCenter);
+[txCenter,theta] = findTx(img,res,estimatedCenter.txCenter,sys.xDist,sys.yDist,sys.zDist);
 % txCenter = sys.userEstimateOfTxLocation
 % theta = 0;
 

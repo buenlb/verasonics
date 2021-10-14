@@ -62,25 +62,33 @@ addpath([verasonicsDir, 'MonkeyTx\lib\mrLib\thermometry\'])
 addpath([verasonicsDir, 'MonkeyTx\lib\mrLib\transducerLocalization\']);
 
 % Experiment Path
-sys.expPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\test_20210913\';
+sys.expPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20210929\';
 
 % Gold Standard Acoustic Imaging Files
-exVivoGoldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\exVivoGoldStandard.mat';
-eulerGoldStandard1 = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\EulerGoldStandard1.mat';
-eulerGoldStandard2 = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\EulerGoldStandard2.mat';
-eulerGoldStandard3 = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20201014\UltrasoundData\Euler_1143_Re-placedx2_blanket_1.5_GS.mat';
-gaussGoldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\GaussGoldStandard.mat';
+eulerGs = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20210929\UltrasoundData\eulerGs.mat';
+boltzmannGs = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20210929\UltrasoundData\boltzmannGs.mat';
 sys.goldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\test_20210913\UltrasoundData\exVivoSkull1_gs.mat';
-
+sys.goldStandard = eulerGs;
 % Set the transducer you are using
-sys.txSn = 'JEC482';
+sys.txSn = 'JAB800';
+
+if strcmp(sys.txSn,'JEC482')
+    sys.zDist = 9.53e-3;
+    sys.xDist = 187.59e-3/2;
+    sys.yDist = 35e-3/2;
+else
+    sys.zDist = 9.53e-3;
+    sys.xDist = (169/2)*1e-3;
+    sys.yDist = (35/2)*1e-3;
+end
+    
 
 % Coupling File
-couplingFile = 'exVivoSkull8.mat';
+couplingFile = 'boltzmann_20210929_2.mat';
 sys.couplingFile = [sys.expPath,'UltrasoundData\',couplingFile];
 
 % Log file
-logFile ='test_20210914_2.mat';
+logFile ='boltzmann20210929.mat';
 sys.logFile = [sys.expPath,'Logs\',logFile];
 
 % Imaging paths
@@ -88,7 +96,7 @@ sys.mrPath = [sys.expPath,'Images\'];
 sys.incomingDcms = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\IncomingImages\';
 
 % Anatomical Series
-sys.aSeriesNo = 16;
+sys.aSeriesNo = 8;
 
 % Invert Transducer
 sys.invertTx = 0;
@@ -96,7 +104,7 @@ sys.invertTx = 0;
 sys.offElements = [];
 
 msgbox(['You have selected transducer: ', sys.txSn]);
-return
+
 %% Check Coupling
 rescan = 1;
 scIdx = 1;
@@ -115,7 +123,7 @@ while rescan
     end
 end
 
-return
+
 %% Localize Transducer
 if exist(sys.logFile,'file')
     warning('File exists, continuing where you left off!')
@@ -135,7 +143,7 @@ sys = selectFocus(sys);
 saveState(sys);
 
 %% Sonicate
-sys = mrSonication(sys,0.2,1.65);
+sys = mrSonication(sys,5,23);
 totalEnergy(sys);
 saveState(sys);
 % Overlay result

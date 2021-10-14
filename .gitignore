@@ -6,5 +6,6 @@ MATFILES/*
 *.png
 *.fig
 guiFileOutput.mat
+guiOutput.mat
 tmpBeforeSonication.mat
 dicmMatFile.mat

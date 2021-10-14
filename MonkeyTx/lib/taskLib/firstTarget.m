@@ -30,8 +30,19 @@ addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\setupScript
 addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\mrLib\transducerLocalization\');
 
 %% User defined inputs
+monk = input('Monkey (b/e): ', 's');
+switch monk
+    case 'b'
+        goldStd = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20210929\UltrasoundData\boltzmann_20210929_2GS.mat';
+        txSn = 'JAB800';
+    case 'e'
+        goldStd = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20201202\UltrasoundData\gs_Euler_0925.mat';
+        txSn = 'JAB800';
+    otherwise
+        error([monk, ' not a recognized subject! Please choose b or e (case sensitive).'])
+end
 expPath = 'C:\Users\Verasonics\Documents\firstTargetData\';
-goldStd = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20201202\UltrasoundData\gs_Euler_0925.mat';
+disp(['Using Tx: ', txSn]);
 
 %% Open Communications
 pt = serial('COM1');
@@ -70,11 +81,11 @@ while ~received
             dc = receiveDoubleFromServer(pt);
             prf = receiveDoubleFromServer(pt);
             duration = receiveDoubleFromServer(pt);
-            frequency = receiveDoubleFromServer(pt);
+            frequency = receiveDoubleFromServer(pt);            
             
             % Get first target and voltage.
-            [voltage, target] = receiveFocusFromServer(pt);
-            
+            [voltage, target,nTargets,dev] = receiveFocusFromServer(pt);
+                        
             disp('Initializing with parameters:')
             disp(['  Focus: <', num2str(target(1)), ',',num2str(target(2)), ',',num2str(target(3)), '>'])
             disp(['  Voltage: ', num2str(voltage), ' V'])
@@ -82,9 +93,10 @@ while ~received
             disp(['  Duty: ', num2str(dc), '%'])
             disp(['  Freqency: ', num2str(frequency), 'MHz'])
             disp(['  Duration: ', num2str(duration), ' ms'])
+            disp(['  Target Variation (<x,y,z>): <', num2str(dev(3)),',',num2str(dev(2)),',',num2str(dev(3)),'>'])
             disp(['  Saving in: ', fName])
             
-            doppler256_neuromodulate2(duration*1e-3,voltage,target,prf,dc,frequency,[expPath,fName,'_log']);
+            doppler256_neuromodulate2_spotlight(duration*1e-3,voltage,target,prf,dc,frequency,[expPath,fName,'_log'],txSn,dev,nTargets);
         case 'SKIPSKULL'
             fprintf(pt,'SKIPSKULL');
             fNameOrig = fName;
@@ -141,7 +153,7 @@ fclose(pt);
 
 %% Launch VSX
 save tmpBeforeVSX.mat
-filename = 'doppler256_neuromodulate2.mat';
+filename = 'doppler256_neuromodulate2_spotlight.mat';
 VSX;
 load tmpBeforeVSX.mat
 %% Take a final coupling Image

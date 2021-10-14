@@ -1,54 +1,73 @@
+% doppler256_neuromodulate sets up a VSX mat file to run a neuromodulatory
+% sonication.
+% 
+% @INPUTS
+%   duration: Sonication duration in seconds.
+%   volages: peak voltage applied to each element in volts
+%   target: target location in mm
+%   PRF: Pulse repitition frequency in Hz
+%   duty: desired duty cycle (%)
+%   frequency: Frequency in MHz
+%   fName: Full path in which to save log file
+% 
+% Taylor Webb
+% University of Utah
+% December 2020
+% 
 
-function Trans = doppler256_MR(duration, voltage, focus, offElements,txSn)
-maxV = 25; % Maximum allowed voltage
-if duration > 5
-    error('Maximum duration is 5 seconds')
-end
-
-if ~exist('offElements','var')
-    offElements = [];
-end
+function doppler256_neuromodulate2_spotlight(duration, voltage, target, PRF, duty, frequency, fName, txSn, dev, nTargets)
+maxV = 50; % Maximum allowed voltage
 %% Set up path locations
 srcDirectory = setPaths();
 addpath([srcDirectory,'lib\mrLib'])
-%% Return Trans struct if no parameters specified.
-if nargin == 0
-    Trans = transducerGeometry(0);
-    Trans.units = 'mm';
-    Trans.maxHighVoltage = maxV;
-    return
-end
 
 %% Setup sonication properties
-frequency = 0.65; % Frequency in MHz
 T = 1/(frequency*1e6);
 nCycles = round(duration/T); % number of cycles with which to excite Tx (can integer multiples of 1/2)
 
 %% error check
-if voltage > maxV
-    error(['Voltage is limited to ', num2str(maxV), ' volts'])
+for ii = 1:length(voltage)
+    if voltage(ii) > maxV
+        error(['Voltage is limited to ', num2str(maxV), ' volts'])
+    end
 end
 
 %% Set up multiple pulses if duration is greater than maxCycles cycles
 maxCycles = 6.5e6;
 if nCycles > maxCycles
-    remainingCycles = nCycles;
-    ii = 1;
-    while remainingCycles > maxCycles
-        nCycles(ii) = maxCycles;
-        remainingCycles = remainingCycles-maxCycles;
-        ii = ii+1;
-    end
-    nCycles(ii) = remainingCycles;
+    error('I haven''t yet implemented pulses this long.')
 end
+
+%% Set up pulsing
+if duty < 100
+    numTransmits = duration*PRF;
+    pulseDuration = 1/PRF*duty/100;
+else
+    numTransmits = 1;
+    pulseDuration = duration;
+end
+nHalfCycles = ceil(2*pulseDuration/T);
+
 %% Specify system parameters
 Resource.Parameters.numTransmit = 256; % no. of xmit chnls (V64LE,V128 or V256).
 Resource.Parameters.numRcvChannels = 256; % change to 64 for Vantage 64 or 64LE
 Resource.Parameters.connector = 0; % trans. connector to use (V256).
 Resource.Parameters.speedOfSound = 1490; % speed of sound in m/sec
-% Resource.Parameters.verbose = 1;
-% Resource.Parameters.simulateMode = 1;
+Resource.Parameters.verbose = 1;
+Resource.Parameters.voltages = voltage;
+Resource.Parameters.simulateMode = 0;
+Resource.Parameters.startEvent = 1;
 
+%% Create a log struct to save results
+Resource.Parameters.logFileName = fName;
+Resource.Parameters.priorSonication = [];
+Resource.Parameters.DutyCycle = duty;
+Resource.Parameters.PulseRepFreq = PRF;
+Resource.Parameters.Duration = duration;
+Resource.Parameters.txSn = txSn;
+Resource.Parameters.log = struct('Date',datetime,'targets',target,'voltages',voltage,'Parameters',Resource.Parameters,'frequency',frequency);
+log = Resource.Parameters.log;
+save(Resource.Parameters.logFileName,'log')
 %% Set up longer pulses
 % HIFU % The Resource.HIFU.externalHifuPwr parameter must be specified in a
 % script using TPC Profile 5 with the HIFU option, to inform the system
@@ -71,7 +90,7 @@ Resource.HIFU.extPwrComPortID = 'COM5';
 
 Resource.HIFU.psType = 'QPX600DP'; % set to 'QPX600DP' to match supply being used
 
-TPC(5).hv = voltage;
+TPC(5).hv = voltage(1);
 for ii = 1:5
     TPC(ii).maxHighVoltage = maxV;
     TPC(ii).highVoltageLimit = maxV;
@@ -84,6 +103,7 @@ Media.MP(1,:) = [0,0,100,1.0]; % [x, y, z, reflectivity]
 
 % Specify Trans structure array.
 Trans = transducerGeometry(0,txSn);
+Trans.frequency = frequency;
 Trans.units = 'mm';
 Trans.maxHighVoltage = maxV;
 
@@ -94,19 +114,13 @@ Resource.RcvBuffer(1).colsPerFrame = 1; % change to 256 for V256 system
 Resource.RcvBuffer(1).numFrames = 1; % minimum size is 1 frame.
 
 % Specify Transmit waveform structure.
-for ii = 1:length(nCycles)
-    TW(ii).type = 'parametric';
-    TW(ii).Parameters = [Trans.frequency,0.67,nCycles(ii)*2,1]; % A, B, C, D
-end
 
-% Specify TX structure array.
-TX(1).waveform = 1; % use 1st TW structure.
-TX(1).focus = 0;
-TX(1).Apod = ones(1,256);
-TX(1).Apod(offElements) = 0;
-% badElements = load('C:\Users\Verasonics\Downloads\elementsOff.mat');
-% TX(1).Apod(badElements.unconnected) = 0;
+TW.type = 'parametric';
+TW.Parameters = [Trans.frequency,0.67,nHalfCycles,1]; % A, B, C, D
 
+%% Create a spotlight effect by sonicating multiple targets
+targets = generateTargets(target,nTargets,dev);
+% Find phases for each target
 xTx = Trans.ElementPos(:,1);
 yTx = Trans.ElementPos(:,2);
 zTx = Trans.ElementPos(:,3);
@@ -114,15 +128,21 @@ zTx = Trans.ElementPos(:,3);
 elements.x = xTx*1e-3;
 elements.y = yTx*1e-3;
 elements.z = zTx*1e-3;
-            
-elements = steerArray(elements,focus,frequency);
-delays = [elements.t]';
-% delays = zeros(size(delays));
-TX(1).Delay = delays;
 
-for ii = 2:length(nCycles)
-    TX(ii) = TX(1);
-    TX(ii).waveform = ii;
+for ii = 1:size(targets,1)
+    elements = steerArray(elements,targets(ii,:)*1e-3,frequency);
+    phases{ii} = [elements.t]';
+end
+
+for ii = 1:length(phases)
+    % Specify TX structure array.
+    TX(ii).waveform = 1; % use 1st TW structure.
+    TX(ii).focus = 0;
+    TX(ii).Apod = ones(1,256);
+    % badElements = load('C:\Users\Verasonics\Downloads\elementsOff.mat');
+    % TX(1).Apod(badElements.unconnected) = 0;
+    
+    TX(ii).Delay = phases{ii};
 end
 
 % Specify TGC Waveform structure.
@@ -132,20 +152,13 @@ TGC(1).Waveform = computeTGCWaveform(TGC);
 
 %% External Function
 Process(1).classname = 'External';
-Process(1).method = 'closeVSX';
+Process(1).method = 'waitForServer';
 Process(1).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'srcbufnum',1,...
 'srcframenum',1,...
 'dstbuffer','none'};
 
-Process(2).classname = 'External';
-Process(2).method = 'waitForUser';
-Process(2).Parameters = {'srcbuffer','receive',... % name of buffer to process.
-'srcbufnum',1,...
-'srcframenum',1,...
-'dstbuffer','none'};
-
-%% Set HIFU TPC
+%% Set TPC 5
 n = 1;
 nsc = 1;
 Event(n).info = 'select TPC profile 5';
@@ -154,50 +167,69 @@ Event(n).rcv = 0;
 Event(n).recon = 0;
 Event(n).process = 0;
 Event(n).seqControl = nsc; % set TPC profile command.
-n = n+1;
 SeqControl(nsc).command = 'setTPCProfile';
 SeqControl(nsc).argument = 5;
 SeqControl(nsc).condition = 'immediate';
 nsc = nsc + 1;
+% Resource.Parameters.startEvent = n;
+n = n+1;
 
-Event(n).info = 'Wait for user in order to sync with MR';
+%% Listen to server
+Event(n).info = 'Listen to server';
 Event(n).tx = 0;
 Event(n).rcv = 0;
 Event(n).recon = 0;
-Event(n).process = 2;
-Event(n).seqControl = nsc; % set TPC profile command.
-SeqControl(nsc).command = 'sync';
-nsc = nsc+1;
+Event(n).process = 1;
+Event(n).seqControl = 0;
+% SeqControl(nsc).command = 'sync';
+% nsc = nsc+1;
+serverEvent = n;
 n = n+1;
 
-for ii = 1:length(nCycles)
-    % Specify sequence events.
-    Event(n).info = 'Sonicate.';
-    Event(n).tx = ii; % use 1st TX structure.
-    Event(n).rcv = 0; % no receive
-    Event(n).recon = 0; % no reconstruction.
-    Event(n).process = 0; % no processing
-    if ii == 1
-        Event(n).seqControl = [nsc];        
-        SeqControl(nsc).command = 'triggerOut';
-        nscTrig = nsc;
-        nsc = nsc + 1;
+%% Sonicate
+Event(n).info = 'Sonicate.';
+Event(n).tx = 1; % use 1st TX structure.
+Event(n).rcv = 0; % no receive
+Event(n).recon = 0; % no reconstruction.
+Event(n).process = 0; % no processing
+Event(n).seqControl = [nsc,nsc+1];
+    SeqControl(nsc).command = 'pause';
+    SeqControl(nsc).condition = 'extTrigger';
+    SeqControl(nsc).argument = 17;
+    nsc = nsc + 1;
+    SeqControl(nsc).command = 'timeToNextAcq';
+    SeqControl(nsc).argument = 1/PRF*1e6;
+    nscTime2Acq = nsc;
+    nsc = nsc + 1;
+    firstSonicationIdx = n;
+n = n+1;
+
+for ii = 2:numTransmits
+    Event(n) = Event(firstSonicationIdx);
+    if mod(ii,size(targets,1))
+        Event(n).tx = mod(ii,size(targets,1));
     else
-        Event(n).seqControl = [nscTrig];
+        Event(n).tx = size(targets,1);
     end
+    Event(n).seqControl = nscTime2Acq;
     n = n+1;
 end
 
-Event(n).info = 'Close VSX.';
+Event(n).info = 'Return to beginning';
 Event(n).tx = 0; % use 1st TX structure.
-Event(n).rcv = 0; % use 1st Rcv structure.
+Event(n).rcv = 0; % no receive
 Event(n).recon = 0; % no reconstruction.
-Event(n).process = 1; % call function to close
+Event(n).process = 0; % no processing
 Event(n).seqControl = nsc;
-SeqControl(nsc).command = 'sync';
-        SeqControl(nsc).argument = duration*1e6;
-nsc = nsc+1;
+    SeqControl(nsc).command = 'jump';
+    SeqControl(nsc).argument = serverEvent;
+    SeqControl(nsc).condition = 'exitAfterJump';
+    nsc = nsc + 1;
+%     SeqControl(nsc).command = 'sync';
+%     SeqControl(nsc).argument = 2.1e9;
+%     nsc = nsc + 1;
 n = n+1;
+
 
 % Save all the structures to a .mat file.
 scriptName = mfilename('fullpath');
