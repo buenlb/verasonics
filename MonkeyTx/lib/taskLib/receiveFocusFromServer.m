@@ -12,17 +12,19 @@
 % Taylor Webb
 % University of Utah
 
-function [v,target] = receiveFocusFromServer(pt)
+function [v,target,nTargets,dev] = receiveFocusFromServer(pt)
 msg = fscanf(pt);
 while isempty(msg)
     msg = fscanf(pt);
 end
 msg = msg(1:end-1);
 result = sscanf(msg,'%f,');
-if length(result) ~= 4
-    fprintf(pt,['Expected 4 floats but received, ', msg]);
-    error(['Expected 4 floats but received ', msg])
+if length(result) ~= 10
+    fprintf(pt,['Expected 10 floats but received, ', msg]);
+    error(['Expected 10 floats but received ', msg])
 end
 v = result(1);
 target = result(2:4)';
+nTargets = result(5:7);
+dev = result(8:10);
 fprintf(pt,msg);

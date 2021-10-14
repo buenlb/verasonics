@@ -4,5 +4,6 @@ MATFILES/*
 *.ASV
 *.snq
 guiFileOutput.mat
+guiOutput.mat
 tmpBeforeSonication.mat
 dicmMatFile.mat

@@ -45,7 +45,7 @@ if isfield(gsParams,'txSn')
     txSn = gsParams.txSn;
 else
 	warning('No Serial Number found, assuming JAB800');
-	txSn = 'JAB800';
+	txSn = input('Serial Number: ', 's');
 end
 
 [gsRaw,crRaw,~,d] = getRawTraces(gsParams.fName,cr,singleElement);

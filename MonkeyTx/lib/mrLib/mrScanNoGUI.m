@@ -91,7 +91,7 @@ sys.userEstimateOfTxLocation = estimatedCenter.txCenter;
 %% Display result
 img2d = squeeze(img(:,:,txCenter(2)));
 % img2d = sum(img,3);
-tmplt3d = drawTransducer(size(img),txCenter,theta,res,1);
+tmplt3d = drawTransducer(sys,size(img),txCenter,theta,res,1);
 tmplt2d = sum(tmplt3d,3);
 tmplt2d(tmplt2d > 1) = 1;
 h = figure;

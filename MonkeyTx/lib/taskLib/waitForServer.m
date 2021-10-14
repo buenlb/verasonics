@@ -58,7 +58,7 @@ while ~received
             return
         case 'FOCUS'
             fprintf(pt,'FOCUS')
-            [voltage,target] = receiveFocusFromServer(pt);
+            [voltage,target,nTargets,dev] = receiveFocusFromServer(pt);
             disp('New Focal Spot:')
             disp(['  Focus: <', num2str(target(1)), ',',num2str(target(2)), ',',num2str(target(3)), '>'])
             disp(['  Voltage: ', num2str(voltage), ' V'])
@@ -82,6 +82,8 @@ while ~received
     end
 end
 
+targets = generateTargets(target,nTargets,dev);
+
 xTx = Trans.ElementPos(:,1);
 yTx = Trans.ElementPos(:,2);
 zTx = Trans.ElementPos(:,3);
@@ -89,11 +91,16 @@ elements.x = xTx*1e-3;
 elements.y = yTx*1e-3;
 elements.z = zTx*1e-3;
 
-% Find the phases for the first focal spot
-elements = steerArray(elements,target*1e-3,Trans.frequency,0);
-phs = [elements.t]';
+if length(TX) ~= size(targets,1)
+    error('You cannot change the number of targets in the middle of a session!')
+end
 
-TX(1).Delay = phs;
+% Find the phases for the first focal spot
+for ii = 1:size(targets,1)
+    elements = steerArray(elements,targets(ii,:)*1e-3,Trans.frequency,1);
+    phs = [elements.t]';
+    TX(ii).Delay = phs;
+end
 TPC(5).hv = voltage;
 setTpcProfileHighVoltage(voltage,5);
 %% Update and run in base

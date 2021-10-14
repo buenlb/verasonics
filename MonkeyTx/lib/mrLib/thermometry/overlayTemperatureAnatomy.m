@@ -65,12 +65,12 @@ T_deNoised = denoiseThermometry(T,sys.sonication(sonicationNo).firstDynamic,sys.
 [tY,tX,tZ] = meshgrid(ty,tx,tz);
 [aY,aX,aZ] = meshgrid(ay,ax,az);
 
-T = tMagImg;
-T = repmat(T,[1,1,1,15]);
-
 d = waitbar(0,'Interpolating');
 tInterp = zeros([size(aX),size(T,4)]);
 tInterp_deNoised = zeros([size(aX),size(T,4)]);
+
+tMagImgInterp = interp3(tY,tX,tZ,tMagImg(:,:,:),aY,aX,aZ,'nearest');
+
 for ii = 1:size(T,4)
     tInterp(:,:,:,ii) = interp3(tY,tX,tZ,T(:,:,:,ii),aY,aX,aZ,'nearest');
     tInterp_deNoised(:,:,:,ii) = interp3(tY,tX,tZ,T_deNoised(:,:,:,ii),aY,aX,aZ,'nearest');
@@ -86,6 +86,7 @@ sys.ty = ty;
 sys.tz = tz;
 sys.tImg = tImg;
 sys.tMagImg = tMagImg;
+sys.tMagImgInterp = tMagImgInterp;
 sys.dynamicLength = acqTime;
 sys.curSonication = sonicationNo;
 
