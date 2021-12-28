@@ -67,9 +67,18 @@ prf = lgn;
 ch = lgn;
 leftLocation = zeros(length(lgn),3);
 rightLocation = zeros(length(lgn),3);
+actualDelay = lgn;
 
 % Loop through struct
 for ii = 1:length(trial_data)
+    if ii == 1
+        if trial_data{length(trial_data)}.epoch_pre_us ~= trial_data{1}.epoch_pre_us
+            warning('Odd Pre-Us-Count');
+            preUsTrials = trial_data{1}.epoch_pre_us;
+        else
+            preUsTrials = trial_data{1}.epoch_pre_us;
+        end
+    end
     if trial_data{ii}.us.priorSonications{ii} == 'L'
         lgn(ii) = -1;
     elseif trial_data{ii}.us.priorSonications{ii} == 'R'
@@ -153,7 +162,9 @@ for ii = 1:length(trial_data)
         rightLocation(ii,:) = nan;
     end
     
-    if abs(abs(delay(ii))-1e3*abs(trial_data{ii}.event_time(4)-trial_data{ii}.event_time(3))) > 7 % the frame period is about 8.3 ms so if it is greater than 9 ms it is off by a frame or more.
+    actualDelay(ii) = 1e3*abs(trial_data{ii}.event_time(4)-trial_data{ii}.event_time(3));
+    
+    if abs(abs(delay(ii))-1e3*abs(trial_data{ii}.event_time(4)-trial_data{ii}.event_time(3))) > 7 % the frame period is about 8.3 ms so if it is greater than 7 ms it is off by a frame or more.
         correctDelay(ii) = false;
     else
         correctDelay(ii) = true;
@@ -165,4 +176,5 @@ tData = struct('ch',ch,'delay',delay,'delayVector',delayVector,'lgn',lgn,...
     'result',result,'timing',timing,'loc',loc,'task',taskType,...
     'leftVoltage',leftVoltage,'rightVoltage',rightVoltage,'dc',dc,'prf',prf,...
     'leftLocation',leftLocation,'rightLocation',rightLocation,'correctDelay',correctDelay,...
-    'brightnessOffset',brightnessOffset,'brightnessOffsetVector',brightnessOffsetVector);
+    'brightnessOffset',brightnessOffset,'brightnessOffsetVector',brightnessOffsetVector,...
+    'actualDelay',actualDelay,'preUsTrials',preUsTrials);

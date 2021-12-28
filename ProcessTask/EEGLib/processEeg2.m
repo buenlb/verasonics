@@ -7,7 +7,6 @@ BANDPASS = 0;
 fNameBase = ['boltzmannTask_',date.year(end-1:end),date.month,date.day];
 
 [t,eeg,dig,alg] = concatIntan(expPath,fNameBase);
-keyboard
 %% Find Task Indices
 [taskIdx,trNum] = findTaskIdx(t,dig(2,:));
 trNum = trNum-1;
@@ -72,7 +71,12 @@ end
 
 %% Process task data
 fName = [taskPath,'Boltzmann',date.year,date.month,date.day,'.mat'];
-trialD = load(fName);
+try
+    trialD = load(fName);
+catch
+    fName = [taskPath,'Boltzmann',date.year,date.month,date.day,'b.mat'];
+    trialD = load(fName);
+end
 if ~isfield(trialD.trial_data{end},'us')
     trialD.trial_data = trialD.trial_data(1:end-1);
 end

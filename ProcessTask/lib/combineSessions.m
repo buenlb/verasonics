@@ -1,3 +1,5 @@
+% combineSessions(idx,tData) combines the structs referenced by idx in
+% tData. 
 function t = combineSessions(idx,tData)
 ch = [];
 lgn = [];
@@ -16,6 +18,8 @@ prf = [];
 leftLocation = [];
 rightLocation = [];
 brightnessOffsetVector = [];
+actualDelay = [];
+preUs = zeros(size(idx));
 
 for ii = 1:length(idx)
     ch = cat(1,tData(idx(ii)).ch,ch);
@@ -35,6 +39,12 @@ for ii = 1:length(idx)
     leftLocation = cat(1,tData(idx(ii)).leftLocation,leftLocation);
     rightLocation = cat(1,tData(idx(ii)).rightLocation,rightLocation);
     brightnessOffsetVector = cat(2,tData(idx(ii)).brightnessOffsetVector,brightnessOffsetVector);
+    actualDelay = cat(1,tData(idx(ii)).actualDelay,actualDelay);
+    preUs(ii) = tData(idx(ii)).preUsTrials;
+end
+
+if sum(preUs(2:end))>0
+    warning(['Later structures have pre-US trials (preUs:', num2str(preUs),').'])
 end
 
 t = struct('ch',ch,'delay',delay,'delayVector',sort(unique(delay)),...
@@ -42,6 +52,6 @@ t = struct('ch',ch,'delay',delay,'delayVector',sort(unique(delay)),...
     'correctDelay',correctDelay,'timing',timing,'leftVoltage',leftVoltage,...
     'rightVoltage',rightVoltage,'brightnessOffset',brightnessOffset,...
     'dc',dc,'prf',prf,'leftLocation',leftLocation,...
-    'rightLocation',rightLocation);
+    'rightLocation',rightLocation,'actualDelay',actualDelay,'preUsTrials',preUs(1));
 t.delayVector = unique(delayVector);
 t.brightnessOffsetVector = unique(brightnessOffsetVector);

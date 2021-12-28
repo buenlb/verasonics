@@ -1,24 +1,69 @@
-function [delays,leftChoices_lLgn,leftChoices_rLgn,leftChoices_ctl] = plotSessionAveragedSigmoids(tData,plotCtl)
+function [delays,leftChoices_lLgn,leftChoices_rLgn,leftChoices_ctl,nTrials] = plotSessionAveragedSigmoids(tData,plotCtl,useActualDelays,delayBuckets,validIdx)
 if ~exist('plotCtl','var')
     plotCtl = 0;
 end
-delays = [];
-% Select delays
-for ii = 1:length(tData)
-    delays = union(unique(tData(ii).delay),delays);
+if ~exist('useActualDelays','var')
+    useActualDelays = 1;
+end
+if ~exist('validIdx','var')
+    validIdx = [];
+end
+
+if ~useActualDelays
+    delays = [];
+    % Select delays
+    for ii = 1:length(tData)
+        if exist('delayBuckets','var')
+            error('delayBuckets is not yet implemented when useActualDelays is turned off');
+        else
+            delays = union(unique(tData(ii).delay),delays);
+        end
+    end
+else
+    if exist('delayBuckets','var')
+        delays = delayBuckets;
+    else
+        delays = sortActualDelays(tData);
+    end
+    if size(delays,1)<size(delays,2)
+        delays = delays';
+    end
 end
 leftChoices_lLgn = nan(length(tData),length(delays));
 leftChoices_rLgn = nan(length(tData),length(delays));
 leftChoices_ctl = nan(length(tData),length(delays));
+nTrials = zeros(3,length(delays));
 
 %% Get averages at each delay
 for ii = 1:length(tData)
-    curDelays = unique(tData(ii).delay);
-    for jj = 1:length(curDelays)
-        curIdx = find(curDelays(jj)==delays);
-        leftChoices_lLgn(ii,curIdx) = mean(tData(ii).ch(tData(ii).lgn==-1 & tData(ii).delay==curDelays(jj)),'omitnan');
-        leftChoices_rLgn(ii,curIdx) = mean(tData(ii).ch(tData(ii).lgn==1 & tData(ii).delay==curDelays(jj)),'omitnan');
-        leftChoices_ctl(ii,curIdx) = mean(tData(ii).ch(tData(ii).lgn==0 & tData(ii).delay==curDelays(jj)),'omitnan');
+    if ~isempty(validIdx)
+        tmp = false(size(tData(ii).ch));
+        if max(validIdx{ii})>length(tData(ii).ch)
+            warning('Valid Index contains entries outside of the current session');
+        end
+        tmp(validIdx{ii}) = true;
+        tData(ii).ch(~tmp) = nan;
+    end
+    if ~useActualDelays
+        curDelays = unique(T2.delay);
+        for jj = 1:length(curDelays)
+            curIdx = find(curDelays(jj)==delays);
+            leftChoices_lLgn(ii,curIdx) = mean(tData(ii).ch(tData(ii).lgn==-1 & tData(ii).delay==curDelays(jj) & tData(ii).correctDelay),'omitnan');
+            leftChoices_rLgn(ii,curIdx) = mean(tData(ii).ch(tData(ii).lgn==1 & tData(ii).delay==curDelays(jj) & tData(ii).correctDelay),'omitnan');
+            leftChoices_ctl(ii,curIdx) = mean(tData(ii).ch(tData(ii).lgn==0 & tData(ii).delay==curDelays(jj) & tData(ii).correctDelay),'omitnan');
+        end
+    else
+        delayIdx = actualDelayMatch(tData(ii),delays);
+        for jj = 1:length(delays)
+            curDelayIdx = false(size(tData(ii).actualDelay));
+            curDelayIdx(delayIdx==jj) = true;
+            leftChoices_lLgn(ii,jj) = mean(tData(ii).ch(tData(ii).lgn==-1 & curDelayIdx),'omitnan');
+            leftChoices_rLgn(ii,jj) = mean(tData(ii).ch(tData(ii).lgn==1 & curDelayIdx),'omitnan');
+            leftChoices_ctl(ii,jj) = mean(tData(ii).ch(tData(ii).lgn==0 & curDelayIdx),'omitnan');
+            nTrials(1,jj) = sum(tData(ii).lgn==-1 & curDelayIdx)+nTrials(1,jj);
+            nTrials(2,jj) = sum(tData(ii).lgn==0 & curDelayIdx)+nTrials(2,jj);
+            nTrials(3,jj) = sum(tData(ii).lgn==1 & curDelayIdx)+nTrials(3,jj);
+        end
     end
 end
 
@@ -59,4 +104,5 @@ end
 %     end
 % end
 %%
+set(h,'position',[359   444   614   352]);
 makeFigureBig(h);
