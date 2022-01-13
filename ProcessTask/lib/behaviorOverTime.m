@@ -13,7 +13,11 @@ time = cell(size(tData));
 for ii = 1:length(tData)
     disp([num2str(ii), ' of ', num2str(length(tData))])
     
-    idx = find(tData(ii).lgn==lgn);
+    if ~isempty(lgn)
+        idx = find(tData(ii).lgn==lgn);
+    else
+        idx = 1:length(tData(ii).ch);
+    end
     
     rawTime = [tData(ii).timing.startTime];
     if sum(diff(rawTime)<0)

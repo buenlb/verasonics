@@ -8,7 +8,7 @@ addpath('C:\Users\Taylor\Documents\Projects\verasonics\verasonics\ProcessTask\li
 addpath('C:\Users\Taylor\Documents\Projects\verasonics\verasonics\lib\');
 
 %% Set the paths
-taskPath = 'C:\Users\Taylor\Documents\Data\Task\grayScreen\';
+taskPath = 'D:\Task\Euler\GS\';
 couplingPath = 'C:\Users\Taylor\Documents\Data\Task\Coupling\';
 gsCouplingFile = 'C:\Users\Taylor\Documents\Papers\MacaqueMethods\figs\gs_Euler_0925.mat';
 
@@ -18,8 +18,8 @@ for ii = 1:length(files)
     couplingFile = [couplingPath,files(ii).name(1:end-4), '_final.mat'];
     if ~exist(couplingFile,'file')
         warning(['Skipping ',files(ii).name,' because it lacks a corresponding coupling file.'])
-        passFinal = double(passFinal);
-        passInitial = double(passInitial);
+        passFinal = nan;
+        passInitial = nan;
         passFinal(ii) = nan;
         passInitial(ii) = nan;
         
@@ -55,7 +55,7 @@ for ii = 1:length(files)
             end
             log = log.log;
             keyboard
-            save(logFile,'log');
+%             save(logFile,'log');
         else
             continue;
         end

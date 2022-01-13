@@ -1,31 +1,37 @@
 %% Plot Average Sacades
 % Set parameters for sessions and trials to include
-passed = true(size(tData));
-validDelays = 0;
-threshold = 20;
-task = 0;
+% passed = true(size(tData));
+% validDelays = 0;
+% threshold = 20;
+% task = 0;
+% 
+% desiredDuty = 100;
+% desiredFreq = 0.65;
+% desiredVoltage = 10.3;
+% 
+% dIdx = selectSessions(tData,threshold,validDelays,dc,freq,voltage,desiredDuty,desiredFreq,desiredVoltage,passed,task);
+% 
+% 
+% tData10 = combineSessions(dIdx,tData);
+tData10 = tData;
+curIdx = false(size(tData.ch));
+curIdx(idxLeft{4}) = true;
 
-desiredDuty = 100;
-desiredFreq = 0.65;
-desiredVoltage = 10.3;
-
-dIdx = selectSessions(tData,threshold,validDelays,dc,freq,voltage,desiredDuty,desiredFreq,desiredVoltage,passed,task);
-
-
-tData10 = combineSessions(dIdx,tData);
-idxLeft = find(tData10.lgn==-1 & ~isnan(tData10.ch));
-tData10 = selectTrials(tData10,idxLeft);
+idxLeft1 = find(tData10.lgn==-1 & ~isnan(tData10.ch)&curIdx);
+tData10 = selectTrials(tData10,idxLeft1);
 tData10.fpWindow = 3;
 [tm,xLeft,yLeft] = plotEyeMovement(tData10,0);
 
-tData10 = combineSessions(dIdx,tData);
-idxRight = find(tData10.lgn==1 & ~isnan(tData10.ch));
-tData10 = selectTrials(tData10,idxRight);
+% tData10 = combineSessions(dIdx,tData);
+tData10=tData;
+idxRight1 = find(tData10.lgn==1 & ~isnan(tData10.ch)&curIdx);
+tData10 = selectTrials(tData10,idxRight1);
 tData10.fpWindow = 3;
 [~,xRight,yRight] = plotEyeMovement(tData10,0);
 
-tData10 = combineSessions(dIdx,tData);
-idx = find(tData10.lgn==0 & ~isnan(tData10.ch));
+% tData10 = combineSessions(dIdx,tData);
+tData10=tData;
+idx = find(tData10.lgn==0 & ~isnan(tData10.ch)&curIdx);
 tData10 = selectTrials(tData10,idx);
 tData10.fpWindow = 3;
 [~,x,y] = plotEyeMovement(tData10,0);
@@ -37,8 +43,8 @@ yLeftA = mean(yLeft,2,'omitnan');
 xRightA = mean(xRight,2,'omitnan');
 yRightA = mean(yRight,2,'omitnan');
 
-xA = mean(x,2,'omitnan');
-yA = mean(y,2,'omitnan');
+% xA = mean(x,2,'omitnan');
+% yA = mean(y,2,'omitnan');
 
 h = figure;
 makeFigureBig(h)
@@ -49,12 +55,12 @@ for ii = 1:length(tm)
     plot(xLeftA(ii),yLeftA(ii),'^','markersize',12,'linewidth',2);
     hold on
     plot(xRightA(ii),yRightA(ii),'^','markersize',12,'linewidth',2);
-    plot(xA(ii),yA(ii),'o','markersize',12,'linewidth',2);
+%     plot(xA(ii),yA(ii),'o','markersize',12,'linewidth',2);
     
     ax.ColorOrderIndex = 1;
     plot(xLeftA(1:ii),yLeftA(1:ii),'-','markersize',12,'linewidth',2);
     plot(xRightA(1:ii),yRightA(1:ii),'-','markersize',12,'linewidth',2);
-    plot(xA(1:ii),yA(1:ii),'--','markersize',12,'linewidth',2);
+%     plot(xA(1:ii),yA(1:ii),'--','markersize',12,'linewidth',2);
     viscircles([0,0],tData10.fpWindow,'Color',[0,0,0])
     axis('equal')
     axis([-1,1,-1,1]*wSize);

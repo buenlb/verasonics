@@ -40,13 +40,14 @@ for ii = 1:size(sessions,1)
         inputIdx{curIdx} = [ii,jj];
         curIdx = curIdx+1;
     end
-    avgs(curIdx) = nan;
-    sems(curIdx) = nan;
+%     avgs(curIdx) = nan;
+%     sems(curIdx) = nan;
     curIdx = curIdx+1;
 end
 
 if exist('barColors','var')
     if length(avgs) ~= size(barColors,1)
+        keyboard
         error('Number of barColors must equal number of averages');
     end
 end

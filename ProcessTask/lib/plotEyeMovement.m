@@ -1,4 +1,7 @@
-function [tm1,x,y] = plotEyeMovement(tData,plotMovement)
+function [tm1,x,y] = plotEyeMovement(tData,plotMovement,index)
+if exist('index','var')
+    tData.timing = tData.timing(index);
+end
 if ~exist('plotMovement','var')
     plotMovement = 1;
 end

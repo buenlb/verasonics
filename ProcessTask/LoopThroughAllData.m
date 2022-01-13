@@ -8,7 +8,7 @@ addpath('C:\Users\Taylor\Documents\Projects\verasonics\verasonics\ProcessTask\li
 addpath('C:\Users\Taylor\Documents\Projects\verasonics\verasonics\lib\');
 
 %% Set the paths
-monk = 'EULER';
+monk = 'Boltzmann';
 switch monk
     case 'EULER'
         taskPath = 'C:\Users\Taylor\Documents\Data\Task\';
@@ -16,9 +16,9 @@ switch monk
         gsCouplingFile = 'C:\Users\Taylor\Documents\Papers\MacaqueMethods\figs\gs_Euler_0925.mat';
         fileNameLength = 12;
     case 'Boltzmann'
-        taskPath = 'C:\Users\Taylor\Documents\Data\Task\Boltzmann\';
-        couplingPath = 'C:\Users\Taylor\Documents\Data\Task\Boltzmann\Coupling\';
-        gsCouplingFile = 'C:\Users\Taylor\Documents\Data\Task\Boltzmann\Coupling\gs_boltzmann.mat';
+        taskPath = 'D:\Task\Boltz\';
+        couplingPath = 'D:\Task\Boltz\Coupling\';
+        gsCouplingFile = 'D:\Task\Boltz\Coupling\gs_boltzmann.mat';
         fileNameLength = 16;
     otherwise
         error('Monk not recognized!')

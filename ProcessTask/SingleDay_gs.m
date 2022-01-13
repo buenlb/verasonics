@@ -8,8 +8,8 @@ addpath('C:\Users\Taylor\Documents\Projects\verasonics\verasonics\ProcessTask\li
 addpath('C:\Users\Taylor\Documents\Projects\verasonics\verasonics\lib\');
 
 %% Set the filenames
-taskPath = 'C:\Users\Taylor\Documents\Data\Task\grayScreen\';
-taskDataFileName = 'Euler20210315_gs';
+taskPath = 'D:\Task\Euler\GS\';
+taskDataFileName = 'Euler20211214_gs';
 taskDataFile = [taskPath,taskDataFileName,'.mat'];
 
 couplingPath = 'C:\Users\Taylor\Documents\Data\Task\Coupling\';
