@@ -15,7 +15,7 @@
 %     were removed
 
 function [delay,ch,idxRemoved] = equalDelays(delay,ch,delayVector)
-
+delayVector = sort(delayVector);
 idxRemoved = [];
 for ii = 1:floor(length(delayVector)/2)
     if delayVector(ii)~=-delayVector(end-ii+1)

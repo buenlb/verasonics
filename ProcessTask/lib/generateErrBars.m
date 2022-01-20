@@ -23,6 +23,7 @@ for ii = 1:nargin
                 barColors = varargin{ii+1};
                 skip = 1;
             otherwise
+                keyboard
                 error([varargin{ii}, ' is not a valid property.'])
         end
     else

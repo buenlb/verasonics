@@ -10,6 +10,7 @@ if isempty(tData)
 end
 
 validDelays = [];
+validIndex = [];
 if exist('varargin','var')
     skip = 0;
     for ii = 1:length(varargin)
@@ -26,6 +27,9 @@ if exist('varargin','var')
                 skip = 1;
             case 'delays'
                 validDelays = varargin{ii+1};
+                skip = 1;
+            case 'index'
+                validIndex = varargin{ii+1};
                 skip = 1;
             otherwise
                 error([varargin{ii}, ' is not a valid property.'])
@@ -47,6 +51,17 @@ for ii = 1:length(tData)
     if ~isempty(validDelays)
         curT.ch(~ismember(curT.delay,validDelays)) = nan;
     end
+    
+    if ~isempty(validIndex)
+        tmp = false(size(curT.ch));
+        if max(validIndex{ii})>length(curT.ch)
+            warning('Valid Index contains entries outside of the current session');
+        end
+        tmp(validIndex{ii}) = true;
+        curT.ch(~tmp) = nan;
+    end
+    
+    curT.ch(~curT.correctDelay) = nan;
 
     correctContra = sum(~isnan(curT.ch) & ((curT.lgn == -1 & curT.delay < 0) | (curT.lgn == 1 & curT.delay > 0)));
     correctIntra = sum(~isnan(curT.ch) & ((curT.lgn == -1 & curT.delay > 0) | (curT.lgn == 1 & curT.delay < 0)));
@@ -78,6 +93,9 @@ for ii = 1:length(tData)
     
     cChoices{ii} = contraChoices(~isnan(contraChoices));
     sessionAvg(ii) = mean(contraChoices,'omitnan');
+    if isnan(sessionAvg(ii))
+        keyboard
+    end
     
     lLgn(ii) = mean(curT.ch(~isnan(curT.ch) & curT.lgn==-1 & curT.task==0));
     rLgn(ii) = mean(curT.ch(~isnan(curT.ch) & curT.lgn==1 & curT.task==0));

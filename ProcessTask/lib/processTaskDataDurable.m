@@ -35,7 +35,7 @@
 % Taylor Webb
 % University of Utah
 
-function tData = processTaskData(fName)
+function tData = processTaskDataDurable(fName)
 
 if nargin < 2
     plotResults = 0;
@@ -52,40 +52,25 @@ if ~isfield(trial_data{end},'us')
 end
 
 % Set up variables
-lgn = zeros(size(trial_data));
-result = lgn;
-taskType = lgn;
-delay = lgn;
-brightnessOffset = lgn;
+result = zeros(size(trial_data));
+lgn = result;
+taskType = result;
+delay = result;
+brightnessOffset = result;
 delayVector = [];
 brightnessOffsetVector = [];
-correctDelay = lgn;
-leftVoltage = lgn;
-rightVoltage = lgn;
-dc = lgn;
-prf = lgn;
-ch = lgn;
-leftLocation = zeros(length(lgn),3);
-rightLocation = zeros(length(lgn),3);
-actualDelay = lgn;
+correctDelay = result;
+leftVoltage = result;
+rightVoltage = result;
+dc = result;
+prf = result;
+ch = result;
+leftLocation = zeros(length(result),3);
+rightLocation = zeros(length(result),3);
+actualDelay = result;
 
 % Loop through struct
 for ii = 1:length(trial_data)
-    if ii == 1
-        if trial_data{length(trial_data)}.epoch_pre_us ~= trial_data{1}.epoch_pre_us
-            warning('Odd Pre-Us-Count');
-            preUsTrials = trial_data{1}.epoch_pre_us;
-        else
-            preUsTrials = trial_data{1}.epoch_pre_us;
-        end
-    end
-    if trial_data{ii}.us.priorSonications{ii} == 'L'
-        lgn(ii) = -1;
-    elseif trial_data{ii}.us.priorSonications{ii} == 'R'
-        lgn(ii) = 1;
-    elseif trial_data{ii}.us.priorSonications{ii} == 'C'
-        lgn(ii) = 0;
-    end
     
     switch trial_data{ii}.result{1}
         case 'NOFIX'
@@ -102,6 +87,10 @@ for ii = 1:length(trial_data)
             result(ii) = 5;
     end
     
+    if (trial_data{ii}.us.sonicated)
+        preUsTrials = ii;
+    end
+
     if isfield(trial_data{ii},'choice')
         if ~iscell(trial_data{ii}.choice)
             ch(ii) = nan;
@@ -169,9 +158,16 @@ for ii = 1:length(trial_data)
     else
         correctDelay(ii) = true;
     end    
+
+    if trial_data{ii}.us.sonicated
+        if trial_data{ii}.focalLocation < 0
+            lgn(ii) = -1;
+        else
+            lgn(ii) = 1;
+        end
+    end
     
 end
-
 tData = struct('ch',ch,'delay',delay,'delayVector',delayVector,'lgn',lgn,...
     'result',result,'timing',timing,'loc',loc,'task',taskType,...
     'leftVoltage',leftVoltage,'rightVoltage',rightVoltage,'dc',dc,'prf',prf,...

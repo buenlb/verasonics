@@ -1,4 +1,4 @@
-function axs = plotTaskResults(tData,makeDelaysEqual,plotCtl,taskType)
+function axs = plotTaskResults(tData,makeDelaysEqual,plotCtl,taskType,idxOfTrials)
 
 if ~exist('makeDelaysEqual','var')
     makeDelaysEqual = 0;
@@ -10,6 +10,10 @@ end
 
 if ~exist('plotCtl','var')
     plotCtl = 1;
+end
+
+if ~exist('idxOfTrials','var')
+    idxOfTrials = true(size(tData.delay));
 end
 
 switch taskType
@@ -26,9 +30,11 @@ switch taskType
     otherwise
         error('Unrecognized Task Name!')
 end
+idx = idx&idxOfTrials;
 
 lgn = tData.lgn(idx);
 ch = tData.ch(idx);
+delay = tData.delay(idx);
 
 rightDelay = delay(lgn==1);
 leftDelay = delay(lgn==-1);

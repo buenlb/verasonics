@@ -1,4 +1,7 @@
 % Plots the fixation window
+% 
+% I HAVEN"T USED THIS IN A WHILE. MAY BE OUT OF DATE. DON"T TRUST UNLESS
+% YOU HAVE CAREFULLY REVIEWD
 
 function ax = plotEyeData_fixationWindow(tData,ax)
 

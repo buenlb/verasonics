@@ -8,7 +8,7 @@ addpath('C:\Users\Taylor\Documents\Projects\verasonics\verasonics\ProcessTask\li
 addpath('C:\Users\Taylor\Documents\Projects\verasonics\verasonics\lib\');
 
 %% Set the paths
-monk = 'EULER';
+monk = 'Boltzmann';
 switch monk
     case 'EULER'
         taskPath = 'C:\Users\Taylor\Documents\Data\Task\';
@@ -16,9 +16,9 @@ switch monk
         gsCouplingFile = 'C:\Users\Taylor\Documents\Papers\MacaqueMethods\figs\gs_Euler_0925.mat';
         fileNameLength = 12;
     case 'Boltzmann'
-        taskPath = 'C:\Users\Taylor\Documents\Data\Task\Boltzmann\';
-        couplingPath = 'C:\Users\Taylor\Documents\Data\Task\Boltzmann\Coupling\';
-        gsCouplingFile = 'C:\Users\Taylor\Documents\Data\Task\Boltzmann\Coupling\gs_boltzmann.mat';
+        taskPath = 'D:\Task\Boltz\';
+        couplingPath = 'D:\Task\Boltz\Coupling\';
+        gsCouplingFile = 'D:\Task\Boltz\Coupling\gs_boltzmann.mat';
         fileNameLength = 16;
     otherwise
         error('Monk not recognized!')
@@ -48,9 +48,15 @@ for ii = 1:length(files)
             voltage(tskIdx) = curData.voltage(oldIdx);
             prf(tskIdx) = curData.prf(oldIdx);
             freq(tskIdx) = curData.freq(oldIdx);
-            distErr(tskIdx) = curData.distErr(oldIdx);
-            powErr(tskIdx) = curData.powErr(oldIdx);
-            totPowErr(tskIdx) = curData.totPowErr(oldIdx);
+            try
+                distErr(tskIdx,:) = curData.distErr(oldIdx,:);
+                powErr(tskIdx,:) = curData.powErr(oldIdx,:);
+                totPowErr(tskIdx) = curData.totPowErr(oldIdx);
+            catch
+                distErr(tskIdx,:) = nan(1,6);
+                powErr(tskIdx,:) = nan(1,6);
+                totPowErr(tskIdx) = nan;
+            end
             try
             targets{tskIdx} = curData.targets{oldIdx};
             catch
@@ -114,6 +120,7 @@ for ii = 1:length(files)
             dc(tskIdx) = input([files(ii).name,': DC? >>']);
             prf(tskIdx) = input([files(ii).name,': PRF? >>']);
             voltage(tskIdx) = input([files(ii).name,': Voltage? >>']);
+            freq(tskIdx) = input([files(ii).name,': Frequency? >>']);
             keyboard
             log.log.Parameters.DutyCycle = dc(tskIdx);
             log.log.Parameters.PulseRepFreq = prf(tskIdx);
@@ -136,6 +143,7 @@ for ii = 1:length(files)
 end
 
 %% Combine sessions on the same day
+if 1
 nSessions = length(dc);
 curIdx = 1;
 for ii = 2:nSessions
@@ -145,9 +153,9 @@ for ii = 2:nSessions
     idx2 = idx2(end)+1;
     if strcmp(processedFiles{ii-1}(idx1:(idx1+fileNameLength)),processedFiles{ii}(idx2:(idx2+fileNameLength)))
         disp(['Combining Sessions ', num2str(ii-1), ' and ', num2str(ii),'!'])
-        combineIdx(curIdx) = ii;     
-        newT(curIdx) = combineSessions([ii-1,ii],tData);
-        tData(ii-1) = newT(curIdx);
+        combineIdx(curIdx) = ii;   
+        newT = combineSessions([ii-1,ii],tData);
+        tData(ii-1) = newT;
         curIdx = curIdx+1;
     end
 end
@@ -172,7 +180,7 @@ targets = targets(keepIdx);
 distErr = distErr(keepIdx);
 powErr = powErr(keepIdx);
 totPowErr = totPowErr(keepIdx);
-
+end
 %% Error checking
 for ii = 1:length(tData)
     if isnan(diff(tData(ii).dc))
@@ -184,21 +192,22 @@ for ii = 1:length(tData)
     end
     
     if sum(diff(tData(ii).leftVoltage))
-        warning(['File ', processedFiles{ii}, ' has multiple left voltages! Setting duty cycle to the last left voltage in the struct(', num2str(tData(ii).leftVoltage(end)),').']);
-        dc(ii) = tData(ii).leftVoltage(end);
+        warning(['File ', processedFiles{ii}, ' has multiple left voltages! Setting voltage to the last left voltage in the struct(', num2str(tData(ii).leftVoltage(end)),').']);
+        voltage(ii) = tData(ii).leftVoltage(end);
     end
     
     if sum(diff(tData(ii).rightVoltage))
-        warning(['File ', processedFiles{ii}, ' has multiple right voltages! Setting duty cycle to the last right voltage in the struct(', num2str(tData(ii).rightVoltage(end)),').']);
-        dc(ii) = tData(ii).rightVoltage(end);
+        warning(['File ', processedFiles{ii}, ' has multiple right voltages! Setting voltage to the last right voltage in the struct(', num2str(tData(ii).rightVoltage(end)),').']);
+        voltage(ii) = tData(ii).rightVoltage(end);
     end
     
     if sum(diff(tData(ii).prf))
-        warning(['File ', processedFiles{ii}, ' has multiple PRFs! Setting duty cycle to the last PRF in the struct(', num2str(tData(ii).prf(end)),').']);
-        dc(ii) = tData(ii).rightVoltage(end);
+        warning(['File ', processedFiles{ii}, ' has multiple PRFs! Setting prf to the last PRF in the struct(', num2str(tData(ii).prf(end)),').']);
+        prf(ii) = tData(ii).rightVoltage(end);
     end
 end
 %%
+return
 passed = passFinal;
 passed(isnan(passed)) = false;
 passed(1:end) = true;

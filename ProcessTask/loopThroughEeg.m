@@ -24,12 +24,24 @@ expPath = 'C:\Users\Taylor\Documents\Data\Task\Boltzmann\EEG\';
 % date(18) = struct('year','2021','month','06','day','10');
 % date(19) = struct('year','2021','month','06','day','15');
 % date(20) = struct('year','2021','month','06','day','21');
-date(1) = struct('year','2021','month','10','day','08');
+date(1) = struct('year','2021','month','10','day','05');
+date(2) = struct('year','2021','month','10','day','08');
+date(3) = struct('year','2021','month','10','day','11');
+date(4) = struct('year','2021','month','10','day','15');
+date(5) = struct('year','2021','month','10','day','29');
+date(6) = struct('year','2021','month','11','day','09');
+date(7) = struct('year','2021','month','11','day','11');
+date(8) = struct('year','2021','month','11','day','09');
+date(9) = struct('year','2021','month','11','day','15');
+date(10) = struct('year','2021','month','11','day','16');
+date(11) = struct('year','2021','month','11','day','17');
+date(12) = struct('year','2021','month','11','day','18');
 taskPath = 'C:/Users/Taylor/Documents/Data/Task/Boltzmann/';
 
 eegLeftCell = cell(1,length(date));
 eegRightCell = cell(1,length(date));
 totalTrials = 0;
+%%
 for ii = 1:length(date)
     [eegLeftCell{ii},eegRightCell{ii},tA,tData(ii)] = processEeg2(expPath,taskPath,date(ii),'FT');
     totalTrials = totalTrials+size(eegLeftCell{ii},1);
@@ -50,17 +62,20 @@ ch = [];
 lgn = [];
 delay = [];
 result = [];
+dc = [];
 for ii = 1:length(date)
     ch = cat(1,tData(ii).ch(1:size(eegRightCell{ii},1)),ch);
     lgn = cat(1,tData(ii).lgn(1:size(eegRightCell{ii},1)),lgn);
     delay = cat(1,tData(ii).delay(1:size(eegRightCell{ii},1)),delay);
     result = cat(1,tData(ii).result(1:size(eegRightCell{ii},1)),result);
+    dc = cat(1,tData(ii).dc(1:size(eegRightCell{ii},1)),dc);
 end
 %%
 [l,r] = sortTrialsBySonication(lgn);
 
 % idx = find(delay == 0);
-delayIdx = find(abs(delay)<40 & abs(delay)> 0);
+% delayIdx = find(delay==0)
+delayIdx = 1:length(lgn);
 
 trls = 1;
 idx = [];
@@ -68,6 +83,7 @@ for ii = 1:length(trls)
     idx = cat(1,idx,l{trls(ii)});
 end
 % idx = idx-1;
+
 idx = intersect(idx,delayIdx);
 
 % idx2 = find(abs(delay)<40 & abs(delay) > 0);
@@ -75,15 +91,12 @@ idx2 = [];
 for ii = 1:length(trls)
     idx2 = cat(1,idx2,r{trls(ii)});
 end
-% idx2 = idx2-1;
 idx2 = intersect(idx2,delayIdx);
 
-idx = ~isnan(ch) & delay < -50;
-idx2 = idx;
 
-idx = find(lgn<0);
-idx2 = find(lgn>0);
-%%
+idx = find(lgn<0 & ~isnan(ch) & delay == 50 & dc == 10);
+idx2 = find(lgn>0 & ~isnan(ch) & delay == 50 & dc == 10);
+
 h = figure;
 subplot(211)
 ax = gca;
@@ -95,7 +108,7 @@ plotVep(1e3*tA,eegLeft(idx2,:),1,ax,{'Color',ax.ColorOrder(2,:),'linewidth',2});
 legend('Left','Right')
 ylabel('voltage (\muV)')
 title('Left Pin')
-axis([0,800,-20,20])
+axis([0,1000,-20,20])
 makeFigureBig(h);
 
 subplot(212)
@@ -106,6 +119,51 @@ plotVep(1e3*tA,eegRight(idx2,:),1,ax,{'Color',ax.ColorOrder(2,:),'linewidth',2})
 [h1,p1] = findSignificanceVEPs(eegRight(idx,:),eegRight(idx2,:),1,ax,tA);
 xlabel('time (ms)')
 title('Right Pin')
-axis([0,800,-20,20])
+axis([0,1000,-20,20])
 makeFigureBig(h)
 h.Position = [0.3306    0.1962    1.3184    0.4200]*1e3;
+
+
+v1Range = [350,500]*1e-3;
+p1Range = [200,300]*1e-3;
+p2Range = [500,650]*1e-3;
+
+p1v1_left_left = max(eegLeft(idx,tA<p1Range(2) & tA>p1Range(1)),[],2)-...
+    min(mean(eegLeft(idx,tA<v1Range(2) & tA>v1Range(1)),1,'omitnan'));
+p1v1_left_right = max(eegLeft(idx2,tA<p1Range(2) & tA>p1Range(1)),[],2)-...
+    min(mean(eegLeft(idx2,tA<v1Range(2) & tA>v1Range(1)),1,'omitnan'));
+
+p1v1_right_left = max(eegRight(idx,tA<p1Range(2) & tA>p1Range(1)),[],2)-...
+    min(mean(eegRight(idx,tA<v1Range(2) & tA>v1Range(1)),1,'omitnan'));
+p1v1_right_right = max(eegRight(idx2,tA<p1Range(2) & tA>p1Range(1)),[],2)-...
+    min(mean(eegRight(idx2,tA<v1Range(2) & tA>v1Range(1)),1,'omitnan'));
+
+h = figure;
+bar(1:4,[mean(p1v1_left_left,'omitnan'),mean(p1v1_left_right,'omitnan'),...
+    mean(p1v1_right_left,'omitnan'),mean(p1v1_right_right,'omitnan')])
+hold on
+eb = errorbar(1:4,[mean(p1v1_left_left,'omitnan'),mean(p1v1_left_right,'omitnan'),...
+    mean(p1v1_right_left,'omitnan'),mean(p1v1_right_right,'omitnan')],...
+    [std(p1v1_left_left,'omitnan'),std(p1v1_left_right,'omitnan'),...
+    std(p1v1_right_left,'omitnan'),std(p1v1_right_right,'omitnan')]);
+set(eb,'linestyle','none','color','k')
+
+p2v1_left_left = max(eegLeft(idx,tA<p2Range(2) & tA>p2Range(1)),[],2)-...
+    min(mean(eegLeft(idx,tA<v1Range(2) & tA>v1Range(1)),1,'omitnan'));
+p2v1_left_right = max(eegLeft(idx2,tA<p2Range(2) & tA>p2Range(1)),[],2)-...
+    min(mean(eegLeft(idx2,tA<v1Range(2) & tA>v1Range(1)),1,'omitnan'));
+
+p2v1_right_left = max(eegRight(idx,tA<p2Range(2) & tA>p2Range(1)),[],2)-...
+    min(mean(eegRight(idx,tA<v1Range(2) & tA>v1Range(1)),1,'omitnan'));
+p2v1_right_right = max(eegRight(idx2,tA<p2Range(2) & tA>p2Range(1)),[],2)-...
+    min(mean(eegRight(idx2,tA<v1Range(2) & tA>v1Range(1)),1,'omitnan'));
+
+h = figure;
+bar(1:4,[mean(p2v1_left_left,'omitnan'),mean(p2v1_left_right,'omitnan'),...
+    mean(p2v1_right_left,'omitnan'),mean(p2v1_right_right,'omitnan')])
+hold on
+eb = errorbar(1:4,[mean(p2v1_left_left,'omitnan'),mean(p2v1_left_right,'omitnan'),...
+    mean(p2v1_right_left,'omitnan'),mean(p2v1_right_right,'omitnan')],...
+    [std(p2v1_left_left,'omitnan'),std(p2v1_left_right,'omitnan'),...
+    std(p2v1_right_left,'omitnan'),std(p2v1_right_right,'omitnan')]);
+set(eb,'linestyle','none','color','k')
