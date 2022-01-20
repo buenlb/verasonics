@@ -18,8 +18,8 @@ for ii = 1:length(tData)
 
         for kk = 1:length(delay)
             if sum(tData.delay(curIdx)==delay(kk))~=windowSize
-                keyboard
-                error('Wrong number of delays');
+%                 keyboard
+                warning('Wrong number of delays');
             end
         end
 
@@ -30,6 +30,9 @@ for ii = 1:length(tData)
             curIdx = curIdx(logical(tData.correctDelay(curIdx)));
             [slope, bias, downshift, scale] = fitSigmoid(tData(ii).delay(curIdx)', tData(ii).ch(curIdx));
             ep(jj) = equalProbabilityPoint(slope,bias,downshift,scale);
+%             if isnan(ep(jj))
+%                 keyboard
+%             end
             if exist('x0','var')
                 y{ii}(jj) = sigmoid_ext(x0,slope,bias,downshift,scale);
             end
