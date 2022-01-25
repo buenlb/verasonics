@@ -160,12 +160,14 @@ for ii = 1:length(trial_data)
     end    
 
     if trial_data{ii}.us.sonicated
-        if trial_data{ii}.focalLocation < 0
+        if trial_data{ii}.focalLocation(1) < 0
             lgn(ii) = -1;
         else
             lgn(ii) = 1;
         end
     end
+
+    block(ii) = trial_data{ii}.us.bucketCounter;
     
 end
 tData = struct('ch',ch,'delay',delay,'delayVector',delayVector,'lgn',lgn,...
@@ -173,4 +175,4 @@ tData = struct('ch',ch,'delay',delay,'delayVector',delayVector,'lgn',lgn,...
     'leftVoltage',leftVoltage,'rightVoltage',rightVoltage,'dc',dc,'prf',prf,...
     'leftLocation',leftLocation,'rightLocation',rightLocation,'correctDelay',correctDelay,...
     'brightnessOffset',brightnessOffset,'brightnessOffsetVector',brightnessOffsetVector,...
-    'actualDelay',actualDelay,'preUsTrials',preUsTrials);
+    'actualDelay',actualDelay,'preUsTrials',preUsTrials,'Block',block);

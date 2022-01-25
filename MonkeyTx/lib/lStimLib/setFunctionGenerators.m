@@ -24,28 +24,30 @@ outpOn(FG670,2,'OFF');
 
 %% LEDs (694 Ch 1)
 setFgWaveform(FG694,1,'SQU',4e-6,triggerAmplitude,triggerAmplitude/2,50,4);
-setFgBurstMode(FG694,1,4*90);
-setFgTriggerMode(FG694,1,'EXT',0);
+setFgBurstMode(FG694,1,4*60);
+setFgTriggerMode(FG694,1,'BUS',0);
 
 %% Trigger to start US triggers (694 Ch 2)
-setFgWaveform(FG694,2,'SQU',0.0111e-6,triggerAmplitude,triggerAmplitude/2,50,10);
-setFgBurstMode(FG694,2,2);
-setFgTriggerMode(FG694,2,'EXT',0);
+setFgWaveform(FG694,2,'SQU',0.0111e-6,triggerAmplitude,triggerAmplitude/2,50,4);
+setFgBurstMode(FG694,2,1,240);
+setFgTriggerMode(FG694,2,'BUS',0);
+
 
 %% US Trigger (670 ch 1)
-setFgWaveform(FG670,1,'SQU',0.5e-6,triggerAmplitude,triggerAmplitude/2,50,0.5);
+setFgWaveform(FG670,1,'SQU',0.5e-6,triggerAmplitude,triggerAmplitude/2,50,5);
 setFgBurstMode(FG670,1,30);
 setFgTriggerMode(FG670,1,'EXT',17,'POS');
 
 %%
-pause(5);
+
 outpOn(FG694,1);
 outpOn(FG694,2);
 
 outpOn(FG670,1);
 outpOn(FG670,2,'OFF');
-setFgTriggerMode(FG694,1,'BUS',0);
-setFgTriggerMode(FG694,2,'BUS',0);
+return
+% setFgTriggerMode(FG694,1,'BUS',0);
+% setFgTriggerMode(FG694,2,'BUS',0);
 
 %%
 % pause(5);

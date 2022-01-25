@@ -70,6 +70,7 @@ if err
     nextErr = 1;
     while nextErr
         nextErr = checkFgError(fg);
+        disp(nextErr);
         ii = ii+1;
     end
     error([num2str(ii), ' remote errors. First error: ', err])

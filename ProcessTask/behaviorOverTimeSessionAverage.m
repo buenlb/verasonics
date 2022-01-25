@@ -9,7 +9,7 @@ time = cell(size(tData));
 totDelays = [];
 for ii = 1:length(tData)
         delay = unique(tData(ii).delay);
-        totDelays = unique([totDelays,delay]);
+        totDelays = unique([totDelays;delay]);
 end
 
 % ep = zeros(floor(length(tData(ii).ch)/(windowSize*length(delay))),1);
@@ -20,9 +20,7 @@ while dataRemains
     curCh = nan(length(totDelays),length(tData));
     dataRemains = 0;
     for ii = 1:length(tData)
-        if jj == 20
-            keyboard;
-        end
+        
         curIdx = ((jj-1)*windowSize*length(delay)+1):(jj*windowSize*length(delay));
         try
             delay = unique(tData(ii).delay);

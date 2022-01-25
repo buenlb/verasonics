@@ -8,9 +8,9 @@
 % taylorwebb85@gmail.com
 function fgTrigger(fg,ch)
 if ~exist('ch','var')
-    fprintf(fg,'TRIG');
+    fprintf(fg,'*TRG');
 elseif strcmp(ch,'BOTH')
-    fprintf(fg,'TRIG');
+    fprintf(fg,'*TRG');
 else
     fprintf(fg,['TRIG',num2str(ch)]);
 end

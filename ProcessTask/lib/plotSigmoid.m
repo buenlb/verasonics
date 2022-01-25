@@ -20,6 +20,7 @@ end
 delays = unique(delay(~isnan(delay)));
 
 if isempty(delays)
+    plt = [];
     return;
 end
 

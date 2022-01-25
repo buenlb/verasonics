@@ -1,15 +1,21 @@
-% tData(1) = processTaskDataDurable('D:\Task\Euler\durable\Euler20220111.mat');
+clear all;
+
+% tData(1) = processTaskDataDurable('D:\Task\Euler\durable\Euler20220221.mat');
 % tData(2) = processTaskDataDurable('D:\Task\Euler\durable\Euler20220112.mat');
 tData(1) = processTaskDataDurable('D:\Task\Boltz\durable\Boltzmann20220114.mat');
 tData(2) = processTaskDataDurable('D:\Task\Boltz\durable\Boltzmann20220117.mat');
 tData(3) = processTaskDataDurable('D:\Task\Boltz\durable\Boltzmann20220119b.mat');
+tData(4) = processTaskDataDurable('D:\Task\Boltz\durable\Boltzmann20220125.mat');
+
+% tData(1) = processTaskDataDurable('D:\Task\Boltz\durable\Boltzmann20220121.mat');
 
 % newT(1) = selectTrials(tData(1),~isnan(tData(1).ch));
 newT(1) = selectTrials(tData(1),~isnan(tData(1).ch)&tData(1).correctDelay);
 newT(2) = selectTrials(tData(2),~isnan(tData(2).ch)&tData(2).correctDelay);
 newT(3) = selectTrials(tData(3),~isnan(tData(3).ch)&tData(3).correctDelay);
+newT(4) = selectTrials(tData(4),~isnan(tData(4).ch)&tData(4).correctDelay);
 
-newT = newT(3);
+% newT = newT(3);
 
 nBlocks = 2;
 blockSize = 3;
@@ -34,7 +40,7 @@ h2 = figure;
 ax2 = gca;
 plot(100*y);
 hold on
-for ii = 1:nSonications
+for ii = 1:1
     figure(h)
     plot(ii*blocksBetween/nBlocks*[1,1],[-100,100],'k--');
 
@@ -73,10 +79,10 @@ for ii = 1:nSonications
     trIdxAfter = (ii*blocksBetween*length(delays)*blockSize+1):...
         (ii*blocksBetween*length(delays)*blockSize...
         +(nBlocksBefore+1)*nBlocks*length(delays)*blockSize);
-    plotSigmoid(newT,trIdxBefore,sigH)
+    plt1 = plotSigmoid(newT,trIdxBefore,sigH);
     hold on
-    plotSigmoid(newT,trIdxAfter,sigH)
-    legend('Before','After')
+    plt2 = plotSigmoid(newT,trIdxAfter,sigH);
+    legend([plt1(1),plt2(1)],'Before','After')
     title(['Sonication ', num2str(ii)])
 end
 figure(h)
