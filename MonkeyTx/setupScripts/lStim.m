@@ -15,7 +15,7 @@
 % December 2020
 % 
 
-function doppler256_neuromodulate2_spotlight(duration, voltage, target, PRF, duty, frequency, fName, txSn, dev, nTargets)
+function lStim(duration, voltage, target, PRF, duty, frequency, fName, txSn, dev, nTargets)
 maxV = 50; % Maximum allowed voltage
 %% Set up path locations
 srcDirectory = setPaths();
@@ -48,13 +48,13 @@ Resource.Parameters.numRcvChannels = 256; % change to 64 for Vantage 64 or 64LE
 Resource.Parameters.connector = 0; % trans. connector to use (V256).
 Resource.Parameters.speedOfSound = 1490; % speed of sound in m/sec
 Resource.Parameters.verbose = 1;
-Resource.Parameters.voltages = voltage;
 Resource.Parameters.simulateMode = 0;
 Resource.Parameters.startEvent = 1;
 
 %% Create a log struct to save results
 Resource.Parameters.logFileName = fName;
 Resource.Parameters.priorSonication = [];
+Resource.Parameters.voltages = voltage;
 Resource.Parameters.DutyCycle = duty;
 Resource.Parameters.PulseRepFreq = PRF;
 Resource.Parameters.Duration = duration;
@@ -146,7 +146,7 @@ TGC(1).Waveform = computeTGCWaveform(TGC);
 
 %% External Function
 Process(1).classname = 'External';
-Process(1).method = 'waitForServer';
+Process(1).method = 'setNextLStim';
 Process(1).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'srcbufnum',1,...
 'srcframenum',1,...
@@ -169,7 +169,7 @@ nsc = nsc + 1;
 n = n+1;
 
 %% Listen to server
-Event(n).info = 'Listen to server';
+Event(n).info = 'Set next parameters';
 Event(n).tx = 0;
 Event(n).rcv = 0;
 Event(n).recon = 0;
@@ -214,14 +214,14 @@ Event(n).tx = 0; % use 1st TX structure.
 Event(n).rcv = 0; % no receive
 Event(n).recon = 0; % no reconstruction.
 Event(n).process = 0; % no processing
-Event(n).seqControl = nsc;
+Event(n).seqControl = [nsc,nsc+1,nsc+2];
     SeqControl(nsc).command = 'jump';
     SeqControl(nsc).argument = serverEvent;
     SeqControl(nsc).condition = 'exitAfterJump';
     nsc = nsc + 1;
-%     SeqControl(nsc).command = 'sync';
-%     SeqControl(nsc).argument = 2.1e9;
-%     nsc = nsc + 1;
+    SeqControl(nsc).command = 'sync';
+    SeqControl(nsc).argument = 2.1e9;
+    nsc = nsc + 1;
 n = n+1;
 
 
