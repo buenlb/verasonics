@@ -3,8 +3,8 @@ blockSize = 3;
 blocksBetween = 40;
 nBlocksBefore = 3;
 
-% tData = processTaskDataDurable('D:\Task\Boltz\durable\Boltzmann20220117.mat');
-tData = processTaskDataDurable('D:\Task\Euler\durable\Euler20220114.mat');
+tData = processTaskDataDurable('D:\Task\Boltz\durable\Boltzmann20220224.mat');
+% tData = processTaskDataDurable('D:\Task\Euler\durable\Euler20220114.mat');
 
 newT = selectTrials(tData,~isnan(tData.ch)&tData.correctDelay);
 

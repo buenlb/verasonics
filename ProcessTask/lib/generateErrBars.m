@@ -42,13 +42,16 @@ if exist('barColors','var')
 end
 
 if ~exist('compareTo','var')
+    SELFCOMPARE = 0;
     compareTo = 0;
+else
+    SELFCOMPARE = 1;
 end
 
 curIdx = 1;
 for ii = 1:length(avgs)
     for jj = 1:length(avgs)
-        if ii == jj
+        if ii == jj && SELFCOMPARE
             [~,p(curIdx)] = ttest(varargin{inputIdx(ii)},compareTo);
             intervals{curIdx} = ii;
             curIdx = curIdx+1;

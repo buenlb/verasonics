@@ -1,10 +1,10 @@
-function [eegLeft,eegRight,tA,tData] = processEeg2(expPath,taskPath,date,syncTo)
+function [eegLeft,eegRight,tA,tData] = processEeg2(expPath,taskPath,baseName,date,syncTo,tData)
 addpath('C:\Users\Taylor\Documents\Projects\verasonics\verasonics\ProcessTask\lib')
 addpath('C:\Users\Taylor\Documents\Projects\verasonics\verasonics\ProcessTask')
 
 BANDPASS = 0;
 
-fNameBase = ['boltzmannTask_',date.year(end-1:end),date.month,date.day];
+fNameBase = [baseName,'_',date.year(end-1:end),date.month,date.day];
 
 [t,eeg,dig,alg] = concatIntan(expPath,fNameBase);
 %% Find Task Indices
@@ -70,17 +70,24 @@ end
 % save([expPath,fNameBase,'_filtered'],'eeg','eegFiltCorrected','t','dig','alg');
 
 %% Process task data
-fName = [taskPath,'Boltzmann',date.year,date.month,date.day,'.mat'];
-try
-    trialD = load(fName);
-catch
-    fName = [taskPath,'Boltzmann',date.year,date.month,date.day,'b.mat'];
-    trialD = load(fName);
+if ~exist('tData','var')
+    fName = [taskPath,'Boltzmann',date.year,date.month,date.day,'.mat'];
+    try
+        trialD = load(fName);
+    catch
+        fName = [taskPath,'Boltzmann',date.year,date.month,date.day,'b.mat'];
+        trialD = load(fName);
+    end
+    if ~isfield(trialD.trial_data{end},'us')
+        trialD.trial_data = trialD.trial_data(1:end-1);
+    end
+    tData = processTaskData(fName);
+else
+    trialD = load(taskPath);
+    if ~isfield(trialD.trial_data{end},'us')
+        trialD.trial_data = trialD.trial_data(1:end-1);
+    end
 end
-if ~isfield(trialD.trial_data{end},'us')
-    trialD.trial_data = trialD.trial_data(1:end-1);
-end
-tData = processTaskData(fName);
 
 %% Process EEG Data
 % Sort out pin indices
@@ -92,8 +99,8 @@ Fs = 20e3;
 eegLength = round(1200e-3*Fs);
 
 % Set up variables
-eegRight = zeros(length(trialD.trial_data),eegLength);
-eegLeft = zeros(length(trialD.trial_data),eegLength);
+eegRight = nan(length(trialD.trial_data),eegLength);
+eegLeft = nan(length(trialD.trial_data),eegLength);
 
 % Loop through trials
 for ii = 1:length(trialD.trial_data)
@@ -113,10 +120,10 @@ for ii = 1:length(trialD.trial_data)
             eegRight(ii,:) = eegFiltCorrected(rightEegIdx,fpIdx);
             eegLeft(ii,:) = eegFiltCorrected(leftEegIdx,fpIdx);
 
-            if max(eegRight(ii,:)) > 100
+            if max(eegRight(ii,:)) > 1000
                 eegRight(ii,:) = nan;
             end
-            if max(eegLeft(ii,:)) > 100
+            if max(eegLeft(ii,:)) > 1000
                 eegLeft(ii,:) = nan;
             end
         case 'FT'
@@ -140,12 +147,12 @@ for ii = 1:length(trialD.trial_data)
             eegRight(ii,:) = eegFiltCorrected(rightEegIdx,fTargetIdx);
             eegLeft(ii,:) = eegFiltCorrected(leftEegIdx,fTargetIdx);
 
-            if max(eegRight(ii,:)) > 100
-                eegRight(ii,:) = nan;
-            end
-            if max(eegLeft(ii,:)) > 100
-                eegLeft(ii,:) = nan;
-            end
+%             if max(eegRight(ii,:)) > 1000
+%                 eegRight(ii,:) = nan;
+%             end
+%             if max(eegLeft(ii,:)) > 1000
+%                 eegLeft(ii,:) = nan;
+%             end
         otherwise
             error([syncTo, ' not yet implemented']);
     end

@@ -26,8 +26,7 @@ end
 
 meanEeg = mean(eeg,dim,'omitnan');
 lgth = sum(~isnan(eeg),dim);
-lgth = lgth(1);
-sem = std(eeg,[],dim,'omitnan')/sqrt(lgth);
+sem = std(eeg,[],dim,'omitnan')./sqrt(lgth);
 
 axes(ax);
 

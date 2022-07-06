@@ -28,7 +28,7 @@
 % Taylor Webb
 % University of Utah
 
-function [pass,distErr,powErr,totErrPow,gsSignals,crSignals,gsSkullIdx,crSkullIdx,d,elementsOfInterest] = checkCoupling(gs,cr,singleElement)
+function [pass,distErr,powErr,totErrPow,curGs,curCr,gsSkullIdx,crSkullIdx,d,elementsOfInterest] = checkCoupling(gs,cr,singleElement)
 
 if nargin < 3
     singleElement = 0;
@@ -45,7 +45,8 @@ if isfield(gsParams,'txSn')
     txSn = gsParams.txSn;
 else
 	warning('No Serial Number found, assuming JAB800');
-	txSn = input('Serial Number: ', 's');
+    txSn = 'JAB800';
+% 	txSn = input('Serial Number: ', 's');
 end
 
 [gsRaw,crRaw,~,d] = getRawTraces(gsParams.fName,cr,singleElement);
@@ -60,7 +61,8 @@ axIdx = 1;
 if ~singleElement
     elementsOfInterest = gsParams.elementsOfInterest;
 else
-    elementsOfInterest = [74,79,124,125,194,199];
+%     elementsOfInterest = [74,79,124,125,194,199];
+    elementsOfInterest = 1:256;
 end
 
 powErr = zeros(1,length(elementsOfInterest));
@@ -72,7 +74,7 @@ gsSignals = zeros(size(crRaw,1),length(elementsOfInterest));
 for ii = 1:length(blocks)
     centerElement = blocks{ii}(ceil(gridSize^2/2));
     if ismember(centerElement,elementsOfInterest)
-        if singleElement
+        if ~singleElement
             idx = [centerElement-9:centerElement-7,centerElement-1:centerElement+1,centerElement+7:centerElement+9];
             curCr = mean(crRaw(:,idx),2);
             curGs = mean(gsRaw(:,idx),2);
@@ -112,12 +114,13 @@ for ii = 1:length(blocks)
         gsSkullIdx(axIdx) = idxGs;
         
         distErr(axIdx) = (d(idxGs)-d(idxCr));
-        powErrTmp = max(curCr)/max(curGs);
-        if powErrTmp > 1
-            powErr(axIdx) = powErrTmp-1;
-        else
-            powErr(axIdx) = 1-powErrTmp;
-        end
+        powErr(axIdx) = (max(curCr)-max(curGs))/max(curGs);
+%         powErrTmp = max(curCr)/max(curGs);
+%         if powErrTmp > 1
+%             powErr(axIdx) = powErrTmp-1;
+%         else
+%             powErr(axIdx) = 1-powErrTmp;
+%         end
 
         axIdx = axIdx+1;
     end
@@ -128,7 +131,6 @@ curCr = crRaw;
 curGs = gsRaw;
 curCr(d>gsParams.powerRange(2) | d<gsParams.powerRange(1),:) = 0;
 curGs(d>gsParams.powerRange(2) | d<gsParams.powerRange(1),:) = 0;
-
 curPw = max(mean(curCr,2));
 gsPw = max(mean(curGs,2));
 totErrPow = (curPw-gsPw)/gsPw;

@@ -16,14 +16,26 @@ if strcmp(fg1.Status, 'closed')
     fopen(fg1);
 end
 triggerAmplitude = 5e3;
+LATERALIZE = 1;
 
-% Set channel 1 to do LEDs
-setFgWaveform(fg1,1,'SQU',4e-6,triggerAmplitude,triggerAmplitude/2,50,4);
-setFgBurstMode(fg1,1,4*30);
-setFgTriggerMode(fg1,1,'BUS',0);
+if LATERALIZE
+    % Set channel 1 to do LEDs
+    setFgWaveform(fg1,1,'SQU',2e-6,triggerAmplitude,triggerAmplitude/2,50,4);
+    setFgBurstMode(fg1,1,2*30);
+    setFgTriggerMode(fg1,1,'BUS',0);
 
+    setFgWaveform(fg2,2,'SQU',2e-6,triggerAmplitude,triggerAmplitude/2,50,4);
+    setFgBurstMode(fg2,2,2*30,180);
+    setFgTriggerMode(fg2,2,'EXT',0);
+else
+    % Set channel 1 to do LEDs
+    setFgWaveform(fg1,1,'SQU',4e-6,triggerAmplitude,triggerAmplitude/2,50,2);
+    setFgBurstMode(fg1,1,4*30);
+    setFgTriggerMode(fg1,1,'BUS',0);
+end
+keyboard
 % Set channel 2 to trigger US triggers
-setFgWaveform(fg1,2,'SQU',4e-6,triggerAmplitude,triggerAmplitude/2,50,4);
+setFgWaveform(fg1,2,'SQU',4e-6,triggerAmplitude,triggerAmplitude/2,50,2);
 setFgBurstMode(fg1,2,1);
 setFgTriggerMode(fg1,2,'BUS',0);
 
@@ -36,14 +48,18 @@ setFgTriggerMode(fg2,1,'EXT',17);
 outpOn(fg1,1);
 outpOn(fg1,2);
 outpOn(fg2,1);
-outpOn(fg2,2,'OFF');
+if LATERALIZE
+    outpOn(fg2,2);
+else
+    outpOn(fg2,2,'OFF');
+end
 
 try
     if length(voltage)~=length(dc)
         error('There must be a voltage for every duty cycle')
     end
     
-    controlFgs_lstim([fg1,fg2],voltage);
+    controlFgs_lstim([fg1,fg2],voltage,1);
 catch ER
     fclose(fg2);
     fclose(fg1);

@@ -89,7 +89,7 @@ sys.tMagImg = tMagImg;
 sys.tMagImgInterp = tMagImgInterp;
 sys.dynamicLength = acqTime;
 sys.curSonication = sonicationNo;
-
+sys.tHeader = phHeader;
 %% Plot Results
 if plotResults
     orthogonalTemperatureViews(sys,6,sonicationNo,[]);

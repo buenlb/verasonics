@@ -5,10 +5,13 @@
 
 addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\lib');
 
-digTriggerChannel = 2;
+digTriggerChannel = 1;
 
-expPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\LStim\EEGTest\';
-fNameBase = 'gauss_beforeInj';
+% expPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\LStim\EEGTest\';
+% fNameBase = 'gauss_beforeInj';
+
+expPath = 'D:\Task\Boltz\eeg\';
+fNameBase = 'boltzmannTask_220128';
 
 [t,eeg,dig,alg] = concatIntan(expPath,fNameBase);
 

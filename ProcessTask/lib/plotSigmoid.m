@@ -1,4 +1,4 @@
-function plt = plotSigmoid(tData,idx,h)
+function [plt,slope,bias,downshift,scale] = plotSigmoid(tData,idx,h)
 
 if length(tData)>1
     delay = [];
@@ -8,8 +8,8 @@ if length(tData)>1
             delay = cat(1,delay,tData(ii).delay(idx));
             ch = cat(1,ch,tData(ii).ch(idx));
         catch
-            delay = cat(1,delay,nan(size(idx)));
-            ch= cat(1,ch,nan(size(idx)));
+            delay = cat(1,delay,nan(size(idx')));
+            ch= cat(1,ch,nan(size(idx')));
         end
     end
 else

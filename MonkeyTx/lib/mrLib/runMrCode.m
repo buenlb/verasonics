@@ -77,6 +77,7 @@ if strcmp(sys.txSn,'JEC482')
     sys.xDist = 187.59e-3/2;
     sys.yDist = 35e-3/2;
 else
+    % zDist is 2.53 + whatever the Tx offset is.
     sys.zDist = 9.53e-3;
     sys.xDist = (169/2)*1e-3;
     sys.yDist = (35/2)*1e-3;
@@ -104,6 +105,7 @@ sys.invertTx = 0;
 sys.offElements = [];
 
 msgbox(['You have selected transducer: ', sys.txSn]);
+
 
 %% Check Coupling
 rescan = 1;

@@ -2,6 +2,13 @@ function [t,eeg,dig,alg] = concatIntan(path,baseName)
 
 %% Find total number of files
 files = dir([path,baseName,'*.rhs']);
+if isempty(files)
+    t = [];
+    eeg = [];
+    dig = [];
+    alg = [];
+    return
+end
 disp(['Loading ', num2str(length(files)), ' data files.'])
 
 

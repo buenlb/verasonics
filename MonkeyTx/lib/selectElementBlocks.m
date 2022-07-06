@@ -16,6 +16,7 @@
 % January 2020
 
 function elements = selectElementBlocks(n,txSn)
+txSn = upper(txSn);
 if ~exist('txSn','var')
 	warning('Serial number not passed to griddedElementBModeImage, assuming JAB800');
 	txSn = 'JAB800';

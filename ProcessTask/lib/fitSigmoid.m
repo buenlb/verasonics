@@ -9,6 +9,14 @@ if length(delayVector)~=length(delays)
 else
     y = choices;
 end
+
+if isrow(y)
+    y = y';
+end
+if isrow(delayVector)
+    delayVector = delayVector';
+end
+
 %% Set fminsearch options and starting point
 fminsearchopt = optimset('LargeScale', 'off', 'Display', 'off', 'MaxFunEvals', 40000, 'MaxIter', 20000);
 slope0 = 0.05;

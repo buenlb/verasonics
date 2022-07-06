@@ -8,11 +8,11 @@ addpath('C:\Users\Taylor\Documents\Projects\verasonics\verasonics\ProcessTask\li
 addpath('C:\Users\Taylor\Documents\Projects\verasonics\verasonics\lib\');
 
 %% Set the paths
-monk = 'Boltzmann';
+monk = 'EULER';
 switch monk
     case 'EULER'
-        taskPath = 'C:\Users\Taylor\Documents\Data\Task\';
-        couplingPath = 'C:\Users\Taylor\Documents\Data\Task\Coupling\';
+        taskPath = 'D:\Task\Euler\';
+        couplingPath = 'D:\Task\Euler\Coupling\';
         gsCouplingFile = 'C:\Users\Taylor\Documents\Papers\MacaqueMethods\figs\gs_Euler_0925.mat';
         fileNameLength = 12;
     case 'Boltzmann'
@@ -167,6 +167,10 @@ keepIdx(combineIdx) = false;
 
 keepIdxFinal = true(size(tData));
 keepIdxFinal(combineIdx-1) = false;
+
+combinedResults = false(size(tData));
+combinedResults(combineIdx-1) = true;
+combinedResults = combinedResults(keepIdx);
 
 tData = tData(keepIdx);
 dc = dc(keepIdx);

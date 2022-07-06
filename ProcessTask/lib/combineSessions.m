@@ -15,6 +15,7 @@ brightnessOffset = [];
 delayVector = [];
 dc = [];
 prf = [];
+targIdx = [];
 leftLocation = [];
 rightLocation = [];
 brightnessOffsetVector = [];
@@ -35,6 +36,7 @@ for ii = 1:length(idx)
     brightnessOffset = cat(1,tData(idx(ii)).brightnessOffset,brightnessOffset);
     delayVector = cat(2,tData(idx(ii)).delayVector,delayVector);
     dc = cat(1,tData(idx(ii)).dc,dc);
+%     targIdx = cat(1,tData(idx(ii)).targIdx,targIdx);
     prf = cat(1,tData(idx(ii)).prf,prf);
     leftLocation = cat(1,tData(idx(ii)).leftLocation,leftLocation);
     rightLocation = cat(1,tData(idx(ii)).rightLocation,rightLocation);
@@ -52,6 +54,7 @@ t = struct('ch',ch,'delay',delay,'delayVector',sort(unique(delay)),...
     'correctDelay',correctDelay,'timing',timing,'leftVoltage',leftVoltage,...
     'rightVoltage',rightVoltage,'brightnessOffset',brightnessOffset,...
     'dc',dc,'prf',prf,'leftLocation',leftLocation,...
-    'rightLocation',rightLocation,'actualDelay',actualDelay,'preUsTrials',preUs(1));
+    'rightLocation',rightLocation,'actualDelay',actualDelay,'preUsTrials',preUs(1),...
+    'targIdx',targIdx);
 t.delayVector = unique(delayVector);
 t.brightnessOffsetVector = unique(brightnessOffsetVector);

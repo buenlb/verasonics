@@ -16,8 +16,14 @@ function [idx,trNum] = findTaskIdx(t,dig)
 dfDig = diff(dig);
 idxOn = find(dfDig>0);
 
+if isempty(idxOn)
+    idx = [];
+    trNum = [];
+    return
+end
+
 curIdx = 1;
-for ii = 1:idxOn
+for ii = 1:length(idxOn)
     if ii == 1
         idx(curIdx) = idxOn(ii);
         curIdx = curIdx+1;
@@ -34,6 +40,11 @@ for ii = 1:idxOn
 end
 
 for ii = 1:length(idx)
-    trNum(ii) = dig2num(t(idx(ii):idx(ii)+200e-3*20e3),dig(idx(ii):idx(ii)+100e-3*20e3));
-    plot(t(idx(ii):idx(ii)+100e-3*20e3),dig(idx(ii):idx(ii)+100e-3*20e3))
+    if idx(ii)+200e-3*20e3 > length(t)
+        trNum(ii) = nan;
+        continue
+    else
+        trNum(ii) = dig2num(t(idx(ii):idx(ii)+200e-3*20e3),dig(idx(ii):idx(ii)+100e-3*20e3));
+%         plot(t(idx(ii):idx(ii)+100e-3*20e3),dig(idx(ii):idx(ii)+100e-3*20e3))
+    end
 end
