@@ -77,6 +77,7 @@ for ii = 1:length(tData)
     contraChoices((curT.lgn == 1 & curT.ch == 1) | (curT.lgn == -1 & curT.ch == 0)) = 1;
     contraChoices(isnan(curT.ch)) = nan;
     contraChoices(curT.lgn==0) = nan;
+%     contraChoices(abs(curT.delay)>0) = nan;
     contraChoices(curT.task==1) = nan;
 
     erBar = errorbar(1+ii,mean(contraChoices,'omitnan')*100-50,100/sqrt(sum(~isnan(contraChoices)))*std(contraChoices,[],'omitnan'));

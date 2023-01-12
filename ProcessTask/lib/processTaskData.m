@@ -54,6 +54,7 @@ end
 % Set up variables
 lgn = zeros(size(trial_data));
 result = lgn;
+targIdx = result;
 taskType = lgn;
 delay = lgn;
 brightnessOffset = lgn;
@@ -65,8 +66,17 @@ rightVoltage = lgn;
 dc = lgn;
 prf = lgn;
 ch = lgn;
-leftLocation = zeros(length(lgn),3);
-rightLocation = zeros(length(lgn),3);
+
+if ~isfield(trial_data{1},'leftLGN')
+    leftLocation = nan(1,3);
+    rightLocation = nan(1,3);
+elseif size(trial_data{1}.leftLGN)==1
+    leftLocation = zeros(length(lgn),3);
+    rightLocation = zeros(length(lgn),3);
+else
+    leftLocation = zeros(length(lgn),size(trial_data{1}.leftLGN,1),3);
+    rightLocation = zeros(length(lgn),size(trial_data{1}.rightLGN,1),3);
+end
 actualDelay = lgn;
 
 % Loop through struct
@@ -151,8 +161,14 @@ for ii = 1:length(trial_data)
         rightVoltage(ii) = trial_data{ii}.rightVoltage;
         dc(ii) = trial_data{ii}.us_duty;
         prf(ii) = trial_data{ii}.us_prf;
-        leftLocation(ii,:) = trial_data{ii}.leftLGN;
-        rightLocation(ii,:) = trial_data{ii}.rightLGN;
+        if size(trial_data{ii}.leftLGN,1)==1
+            leftLocation(ii,:) = trial_data{ii}.leftLGN;
+            rightLocation(ii,:) = trial_data{ii}.rightLGN;
+        else
+            leftLocation(ii,:,:) = trial_data{ii}.leftLGN;
+            rightLocation(ii,:,:) = trial_data{ii}.rightLGN;
+            targIdx(ii) = trial_data{ii}.us.targIdx;
+        end
     else
         leftVoltage(ii) = nan;
         rightVoltage(ii) = nan;
@@ -177,4 +193,4 @@ tData = struct('ch',ch,'delay',delay,'delayVector',delayVector,'lgn',lgn,...
     'leftVoltage',leftVoltage,'rightVoltage',rightVoltage,'dc',dc,'prf',prf,...
     'leftLocation',leftLocation,'rightLocation',rightLocation,'correctDelay',correctDelay,...
     'brightnessOffset',brightnessOffset,'brightnessOffsetVector',brightnessOffsetVector,...
-    'actualDelay',actualDelay,'preUsTrials',preUsTrials);
+    'actualDelay',actualDelay,'preUsTrials',preUsTrials,'targIdx',targIdx);

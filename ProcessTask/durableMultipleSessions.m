@@ -1,21 +1,39 @@
 clear all;
 
+LEFT = 0;
 % tData(1) = processTaskDataDurable('D:\Task\Euler\durable\Euler20220221.mat');
 % tData(2) = processTaskDataDurable('D:\Task\Euler\durable\Euler20220112.mat');
-tData(1) = processTaskDataDurable('D:\Task\Boltz\durable\Boltzmann20220114.mat');
-tData(2) = processTaskDataDurable('D:\Task\Boltz\durable\Boltzmann20220117.mat');
-tData(3) = processTaskDataDurable('D:\Task\Boltz\durable\Boltzmann20220119b.mat');
-tData(4) = processTaskDataDurable('D:\Task\Boltz\durable\Boltzmann20220125.mat');
+if LEFT
+    tData(1) = processTaskDataDurable('D:\Task\Boltz\durable\Boltzmann20220209.mat');
 
-% tData(1) = processTaskDataDurable('D:\Task\Boltz\durable\Boltzmann20220121.mat');
+    newT(1) = selectTrials(tData(1),~isnan(tData(1).ch)&tData(1).correctDelay);
+else
+    tData(1) = processTaskDataDurable('D:\Task\Boltz\durable\Boltzmann20220114.mat');
+    tData(2) = processTaskDataDurable('D:\Task\Boltz\durable\Boltzmann20220117.mat');
+    tData(3) = processTaskDataDurable('D:\Task\Boltz\durable\Boltzmann20220119b.mat');
+    tData(4) = processTaskDataDurable('D:\Task\Boltz\durable\Boltzmann20220127.mat');
+    tData(5) = processTaskDataDurable('D:\Task\Boltz\durable\Boltzmann20220217.mat');
+    tData(6) = processTaskDataDurable('D:\Task\Boltz\durable\Boltzmann20220224.mat');
+    tData(7) = processTaskDataDurable('D:\Task\Boltz\durable\Boltzmann20220228.mat');
+    
+    % tData(1) = processTaskDataDurable('D:\Task\Boltz\durable\Boltzmann20220121.mat');
+    
+%     tData(5) = processTaskDataDurable('D:\Task\Euler\durable\Euler20220207.mat');
+%     tData(6) = processTaskDataDurable('D:\Task\Euler\durable\Euler20220204.mat');
+%     tData(7) = processTaskDataDurable('D:\Task\Euler\durable\Euler20220130.mat');
 
-% newT(1) = selectTrials(tData(1),~isnan(tData(1).ch));
-newT(1) = selectTrials(tData(1),~isnan(tData(1).ch)&tData(1).correctDelay);
-newT(2) = selectTrials(tData(2),~isnan(tData(2).ch)&tData(2).correctDelay);
-newT(3) = selectTrials(tData(3),~isnan(tData(3).ch)&tData(3).correctDelay);
-newT(4) = selectTrials(tData(4),~isnan(tData(4).ch)&tData(4).correctDelay);
-
-% newT = newT(3);
+    % newT(1) = selectTrials(tData(1),~isnan(tData(1).ch));
+    newT(1) = selectTrials(tData(1),~isnan(tData(1).ch)&tData(1).correctDelay);
+    newT(2) = selectTrials(tData(2),~isnan(tData(2).ch)&tData(2).correctDelay);
+    newT(3) = selectTrials(tData(3),~isnan(tData(3).ch)&tData(3).correctDelay);
+    newT(4) = selectTrials(tData(4),~isnan(tData(4).ch)&tData(4).correctDelay);
+    newT(5) = selectTrials(tData(5),~isnan(tData(5).ch)&tData(5).correctDelay);
+    newT(6) = selectTrials(tData(6),~isnan(tData(6).ch)&tData(6).correctDelay);
+    newT(7) = selectTrials(tData(7),~isnan(tData(7).ch)&tData(7).correctDelay);
+%     newT(5) = selectTrials(tData(5),~isnan(tData(5).ch)&tData(5).correctDelay);
+end
+%%
+% newT = newT(4);
 
 nBlocks = 2;
 blockSize = 3;

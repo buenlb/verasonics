@@ -5,7 +5,7 @@
 
 addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\lib');
 
-digTriggerChannel = 2;
+digTriggerChannel = 1;
 
 expPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\Ernie\';
 fNameBase = 'baselineTest3';

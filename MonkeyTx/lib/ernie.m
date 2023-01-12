@@ -1,6 +1,8 @@
 % Set and run FGs for Ernie
 % addpath 'C:\Users\Taylor\Documents\Projects\verasonics\verasonics\MonkeyTx\lib\lStimLib';
 addpath C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\lStimLib;
+addpath 'C:\Users\Taylor\Documents\Projects\verasonics\verasonics\MonkeyTx\lib\lStimLib';
+
 FG694VISA = 'USB0::0x0957::0x2A07::MY52600694::0::INSTR';
 FG670VISA = 'USB0::0x0957::0x2A07::MY52600670::0::INSTR';
 

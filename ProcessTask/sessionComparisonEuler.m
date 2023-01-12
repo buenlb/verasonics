@@ -8,10 +8,14 @@ passed(idxNan) = false;
 validDelays = 0;
 threshold = 20;
 task = 0;
+
+desiredVoltage = 15; % Euler
+% desiredVoltage = 10.3; % Boltzmann
+
 % 10 Percent
-idx10 = selectSessions(tData,threshold,validDelays,dc,freq,voltage,10,[],15,passed,task);
+idx10 = selectSessions(tData,threshold,validDelays,dc,freq,voltage,10,[],desiredVoltage,passed,task);
 idx10_48 = selectSessions(tData,threshold,validDelays,dc,freq,voltage,10,0.48,[],passed,task);
-idx10_65 = selectSessions(tData,threshold,validDelays,dc,freq,voltage,10,0.65,15,passed,task);
+idx10_65 = selectSessions(tData,threshold,validDelays,dc,freq,voltage,10,0.65,desiredVoltage,passed,task);
 idx10_85 = selectSessions(tData,threshold,validDelays,dc,freq,voltage,10,0.85,[],passed,task);
 
 % 10 Percent, 1.2 MPa
@@ -75,6 +79,21 @@ generateErrBars(100*ses10_65,100*ses50_65,100*ses100_65,...
     'yaxis',[40,60]);
 ylabel('% Contralateral Choices')
 
+%% 650 kHz Only Without 50 %
+generateErrBars(100*ses10_65,100*ses100_65,...
+    'xlabels',{'10%','100%'},...
+    'compareTo',50,...
+    'yaxis',[40,60]);
+ylabel('% Contralateral Choices')
+
+[~,p,~,st]=ttest(ses10_65,0.5);
+disp(['10%: p=', num2str(p),', t(', num2str(st.df),')=', num2str(st.tstat)])
+
+[~,p,~,st]=ttest(ses100_65,0.5);
+disp(['100%: p=', num2str(p),', t(', num2str(st.df),')=', num2str(st.tstat)])
+
+[~,p,~,st]=ttest2(ses10_65,ses100_65);
+disp(['Comparison: p=', num2str(p),', t(', num2str(st.df),')=', num2str(st.tstat)])
 %% Pressure changes
 generateErrBars(100*ses10_65,100*ses10_65_1p2,nan,100*ses100_65,...
     'xlabels',{'10 %, 0.75 MPa','10 %, 1.2 MPa','','100 %, 0.75 MPa'},...
@@ -96,6 +115,9 @@ if length(ses100_65)>size(lm,1)
 else
     lm(1:length(ses100_65),3) = ses50_65;
 end
+
+% Uncomment this line to do only 10% and CW
+lm = lm(:,[1,3]);
 
 lm(lm==0) = nan;
 [~,tbl] = anova1(lm);

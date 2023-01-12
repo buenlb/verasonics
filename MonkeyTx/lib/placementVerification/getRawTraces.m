@@ -34,6 +34,7 @@ else
 	warning('No Serial Number found, assuming JAB800');
 	txSn = 'JAB800';
 end
+txSn = upper(txSn);
 
 if ~singleElement
     gs = gs.griddedElRaw;

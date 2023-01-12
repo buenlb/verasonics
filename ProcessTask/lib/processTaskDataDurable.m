@@ -62,6 +62,8 @@ brightnessOffsetVector = [];
 correctDelay = result;
 leftVoltage = result;
 rightVoltage = result;
+voltage = result;
+dur = result;
 dc = result;
 prf = result;
 ch = result;
@@ -145,10 +147,15 @@ for ii = 1:length(trial_data)
     else
         leftVoltage(ii) = nan;
         rightVoltage(ii) = nan;
-        dc(ii) = nan;
+%         dc(ii) = nan;
         prf(ii) = nan;
         leftLocation(ii,:) = nan;
         rightLocation(ii,:) = nan;
+
+        voltage(ii) = trial_data{ii}.voltage;
+        dc(ii) = trial_data{ii}.us_duty;
+        prf(ii) = trial_data{ii}.us_prf;
+        dur(ii) = trial_data{ii}.us_dur;
     end
     
     actualDelay(ii) = 1e3*abs(trial_data{ii}.event_time(4)-trial_data{ii}.event_time(3));
@@ -166,13 +173,49 @@ for ii = 1:length(trial_data)
             lgn(ii) = 1;
         end
     end
-
-    block(ii) = trial_data{ii}.us.bucketCounter;
-    
+    trialsPerBucket = trial_data{1}.timing_trials_per_bucket;
+    block(ii) = trial_data{ii}.us.bucketCounter;    
 end
+voltage = unique(voltage);
+if length(voltage)>1
+%     keyboard;
+end
+dc = unique(dc);
+if length(dc)>1
+%     keyboard;
+end
+prf = unique(prf);
+if length(prf)>1
+%     keyboard;
+end
+dur = unique(dur);
+if length(dur)>1
+%     keyboard;
+end
+
+if exist('actualUsBlock','var')
+    usBlock = actualUsBlock;
+else
+    usBlock = zeros(size(trial_data));
+    for ii = 1:length(trial_data)
+        usBlock(ii) = trial_data{ii}.pre_us_buckets;
+    end
+    usBlock = unique(usBlock);
+    if length(usBlock)>1
+        warning('The number of blocks before US changed during the session')
+        keyboard
+    end
+end
+
+sonicationProperties = struct('FocalLocation',trial_data{1}.focalLocation,...
+    'focalDev',trial_data{1}.focalDev,'nFocalSpots',trial_data{1}.nFocalSpots,...
+    'voltage',voltage,'dc',dc,'prf',prf,'dur',dur);
+
 tData = struct('ch',ch,'delay',delay,'delayVector',delayVector,'lgn',lgn,...
     'result',result,'timing',timing,'loc',loc,'task',taskType,...
     'leftVoltage',leftVoltage,'rightVoltage',rightVoltage,'dc',dc,'prf',prf,...
     'leftLocation',leftLocation,'rightLocation',rightLocation,'correctDelay',correctDelay,...
     'brightnessOffset',brightnessOffset,'brightnessOffsetVector',brightnessOffsetVector,...
-    'actualDelay',actualDelay,'preUsTrials',preUsTrials,'Block',block);
+    'actualDelay',actualDelay,'preUsTrials',preUsTrials,'Block',block,...
+    'sonicationProperties',sonicationProperties,'trialsPerBucket',trialsPerBucket,...
+    'usBlock',usBlock);
