@@ -43,7 +43,6 @@ m0 = nan(size(time));
 rawCh = nan(size(time));
 nTrials = zeros(size(time));
 blocksUsed = cell(size(time));
-
 % Look through time
 for ii = 1:(length(time))
 %     disp(['  Processing time block ', num2str(ii) ' of ', num2str(length(time))])
@@ -52,7 +51,7 @@ for ii = 1:(length(time))
     % time(ii)-time(ii-1) may not equal tWindow (in the case of overlapping
     % windows)
     if useBlocks
-        curBlocks = blocksWithTime(blockTime<time(ii)+tWindow & blockTime>=time(ii));
+        curBlocks = blocksWithTime(blockTime<time(ii) & blockTime>=time(ii)-tWindow);
         
         % Remove the two blocks during the sonication
         if time(ii)==0
@@ -64,23 +63,25 @@ for ii = 1:(length(time))
         curIdx = find(ismember(blocks,curBlocks));
         blocksUsed{ii} = curBlocks;
     else
-        curIdx = find(trTime<time(ii)+tWindow & trTime>=time(ii));
+        curIdx = find(trTime<time(ii) & trTime>=time(ii)-tWindow & tData.correctDelay');
 
         % Remove sonication blocks
         % curIdx = curIdx(blocks(curIdx)~=usBlock & blocks(curIdx)~=usBlock+1);
 
         blocksUsed{ii} = curIdx;
     end
-    if isempty(curIdx)
+    if length(curIdx)<150
         continue;
     end
 
     % Match choices to the correct delay
     curCh = zeros(size(delay));
+    tmpCh = tData.ch(curIdx);
+    tmpDelay = tData.delay(curIdx);
     for kk = 1:length(delay)
-        curCh(delay(kk)==delay) = mean(tData.ch(curIdx(tData.delay(curIdx)==delay(kk))));
+        curCh(delay(kk)==delay) = mean(tmpCh(tmpDelay==delay(kk)),'omitnan');
     end
-    rawCh(ii) = mean(tData.ch(curIdx));
+    rawCh(ii) = mean(tData.ch(curIdx),'omitnan');
     
     % Compute Sigmoid
     if sum(isnan(curCh))

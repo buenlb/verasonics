@@ -25,6 +25,7 @@ dx = x(2)-x(1);
 p = zeros(size(x));
 for ii = 1:length(x)
     [~,p(ii)] = ttest2(y1(ii,:),y2(ii,:));
+%     p(ii) = p(ii)/2;
     if p(ii)<=sigValue
         patch([x(ii)-dx/2,x(ii)-dx/2,x(ii)+dx/2,x(ii)+dx/2],...
             [ymin,ymax,ymax,ymin],'k','edgealpha',0.1,'facealpha',0.1);

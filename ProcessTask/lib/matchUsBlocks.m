@@ -1,4 +1,4 @@
-    function tData = matchUsBlocks(tData,desiredUsBlock)
+function tData = matchUsBlocks(tData,desiredUsBlock)
 
 actualUsBlock = tData.usBlock;
 

@@ -56,7 +56,8 @@ if trId(end)==length(tData.timing)+1
     trId = trId(1:end-1);
 elseif trId(end)>length(tData.timing)+1
     % This shouldn't happen. Alert the user
-    keyboard
+    warning('Cutting off trials that have indexes that are too high')
+    trId = trId(trId<=length(tData.timing));
 end
 
 if length(trId)<100

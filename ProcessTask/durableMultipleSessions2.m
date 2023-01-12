@@ -1,5 +1,8 @@
 clear; close all; clc;
-
+addpath C:\Users\Taylor\Documents\Projects\verasonics\verasonics\lib\
+addpath C:\Users\Taylor\Documents\Projects\verasonics\verasonics\ProcessTask\lib\
+addpath C:\Users\Taylor\Documents\Projects\verasonics\verasonics\ProcessTask\EEGLib\
+%%
 BOLTZ = 1;
 EULER = 1;
 EEG = 0;
@@ -50,7 +53,6 @@ if BOLTZ
                 curIdx = curIdx+1;
             catch me
                 warning(['Loading of file:', files(ii).name, ' failed.']);
-                keyboard
             end
         end
         found = 0;
@@ -107,70 +109,34 @@ if EULER
     save([pth,'curData.mat'],'tData','processedFiles');
 end
 
-%%
-% runJanScripts
-% return
-date = struct('year',[],'month',[],'day',[]);
-tA = [];
-if EEG
-    eegLeft = cell(size(tData));
-    eegRight= cell(size(tData));
-%     tEeg = cell(size(tData));
-%     eeg = cell(size(tData));
-    trId = cell(size(tData));
-    taskIdx = cell(size(tData));
-    for ii = 1:length(processedFiles)
-        disp(['  Processing EEG data in session ', num2str(ii), ' of ', num2str(length(processedFiles))])
-        tic
-        for jj = 1:length(processedFiles{ii})
-            if ~isnan(str2double(processedFiles{ii}(jj))) && isreal(str2double(processedFiles{ii}(jj)))
-                date(ii).year = (processedFiles{ii}(jj:(jj+3)));
-                date(ii).month = (processedFiles{ii}((jj+4):(jj+5)));
-                date(ii).day = (processedFiles{ii}((jj+6):(jj+7)));
-                break;
-            end
-        end
-        switch monk(ii)
-            case 'b'
-                pth = 'D:\Task\Boltz\eeg\';
-                baseName1 = 'boltzmannTask_';
-            case 'e'
-                pth = 'D:\Task\Euler\eeg\';
-                baseName1 = 'Euler_';
-        end
-        baseName = [baseName1,date(ii).year(3:4),date(ii).month,date(ii).day];
-%         if isempty(tA)
-%             [tA,eegLeft{ii},eegRight{ii},~,tEeg{ii},eeg{ii},~,~,trId{ii},taskIdx{ii}] =...
-%                 loadEEGTaskData(pth,baseName,tData(ii));
-%         else
-%             [~,eegLeft{ii},eegRight{ii},~,tEeg{ii},eeg{ii},~,~,trId{ii},taskIdx{ii}] =...
-%                 loadEEGTaskData(pth,baseName,tData(ii));
-%         end
-        if isempty(tA)
-            [tA,eegLeft{ii},eegRight{ii},~,tEeg,eeg,~,~,trId{ii},taskIdx{ii}] =...
-                loadEEGTaskData(pth,baseName,tData(ii));
-        else
-            [~,eegLeft{ii},eegRight{ii},~,tEeg,eeg,~,~,trId{ii},taskIdx{ii}] =...
-                loadEEGTaskData(pth,baseName,tData(ii));
-        end
-        eegWindow1 = 500e-3;
-        eegWindow2 = 60*5;
-        eegWindowSep = 30;
-        if isempty(eeg)
-            continue
-        end
-        tAligned = alignEegSpectra({tEeg},tData(ii),taskIdx(ii),trId(ii));
-        spectra = eegSpectra(tAligned,{eeg},eegWindow1);
-        spectra2(ii) = smoothFrequencyBands(spectra,eegWindow2,eegWindowSep);
-        keyboard
-        toc
+%% Process each session to get five minute window data
+tWindow = 5*60;
+% dt = tWindow;
+dt = 30;
+tBefore = 10*60;
+tAfter = 20*60;
+tm = -tBefore:dt:tAfter;
+epp = nan(length(tData),length(tm));
+y = nan(length(tData),length(tm));
+m = nan(length(tData),length(tm));
+rawCh = nan(length(tData),length(tm));
+nTrials = nan(length(tData),length(tm));
+bLines = nan(length(tData),1);
+for ii = 1:length(tData)
+%     newT = selectTrials(tData(ii),~isnan(tData(ii).ch)&tData(ii).correctDelay);
+    newT = tData(ii);
+    if tData(ii).usBlock ~= 40
+        disp(['Adjusting Block Center ', processedFiles{ii}])
+        newT = matchUsBlocks(newT,40);
     end
-%     eegWindow1 = 500e-3;
-%     eegWindow2 = 60*5;
-%     eegWindowSep = 30;
-%     tAligned = alignEegSpectra(tEeg,tData,taskIdx,trId);
-%     spectra = eegSpectra(tAligned,eeg,eegWindow1);
-%     spectra2 = smoothFrequencyBands(spectra,eegWindow2,eegWindowSep);
+    disp(['Processing Session ', num2str(ii), ' of ', num2str(length(tData))])
+    [~,p0,~,m0,~,bu] = behaviorOverTimeTime(newT,tWindow,[],0);
+    [~,epp(ii,:),y2(ii,:),m(ii,:),rawCh(ii,:),nTrials(ii,:),bu2{ii}] = behaviorOverTimeTime(newT,tWindow,p0,tm);
+    tProcessed(ii) = newT;
+    bLines(ii) = p0;
+    mAll(ii) = m0;
+    [~,bLinesM(ii)] = behaviorOverTimeTime(newT,tWindow,[],-5*60);
+    [~,bLinesP(ii)] = behaviorOverTimeTime(newT,tWindow,[],5*60);
 end
 
 %% Find relevant sessions
@@ -178,33 +144,110 @@ nBlocksBeforeAfter = 1;
 blocksToSkip = 0;
 usBlock = 40;
 
-curLeft = 1;
-curRight = 1;
-curCtl = 1;
-clear idxRight idxLeft idxCtl
-% desiredVoltage = 17.7;
-% desiredVoltage2 = 0;
-desiredVoltage2 = 9;
-desiredVoltage = 25.6;
+freqs = [480,650,850];
+bConversion = [64.4,105,53.1];
+eConversion = [46,75,37.9];
+
+
+v = nan(size(tData));
+dc = v;
+sideSonicated = v;
+
+% Find voltage, I, and Ispta for each session
 for ii = 1:length(tData)
-    if sum(isnan(tData(ii).sonicationProperties.FocalLocation)) &&...
-            (tData(ii).sonicationProperties.voltage == desiredVoltage || tData(ii).sonicationProperties.voltage == desiredVoltage2)...
-            && tData(ii).Block(end)>tData(ii).usBlock+blocksToSkip-1+nBlocksBeforeAfter
-        idxCtl(curCtl) = ii;
-        curCtl = curCtl+1;
-    elseif sum(tData(ii).lgn)<0 &&...
-            (tData(ii).sonicationProperties.voltage == desiredVoltage || tData(ii).sonicationProperties.voltage == desiredVoltage2)...
-            && tData(ii).Block(end)>tData(ii).usBlock+blocksToSkip-1+nBlocksBeforeAfter
-        idxLeft(curLeft) = ii;
-        curLeft = curLeft+1;
-    elseif sum(tData(ii).lgn)>0 &&...
-            (tData(ii).sonicationProperties.voltage == desiredVoltage || tData(ii).sonicationProperties.voltage == desiredVoltage2)...
-            && tData(ii).Block(end)>tData(ii).usBlock+blocksToSkip-1+nBlocksBeforeAfter
-        idxRight(curRight) = ii;
-        curRight = curRight+1;
+    v(ii) = tData(ii).sonicationProperties.voltage;
+    dc(ii) = tData(ii).sonicationProperties.dc/100;
+    prf(ii) = tData(ii).sonicationProperties.prf;
+    nF = tData(ii).sonicationProperties.nFocalSpots;
+    nF(nF==1) = 0;
+    if sum(nF>0)
+        dc(ii) = dc(ii)/sum(nF);
+    end
+    if sum(isnan(tData(ii).sonicationProperties.FocalLocation)) % CTL
+        sideSonicated(ii) = 0;
+    elseif sum(tData(ii).lgn)<0
+        sideSonicated(ii) = -1;
+    elseif sum(tData(ii).lgn)>0
+        sideSonicated(ii) = 1;        
+    end
+    nFoci(ii) = sum(nF);
+end
+sonFreqs = 480*ones(size(v));
+idxE = find(monk=='e');
+idxB = find(monk=='b');
+p = nan(size(v));
+conversion = nan(size(v));
+for ii = 1:length(freqs)
+    conversion(sonFreqs==freqs(ii) & monk=='b') = bConversion(ii);
+    conversion(sonFreqs==freqs(ii) & monk=='e') = eConversion(ii);
+end
+
+p = v.*conversion*1e-3;
+I = nan(size(p));
+for ii = 1:length(p)
+    I(ii) = p2I_brain(p(ii)*1e6)/1e4;
+end
+Ispta = I.*dc;
+
+% Select the relevant sessions
+% idxLeft = find(monk~='a' & round(Ispta*1e3/10)*10==1500 & sideSonicated == -1);
+% idxRight = find(monk~='a' & round(Ispta*1e3/10)*10==1500 & sideSonicated == 1);
+% idxCtl = find(monk~='a' & round(Ispta*1e3/10)*10==1450 & sideSonicated == 0);
+[I,Ispta,monkS,idxPts,ss,I_all,Ispta_all] = plot_isptaOld(v,dc,monk,tData,6);
+
+scan = false(size(Ispta));
+for ii = 1:length(Ispta)
+    if nFoci(idxPts{ii}(1))>0
+        scan(ii) = true;
     end
 end
 
+%---------------------------------------------------------------------------
+%---------------------------------------------------------------------------
+% Set desired indices
+% ptIdx = [1,7];
+% ptIdx = 7;
+% hold on
+% for ii = 1:length(ptIdx)
+%     plot(I(ptIdx(ii)),100*dc(idxPts{ptIdx(ii)}(1)),'ko','markersize',14,'linestyle','--');
+% end
+ptIdx = find(Ispta>=1000e-3);
+ptIdx = ptIdx(5:7);
+% ptIdx = ptIdx(6);
+% ptIdx = 1:length(Ispta);
+% ptIdx = ptIdx(ptIdx~=10);
+% ptIdx = ptIdx(ptIdx~=8);
+% ptIdx = 1:length(Ispta);
+% ptIdx = 5;
+% ptIdx = 1:length(Ispta);
+%---------------------------------------------------------------------------
+idxLeft = [];
+idxRight = [];
+idxCtl = [];
+for ii = 1:length(ptIdx)
+%     if monkS(ptIdx(ii))=='e'
+%         continue
+%     end
+    disp(num2str(ii))
+    idxLeft = cat(2,idxLeft,idxPts{ptIdx(ii)}(ss{ptIdx(ii)}==-1));
+    idxRight = cat(2,idxRight,idxPts{ptIdx(ii)}(ss{ptIdx(ii)}==1));
+    idxCtl = cat(2,idxCtl,idxPts{ptIdx(ii)}(ss{ptIdx(ii)}==0));
+end
+% idxLeft = idxLeft(idxLeft<140 | idxLeft>141);
+idxLeft = idxLeft([1:12,14:end])
+
+% filterIdx = intersect(find(nFoci<=1),idxE);
+% filterIdx = idxB;
+% 
+% idxLeft = intersect(idxLeft,filterIdx);
+% idxRight = intersect(idxRight,filterIdx);
+% idxCtl = intersect(idxCtl,filterIdx);
+
+if isempty(idxCtl)
+    clear idxCtl
+end
+% clear idxCtl
+% Adjust block centers
 if exist('idxCtl','var')
     idx = idxCtl;
     clear newTCtl;
@@ -238,6 +281,516 @@ for ii = 1:length(idx)
         newTRight(ii) = matchUsBlocks(newTRight(ii),40);
     end
 end
+
+% Plot change over time
+h = figure;
+ax = gca;
+yLeft = mean(y(idxLeft,:),1,'omitnan');
+yLeftSem = semOmitNan(y(idxLeft,:),1);
+yRight = mean(y(idxRight,:),1,'omitnan');
+yRightSem = semOmitNan(y(idxRight,:),1);
+shadedErrorBar(tm/60,100*yLeft,100*yLeftSem,'lineprops',{'Color',ax.ColorOrder(1,:),'linewidth',2})
+hold on;
+shadedErrorBar(tm/60,100*yRight,100*yRightSem,'lineprops',{'Color',ax.ColorOrder(2,:),'linewidth',2})
+if exist('idxCtl','var')
+    yCtl = mean(y(idxCtl,:),1,'omitnan');
+    yCtlSem = semOmitNan(y(idxCtl,:),1);
+    shadedErrorBar(tm/60,100*yCtl,100*yCtlSem,'lineprops',{'Color',ax.ColorOrder(3,:),'linewidth',2})
+end
+axis([-20,20,30,70])
+plot([-120,120],[1,1]*66.67,'k:')
+plot([-120,120],[1,1]*33.33,'k:')
+plot([-120,120],[1,1]*50,'k-')
+plot([-120,120],[1,1]*75,'k-.')
+plot([-120,120],[1,1]*25,'k-.')
+if ~exist('idxCtl','var')
+    legend('Left LGN','Right LGN','Location','northwest')
+else
+    legend('Left LGN','Right LGN','Control','Location','northwest')
+end
+makeFigureBig(h);
+
+% Plot change over time
+h = figure;
+ax = gca;
+idxAll = [idxLeft,idxRight];
+yC = nan(length(idxAll),size(y,2));
+yC(1:length(idxLeft),:) = 1-y(idxLeft,:);
+yC(length(idxLeft)+1:end,:) = y(idxRight,:);
+yCM = mean(yC,1,'omitnan');
+yCS = semOmitNan(yC,1);
+shadedErrorBar(tm/60,100*yCM,100*yCS,'lineprops',{'Color',ax.ColorOrder(1,:),'linewidth',2})
+hold on;
+% shadedErrorBar(tm/60,100*yRight,100*yRightSem,'lineprops',{'Color',ax.ColorOrder(2,:),'linewidth',2})
+if exist('idxCtl','var')
+    yCtl = mean(y(idxCtl,:),1,'omitnan');
+    yCtlSem = semOmitNan(y(idxCtl,:),1);
+    shadedErrorBar(tm/60,100*yCtl,100*yCtlSem,'lineprops',{'Color',ax.ColorOrder(3,:),'linewidth',2})
+end
+axis([-20,20,40,60])
+plot([-120,120],[1,1]*66.67,'k:')
+plot([-120,120],[1,1]*33.33,'k:')
+plot([-120,120],[1,1]*50,'k-')
+plot([-120,120],[1,1]*75,'k-.')
+plot([-120,120],[1,1]*25,'k-.')
+makeFigureBig(h);
+
+% Plot behavior at delay=0
+h = figure;
+ax = gca;
+hold on
+shadedErrorBar(tm/60,mean(m(idxLeft,:),1,'omitnan'),semOmitNan(m(idxLeft,:),1),...
+    'lineprops',{'Color',ax.ColorOrder(1,:),'linewidth',2,})
+shadedErrorBar(tm/60,mean(m(idxRight,:),1,'omitnan'),semOmitNan(m(idxRight,:),1),...
+    'lineprops',{'Color',ax.ColorOrder(2,:),'linewidth',2,})
+xlabel('Time (minutes)')
+ylabel('Leftward Choices (%)')
+ax.XLim = [-20,20];
+makeFigureBig(h)
+return
+%% Bar plot averaging by block number
+
+[yLeft,pBLeft,pALeft] = beforeAfterSonication(newTLeft,usBlock,nBlocksBeforeAfter,blocksToSkip);
+[yRight,pBRight,pARight] = beforeAfterSonication(newTRight,usBlock,nBlocksBeforeAfter,blocksToSkip);
+if exist('idxCtl','var')
+    [yCtl,pBCtl,pACtl] = beforeAfterSonication(newTCtl,usBlock,nBlocksBeforeAfter,blocksToSkip);
+end
+
+h = figure;
+ax = gca;
+bar(1,mean(yLeft)*100,'BaseValue',50);
+hold on
+bar(2,mean(yRight)*100,'BaseValue',50);
+if exist('idxCtl','var')
+    bar(3,mean(yCtl)*100,'BaseValue',50);
+end
+ax.ColorOrderIndex = 1;
+eb = errorbar(1,mean(yLeft)*100,100*std(yLeft)/sqrt(length(yLeft)));
+set(eb,'linestyle','none','linewidth',2)
+eb = errorbar(2,mean(yRight)*100,100*std(yRight)/sqrt(length(yRight)));
+set(eb,'linestyle','none','linewidth',2)
+if exist('idxCtl','var')
+    eb = errorbar(3,mean(yCtl)*100,100*std(yCtl)/sqrt(length(yCtl)));
+    set(eb,'linestyle','none','linewidth',2)
+end
+xticks(1:2);
+xticklabels({'Left','Right'})
+xtickangle(90);
+axis([0,4,25,75])
+ylabel('Percent Leftward Choices')
+% title(['Change at Equal Probability Point (n=', num2str(length(idxLeft)+length(idxRight)),')']);
+
+[~,p1] = ttest2(yLeft,yRight);
+if exist('idxCtl','var')
+    [~,p2] = ttest2(yLeft,yCtl);
+    [~,p3] = ttest2(yRight,yCtl);
+    sigstar({[1,2],[1,3],[2,3]},[p1,p2,p3]);
+else
+    sigstar({[1,2]},p1);
+end
+makeFigureBig(h);
+
+% Time Bar Plot
+timeWindow = 5*60;
+[yLeft,~,~,nBefLeft,nAftLeft,idxBLeft,idxALeft] = beforeAfterSonicationTime(newTLeft,timeWindow,0);
+[yRight,~,~,nBefRight,nAftRight,idxBRight,idxARight] = beforeAfterSonicationTime(newTRight,timeWindow,0);
+if exist('idxCtl','var')
+    [yCtl,~,~,nBefCtl,nAftCtl] = beforeAfterSonicationTime(newTCtl,timeWindow,0);
+end
+
+% yLeft = yLeft(nAftLeft>=100);
+% yRight = yRight(nAftRight>=100);
+
+h = figure;
+ax = gca;
+bar(1,mean(yLeft)*100,'BaseValue',50);
+hold on
+ax.ColorOrderIndex = 1;
+eb = errorbar(1,mean(yLeft)*100,100*std(yLeft)/sqrt(length(yLeft)));
+set(eb,'linestyle','none','linewidth',2)
+if exist('idxCtl','var')
+    ax.ColorOrderIndex = 2;
+    bar(3,mean(yRight)*100,'BaseValue',50);
+    ax.ColorOrderIndex = 3;
+    bar(2,mean(yCtl)*100,'BaseValue',50);
+    ax.ColorOrderIndex = 3;
+    eb = errorbar(2,mean(yCtl)*100,100*std(yCtl)/sqrt(length(yCtl)));
+    set(eb,'linestyle','none','linewidth',2)
+    ax.ColorOrderIndex = 2;
+    eb = errorbar(3,mean(yRight)*100,100*std(yRight)/sqrt(length(yRight)));
+    set(eb,'linestyle','none','linewidth',2)
+    xticks(1:3);
+    xticklabels({'Left','Control','Right'})
+else
+    bar(2,mean(yRight)*100,'BaseValue',50);
+    eb = errorbar(2,mean(yRight)*100,100*std(yRight)/sqrt(length(yRight)));
+    set(eb,'linestyle','none','linewidth',2)
+    xticks(1:2);
+    xticklabels({'Left','Right'})
+end
+
+xtickangle(90);
+axis([0,4,25,75])
+ylabel('Percent Leftward Choices')
+% title(['Change at Equal Probability Point (n=', num2str(length(idxLeft)+length(idxRight)),')']);
+
+[~,p1] = ttest2(yLeft,yRight);
+if exist('idxCtl','var')
+    [~,p2] = ttest2(yLeft,yCtl);
+    [~,p3] = ttest2(yRight,yCtl);
+    ints = {[1,2],[1,3],[2,3]};
+    p = [p2,p1,p3];
+    sigstar(ints(p<0.05),p(p<0.05));
+else
+    sigstar({[1,2]},p1);
+end
+makeFigureBig(h);
+
+% Behavior over time
+% idxRight = idxRight(1:3);
+% idxLeft = idxLeft(1:3);
+tWindow = 5*60;
+dt = 30;
+tBefore = 15*60;
+tAfter = 60*60;
+tm = -ceil(tBefore/dt)*dt:dt:ceil(tAfter/dt)*dt;
+
+pTimeLeft = zeros(length(idxLeft),length(tm));
+yTimeLeft = zeros(length(idxLeft),length(tm));
+mTimeLeft = zeros(length(idxLeft),length(tm));
+rawChLeft = zeros(length(idxLeft),length(tm));
+nTrialsLeft = zeros(length(idxLeft),length(tm));
+for ii = 1:length(idxLeft)
+    disp(['Processing Left LGN (', num2str(ii), ' of ', num2str(length(idxLeft)),')'])
+    [~,p0,~,~,~,bu] = behaviorOverTimeTime(newTLeft(ii),tWindow,[],-tWindow);
+    [~,pTimeLeft(ii,:),yTimeLeft(ii,:),mTimeLeft(ii,:),rawChLeft(ii,:),nTrialsLeft(ii,:),bu2] = behaviorOverTimeTime(newTLeft(ii),tWindow,p0,tm);
+end
+
+pTimeRight = zeros(length(idxRight),length(tm));
+yTimeRight = zeros(length(idxRight),length(tm));
+mTimeRight = zeros(length(idxRight),length(tm));
+rawChRight= zeros(length(idxLeft),length(tm));
+nTrialsRight = zeros(length(idxRight),length(tm));
+for ii = 1:length(idxRight)
+    disp(['Processing Right LGN (', num2str(ii), ' of ', num2str(length(idxRight)),')'])
+    [~,p0] = behaviorOverTimeTime(newTRight(ii),tWindow,[],-tWindow);
+    [~,pTimeRight(ii,:),yTimeRight(ii,:),mTimeRight(ii,:),rawChRight(ii,:),nTrialsRight(ii,:)] = behaviorOverTimeTime(newTRight(ii),tWindow,p0,tm);
+end
+
+if exist('idxCtl','var')
+    pTimeCtl = zeros(length(idxCtl),length(tm));
+    yTimeCtl = zeros(length(idxCtl),length(tm));
+    mTimeCtl = zeros(length(idxCtl),length(tm));
+    rawChCtl = zeros(length(idxCtl),length(tm));
+    nTrialsCtl = zeros(length(idxCtl),length(tm));
+    for ii = 1:length(idxCtl)
+        disp(['Processing Ctl LGN (', num2str(ii), ' of ', num2str(length(idxCtl)),')'])
+        [~,p0,~,~,~,bu] = behaviorOverTimeTime(newTCtl(ii),tWindow,[],-tWindow);
+        [~,pTimeCtl(ii,:),yTimeCtl(ii,:),mTimeCtl(ii,:),rawChCtl(ii,:),nTrialsCtl(ii,:),bu2] = behaviorOverTimeTime(newTCtl(ii),tWindow,p0,tm);
+    end
+end
+
+% Plot Results: bias
+% Average the left
+variableToPlot = yTimeLeft;
+
+yTimeLeftMean = mean(variableToPlot,1,'omitnan');
+yTimeLeftSem = std(variableToPlot,[],1,'omitnan')./sqrt(sum(~isnan(variableToPlot),1));
+
+% Average the Right
+variableToPlot = yTimeRight;
+
+yTimeRightMean = mean(variableToPlot,1,'omitnan');
+yTimeRightSem = std(variableToPlot,[],1,'omitnan')./sqrt(sum(~isnan(variableToPlot),1));
+
+if exist('idxCtl','var')
+    % Average the left
+    variableToPlot = yTimeCtl;
+    
+    yTimeCtlMean = mean(variableToPlot,1,'omitnan');
+    yTimeCtlSem = std(variableToPlot,[],1,'omitnan')./sqrt(sum(~isnan(variableToPlot),1));
+end
+windowShift = 5;
+% Plot
+h = figure;
+ax = gca;
+shadedErrorBar(tm/60+windowShift,100*yTimeLeftMean,100*yTimeLeftSem,'lineprops',{'linewidth',2,'Color',ax.ColorOrder(1,:)});
+hold on
+shadedErrorBar(tm/60+windowShift,100*yTimeRightMean,100*yTimeRightSem,'lineprops',{'linewidth',2,'Color',ax.ColorOrder(2,:)});
+if exist('idxCtl','var')
+    shadedErrorBar(tm/60+windowShift,100*yTimeCtlMean,100*yTimeCtlSem,'lineprops',{'linewidth',2,'Color',ax.ColorOrder(3,:)});
+end
+axis([0,20,20,80])
+plot([-120,120],[1,1]*66.67,'k:')
+plot([-120,120],[1,1]*33.33,'k:')
+plot([-120,120],[1,1]*50,'k-')
+plot([-120,120],[1,1]*75,'k-.')
+plot([-120,120],[1,1]*25,'k-.')
+% plot([5.5,5.5]-windowShift  ,[0,100],'k--','linewidth',2)
+
+% Show where it is significant
+% p = addSignificance(yTimeLeft,yTimeRight,tm/60+windowShift,h,0.05);
+if exist('idxCtl','var')
+    legend('Left LGN','Right LGN','Control','location','northwest')
+else
+    legend('Left LGN','Right LGN','location','northwest')
+end
+xlabel('Time (minutes)')
+ylabel('Leftward Choices (%)')
+% title(['Choice at Equal Probability Point (', num2str(tWindow/60),' minute window)'])
+makeFigureBig(h);
+return
+%% Plot Results: Point of equal probability
+% Average the left
+variableToPlot = pTimeLeft;
+
+yTimeLeftMean = mean(variableToPlot,1,'omitnan');
+yTimeLeftSem = std(variableToPlot,[],1,'omitnan')./sqrt(sum(~isnan(variableToPlot),1));
+
+% Average the Right
+variableToPlot = pTimeRight;
+
+yTimeRightMean = mean(variableToPlot,1,'omitnan');
+yTimeRightSem = std(variableToPlot,[],1,'omitnan')./sqrt(sum(~isnan(variableToPlot),1));
+
+% Average the Right
+if exist('idxCtl','var')
+    variableToPlot = pTimeCtl;
+    
+    yTimeCtlMean = mean(variableToPlot,1,'omitnan');
+    yTimeCtlSem = std(variableToPlot,[],1,'omitnan')./sqrt(sum(~isnan(variableToPlot),1));
+end
+
+% Plot
+h = figure;
+ax = gca;
+shadedErrorBar(tm/60,yTimeLeftMean,yTimeLeftSem,'lineprops',{'linewidth',2,'Color',ax.ColorOrder(1,:)});
+hold on
+shadedErrorBar(tm/60,yTimeRightMean,yTimeRightSem,'lineprops',{'linewidth',2,'Color',ax.ColorOrder(2,:)});
+if exist('idxCtl','var')
+    shadedErrorBar(tm/60,yTimeCtlMean,yTimeCtlSem,'lineprops',{'linewidth',2,'Color',ax.ColorOrder(3,:)});
+end
+axis([min(tm)/60,20,-40,40])
+
+% Show where it is significant
+addSignificance(pTimeLeft,pTimeRight,tm/60,h,0.05);
+
+legend('Left LGN','Right LGN','Control','location','northwest')
+xlabel('Time (minutes)')
+ylabel('Leftward Choices (%)')
+title(['No Bias Delay (', num2str(tWindow/60),' minute window)'])
+makeFigureBig(h);
+
+%% Plot results Contralateral Bias
+
+% Average LGN targeting
+variableToPlot = cat(1,1-yTimeLeft,yTimeRight);
+contraChoice = variableToPlot;
+
+yTimeRightMean = mean(variableToPlot,1,'omitnan');
+yTimeRightSem = std(variableToPlot,[],1,'omitnan')./sqrt(sum(~isnan(variableToPlot),1));
+
+if exist('idxCtl','var')
+    % Average the left
+    variableToPlot = yTimeCtl;
+    
+    yTimeCtlMean = mean(variableToPlot,1,'omitnan');
+    yTimeCtlSem = std(variableToPlot,[],1,'omitnan')./sqrt(sum(~isnan(variableToPlot),1));
+end
+
+% Plot
+h = figure;
+ax = gca;
+hold on
+shadedErrorBar(tm/60,100*yTimeRightMean,100*yTimeRightSem,'lineprops',{'linewidth',2,'Color',ax.ColorOrder(2,:)});
+if exist('idxCtl','var')
+    shadedErrorBar(tm/60,100*yTimeCtlMean,100*yTimeCtlSem,'lineprops',{'linewidth',2,'Color',ax.ColorOrder(3,:)});
+end
+axis([-5,15,30,70])
+plot([-120,120],[1,1]*66.67,'k:')
+plot([-120,120],[1,1]*33.33,'k:')
+plot([-120,120],[1,1]*50,'k-')
+plot([-120,120],[1,1]*75,'k-.')
+plot([-120,120],[1,1]*25,'k-.')
+
+% Show where it is significant
+p = addSignificance(contraChoice,yTimeCtl,tm/60,h,0.05);
+
+legend('LGN','Control','location','northwest')
+xlabel('Time (minutes)')
+ylabel('Contralateral Choices (%)')
+% title(['Choice at Equal Probability Point (', num2str(tWindow/60),' minute window)'])
+makeFigureBig(h);
+return
+
+%% Time based sigmoid comparison
+curSession = 7;
+[~,meanChoicesAfter,~,meanChoicesBefore,allDelays] = beforeAfterSonicationTimeSigmoid(tData(idxLeft),timeWindow,0);
+delays = [];
+for ii = 1:length(meanChoicesBefore)
+    delays = cat(1,delays,allDelays{ii});
+end
+delays = unique(delays);
+
+chAfter = nan(length(meanChoicesBefore),length(delays));
+chBefore = nan(length(meanChoicesBefore),length(delays));
+for ii = 1:length(meanChoicesAfter)
+    for jj = 1:length(delays)
+        if ~isempty(find(allDelays{ii}==delays(jj)))
+            chAfter(ii,jj) = meanChoicesAfter{ii}(allDelays{ii}==delays(jj));
+            chBefore(ii,jj) = meanChoicesBefore{ii}(allDelays{ii}==delays(jj));
+        end
+    end
+end
+
+h = figure;
+ax = gca;
+
+plot(delays,mean(chBefore,1,'omitnan'),'*','linewidth',3,'markersize',8)
+hold on
+ax.ColorOrderIndex = 1;
+eb = errorbar(delays,mean(chBefore,1,'omitnan'),semOmitNan(chBefore,1));
+set(eb,'linestyle','none')
+[slope, bias, downshift, scale] = fitSigmoid(delays,mean(chBefore,1,'omitnan'));
+x = linspace(min(delays),max(delays),1e3);
+y = sigmoid_ext(x,slope,bias,downshift,scale);
+p0Before = equalProbabilityPoint(slope,bias,downshift,scale);
+ax.ColorOrderIndex = 1;
+plt(1) = plot(x,y,'LineWidth',2);
+
+ax.ColorOrderIndex = 2;
+plot(delays,mean(chAfter,1,'omitnan'),'*','linewidth',3,'markersize',8)
+hold on
+ax.ColorOrderIndex = 2;
+eb = errorbar(delays,mean(chAfter,1,'omitnan'),semOmitNan(chAfter,1));
+set(eb,'linestyle','none')
+[slope, bias, downshift, scale] = fitSigmoid(delays,mean(chAfter,1,'omitnan'));
+x = linspace(min(delays),max(delays),1e3);
+y = sigmoid_ext(x,slope,bias,downshift,scale);
+p0After= equalProbabilityPoint(slope,bias,downshift,scale);
+yAfter = sigmoid_ext(p0Before,slope,bias,downshift,scale);
+ax.ColorOrderIndex = 2;
+plt(2) = plot(x,y,'LineWidth',2);
+title('Left LGN')
+xlabel('Delays (ms)')
+ylabel('Leftward Choices (%)')
+legend(plt,'Before','After')
+makeFigureBig(h)
+
+disp(['Left Points of EP: Before: ', num2str(p0Before,3), 'ms. After: ', num2str(p0After,3),'ms'])
+disp(['Left Percent Change at EP: ', num2str(100*yAfter,3),'%'])
+
+% idxRight = 43;
+[~,meanChoicesAfter,~,meanChoicesBefore,allDelays] = beforeAfterSonicationTimeSigmoid(tData(idxRight),timeWindow,0);
+delays = [];
+for ii = 1:length(meanChoicesBefore)
+    delays = cat(1,delays,allDelays{ii});
+end
+delays = unique(delays);
+
+chAfter = nan(length(meanChoicesBefore),length(delays));
+chBefore = nan(length(meanChoicesBefore),length(delays));
+for ii = 1:length(meanChoicesAfter)
+    for jj = 1:length(delays)
+        if ~isempty(find(allDelays{ii}==delays(jj)))
+            chAfter(ii,jj) = meanChoicesAfter{ii}(allDelays{ii}==delays(jj));
+            chBefore(ii,jj) = meanChoicesBefore{ii}(allDelays{ii}==delays(jj));
+        end
+    end
+end
+
+h = figure;
+ax = gca;
+
+plot(delays,mean(chBefore,1,'omitnan'),'*','linewidth',3,'markersize',8)
+hold on
+ax.ColorOrderIndex = 1;
+eb = errorbar(delays,mean(chBefore,1,'omitnan'),semOmitNan(chBefore,1));
+set(eb,'linestyle','none')
+[slope, bias, downshift, scale] = fitSigmoid(delays,mean(chBefore,1,'omitnan'));
+x = linspace(min(delays),max(delays),1e3);
+y = sigmoid_ext(x,slope,bias,downshift,scale);
+p0Before = equalProbabilityPoint(slope,bias,downshift,scale);
+ax.ColorOrderIndex = 1;
+plt(1) = plot(x,y,'LineWidth',2);
+
+ax.ColorOrderIndex = 2;
+plot(delays,mean(chAfter,1,'omitnan'),'*','linewidth',3,'markersize',8)
+hold on
+ax.ColorOrderIndex = 2;
+eb = errorbar(delays,mean(chAfter,1,'omitnan'),semOmitNan(chAfter,1));
+set(eb,'linestyle','none')
+[slope, bias, downshift, scale] = fitSigmoid(delays,mean(chAfter,1,'omitnan'));
+x = linspace(min(delays),max(delays),1e3);
+y = sigmoid_ext(x,slope,bias,downshift,scale);
+p0After= equalProbabilityPoint(slope,bias,downshift,scale);
+yAfter = sigmoid_ext(p0Before,slope,bias,downshift,scale);
+ax.ColorOrderIndex = 2;
+plt(2) = plot(x,y,'LineWidth',2);
+title('Right LGN')
+xlabel('Delays (ms)')
+ylabel('Leftward Choices (%)')
+legend(plt,'Before','After')
+makeFigureBig(h)
+
+disp(['Right Points of EP: Before: ', num2str(p0Before,3), 'ms. After: ', num2str(p0After,3),'ms'])
+disp(['Right Percent Change at EP: ', num2str(100*yAfter,3),'%'])
+
+[~,meanChoicesAfter,~,meanChoicesBefore,allDelays] = beforeAfterSonicationTimeSigmoid(tData(idxCtl),timeWindow,0);
+delays = [];
+for ii = 1:length(meanChoicesBefore)
+    delays = cat(1,delays,allDelays{ii});
+end
+delays = unique(delays);
+
+chAfter = nan(length(meanChoicesBefore),length(delays));
+chBefore = nan(length(meanChoicesBefore),length(delays));
+for ii = 1:length(meanChoicesAfter)
+    for jj = 1:length(delays)
+        if ~isempty(find(allDelays{ii}==delays(jj)))
+            chAfter(ii,jj) = meanChoicesAfter{ii}(allDelays{ii}==delays(jj));
+            chBefore(ii,jj) = meanChoicesBefore{ii}(allDelays{ii}==delays(jj));
+        end
+    end
+end
+
+h = figure;
+ax = gca;
+
+plot(delays,mean(chBefore,1,'omitnan'),'*','linewidth',3,'markersize',8)
+hold on
+ax.ColorOrderIndex = 1;
+eb = errorbar(delays,mean(chBefore,1,'omitnan'),semOmitNan(chBefore,1));
+set(eb,'linestyle','none')
+[slope, bias, downshift, scale] = fitSigmoid(delays,mean(chBefore,1,'omitnan'));
+x = linspace(min(delays),max(delays),1e3);
+y = sigmoid_ext(x,slope,bias,downshift,scale);
+p0Before = equalProbabilityPoint(slope,bias,downshift,scale);
+ax.ColorOrderIndex = 1;
+plt(1) = plot(x,y,'LineWidth',2);
+
+ax.ColorOrderIndex = 2;
+plot(delays,mean(chAfter,1,'omitnan'),'*','linewidth',3,'markersize',8)
+hold on
+ax.ColorOrderIndex = 2;
+eb = errorbar(delays,mean(chAfter,1,'omitnan'),semOmitNan(chAfter,1));
+set(eb,'linestyle','none')
+[slope, bias, downshift, scale] = fitSigmoid(delays,mean(chAfter,1,'omitnan'));
+x = linspace(min(delays),max(delays),1e3);
+y = sigmoid_ext(x,slope,bias,downshift,scale);
+p0After= equalProbabilityPoint(slope,bias,downshift,scale);
+yAfter = sigmoid_ext(p0Before,slope,bias,downshift,scale);
+ax.ColorOrderIndex = 2;
+plt(2) = plot(x,y,'LineWidth',2);
+title('Control')
+xlabel('Delays (ms)')
+ylabel('Leftward Choices (%)')
+legend(plt,'Before','After')
+makeFigureBig(h)
+
+disp(['Control Points of EP: Before: ', num2str(p0Before,3), 'ms. After: ', num2str(p0After,3),'ms'])
+disp(['Control Percent Change at EP: ', num2str(100*yAfter,3),'%'])
+return
 
 %% Plot EEG
 minT = 0;
@@ -328,7 +881,7 @@ if EEG
     plotVep(t/60,gamma(idx1,:),1,ax,{'Color',ax.ColorOrder(1,:)});
     plotVep(t/60,gamma(idx2,:),1,ax,{'Color',ax.ColorOrder(2,:)});
     ax.XLim = [-10,15];
-    ax.YLim = [0.5*mean(gamma(:),'omitnan'),2*mean(gamma(:),'omitnan')];
+    ax.YLim = [0.0*mean(gamma(:),'omitnan'),2*mean(gamma(:),'omitnan')];
     makeFigureBig(h);
 
     h = figure;
@@ -337,7 +890,7 @@ if EEG
     plotVep(t/60,mean(gen(idx1,:,genIdx),3,'omitnan'),1,ax,{'Color',ax.ColorOrder(1,:)});
     plotVep(t/60,mean(gen(idx2,:,genIdx),3,'omitnan'),1,ax,{'Color',ax.ColorOrder(2,:)});
     ax.XLim = [-10,15];
-    ax.YLim = [0.5*mean(gamma(:),'omitnan'),2*mean(gamma(:),'omitnan')];
+    ax.YLim = [0.0*mean(gamma(:),'omitnan'),2*mean(gamma(:),'omitnan')];
     makeFigureBig(h);
 %% Bar Plots of spectra
     t1 = -5.5*60;
@@ -638,446 +1191,6 @@ axis([-800,800,-15,15])
 makeFigureBig(h);
 
 end
-
-%% Bar plot averaging by block number
-
-[yLeft,pBLeft,pALeft] = beforeAfterSonication(newTLeft,usBlock,nBlocksBeforeAfter,blocksToSkip);
-[yRight,pBRight,pARight] = beforeAfterSonication(newTRight,usBlock,nBlocksBeforeAfter,blocksToSkip);
-if exist('idxCtl','var')
-    [yCtl,pBCtl,pACtl] = beforeAfterSonication(newTCtl,usBlock,nBlocksBeforeAfter,blocksToSkip);
-end
-
-h = figure;
-ax = gca;
-bar(1,mean(yLeft)*100,'BaseValue',50);
-hold on
-bar(2,mean(yRight)*100,'BaseValue',50);
-if exist('idxCtl','var')
-    bar(3,mean(yCtl)*100,'BaseValue',50);
-end
-ax.ColorOrderIndex = 1;
-eb = errorbar(1,mean(yLeft)*100,100*std(yLeft)/sqrt(length(yLeft)));
-set(eb,'linestyle','none','linewidth',2)
-eb = errorbar(2,mean(yRight)*100,100*std(yRight)/sqrt(length(yRight)));
-set(eb,'linestyle','none','linewidth',2)
-if exist('idxCtl','var')
-    eb = errorbar(3,mean(yCtl)*100,100*std(yCtl)/sqrt(length(yCtl)));
-    set(eb,'linestyle','none','linewidth',2)
-end
-xticks(1:2);
-xticklabels({'Left','Right'})
-xtickangle(90);
-axis([0,4,25,75])
-ylabel('Percent Leftward Choices')
-% title(['Change at Equal Probability Point (n=', num2str(length(idxLeft)+length(idxRight)),')']);
-
-[~,p1] = ttest2(yLeft,yRight);
-if exist('idxCtl','var')
-    [~,p2] = ttest2(yLeft,yCtl);
-    [~,p3] = ttest2(yRight,yCtl);
-    sigstar({[1,2],[1,3],[2,3]},[p1,p2,p3]);
-else
-    sigstar({[1,2]},p1);
-end
-makeFigureBig(h);
-
-%% Time Bar Plot
-timeWindow = 5*60;
-[yLeft,~,~,nBefLeft,nAftLeft,idxBLeft,idxALeft] = beforeAfterSonicationTime(newTLeft,timeWindow,0);
-[yRight,~,~,nBefRight,nAftRight,idxBRight,idxARight] = beforeAfterSonicationTime(newTRight,timeWindow,0);
-if exist('idxCtl','var')
-    [yCtl,~,~,nBefCtl,nAftCtl] = beforeAfterSonicationTime(newTCtl,timeWindow,0);
-end
-
-% yLeft = yLeft(nAftLeft>=100);
-% yRight = yRight(nAftRight>=100);
-
-h = figure;
-ax = gca;
-bar(1,mean(yLeft)*100,'BaseValue',50);
-hold on
-ax.ColorOrderIndex = 1;
-eb = errorbar(1,mean(yLeft)*100,100*std(yLeft)/sqrt(length(yLeft)));
-set(eb,'linestyle','none','linewidth',2)
-if exist('idxCtl','var')
-    ax.ColorOrderIndex = 2;
-    bar(3,mean(yRight)*100,'BaseValue',50);
-    ax.ColorOrderIndex = 3;
-    bar(2,mean(yCtl)*100,'BaseValue',50);
-    ax.ColorOrderIndex = 3;
-    eb = errorbar(2,mean(yCtl)*100,100*std(yCtl)/sqrt(length(yCtl)));
-    set(eb,'linestyle','none','linewidth',2)
-    ax.ColorOrderIndex = 2;
-    eb = errorbar(3,mean(yRight)*100,100*std(yRight)/sqrt(length(yRight)));
-    set(eb,'linestyle','none','linewidth',2)
-    xticks(1:3);
-    xticklabels({'Left','Control','Right'})
-else
-    bar(2,mean(yRight)*100,'BaseValue',50);
-    eb = errorbar(2,mean(yRight)*100,100*std(yRight)/sqrt(length(yRight)));
-    set(eb,'linestyle','none','linewidth',2)
-    xticks(1:2);
-    xticklabels({'Left','Right'})
-end
-
-xtickangle(90);
-axis([0,4,25,75])
-ylabel('Percent Leftward Choices')
-% title(['Change at Equal Probability Point (n=', num2str(length(idxLeft)+length(idxRight)),')']);
-
-[~,p1] = ttest2(yLeft,yRight);
-if exist('idxCtl','var')
-    [~,p2] = ttest2(yLeft,yCtl);
-    [~,p3] = ttest2(yRight,yCtl);
-    ints = {[1,2],[1,3],[2,3]};
-    p = [p2,p1,p3];
-    sigstar(ints(p<0.05),p(p<0.05));
-else
-    sigstar({[1,2]},p1);
-end
-makeFigureBig(h);
-
-%% Time based sigmoid comparison
-curSession = 7;
-[~,meanChoicesAfter,~,meanChoicesBefore,allDelays] = beforeAfterSonicationTimeSigmoid(tData(idxLeft),timeWindow,0);
-delays = [];
-for ii = 1:length(meanChoicesBefore)
-    delays = cat(1,delays,allDelays{ii});
-end
-delays = unique(delays);
-
-chAfter = nan(length(meanChoicesBefore),length(delays));
-chBefore = nan(length(meanChoicesBefore),length(delays));
-for ii = 1:length(meanChoicesAfter)
-    for jj = 1:length(delays)
-        if ~isempty(find(allDelays{ii}==delays(jj)))
-            chAfter(ii,jj) = meanChoicesAfter{ii}(allDelays{ii}==delays(jj));
-            chBefore(ii,jj) = meanChoicesBefore{ii}(allDelays{ii}==delays(jj));
-        end
-    end
-end
-
-h = figure;
-ax = gca;
-
-plot(delays,mean(chBefore,1,'omitnan'),'*','linewidth',3,'markersize',8)
-hold on
-ax.ColorOrderIndex = 1;
-eb = errorbar(delays,mean(chBefore,1,'omitnan'),semOmitNan(chBefore,1));
-set(eb,'linestyle','none')
-[slope, bias, downshift, scale] = fitSigmoid(delays,mean(chBefore,1,'omitnan'));
-x = linspace(min(delays),max(delays),1e3);
-y = sigmoid_ext(x,slope,bias,downshift,scale);
-p0Before = equalProbabilityPoint(slope,bias,downshift,scale);
-ax.ColorOrderIndex = 1;
-plt(1) = plot(x,y,'LineWidth',2);
-
-ax.ColorOrderIndex = 2;
-plot(delays,mean(chAfter,1,'omitnan'),'*','linewidth',3,'markersize',8)
-hold on
-ax.ColorOrderIndex = 2;
-eb = errorbar(delays,mean(chAfter,1,'omitnan'),semOmitNan(chAfter,1));
-set(eb,'linestyle','none')
-[slope, bias, downshift, scale] = fitSigmoid(delays,mean(chAfter,1,'omitnan'));
-x = linspace(min(delays),max(delays),1e3);
-y = sigmoid_ext(x,slope,bias,downshift,scale);
-p0After= equalProbabilityPoint(slope,bias,downshift,scale);
-yAfter = sigmoid_ext(p0Before,slope,bias,downshift,scale);
-ax.ColorOrderIndex = 2;
-plt(2) = plot(x,y,'LineWidth',2);
-title('Left LGN')
-xlabel('Delays (ms)')
-ylabel('Leftward Choices (%)')
-legend(plt,'Before','After')
-makeFigureBig(h)
-
-disp(['Left Points of EP: Before: ', num2str(p0Before,3), 'ms. After: ', num2str(p0After,3),'ms'])
-disp(['Left Percent Change at EP: ', num2str(100*yAfter,3),'%'])
-
-% idxRight = 43;
-[~,meanChoicesAfter,~,meanChoicesBefore,allDelays] = beforeAfterSonicationTimeSigmoid(tData(idxRight),timeWindow,0);
-delays = [];
-for ii = 1:length(meanChoicesBefore)
-    delays = cat(1,delays,allDelays{ii});
-end
-delays = unique(delays);
-
-chAfter = nan(length(meanChoicesBefore),length(delays));
-chBefore = nan(length(meanChoicesBefore),length(delays));
-for ii = 1:length(meanChoicesAfter)
-    for jj = 1:length(delays)
-        if ~isempty(find(allDelays{ii}==delays(jj)))
-            chAfter(ii,jj) = meanChoicesAfter{ii}(allDelays{ii}==delays(jj));
-            chBefore(ii,jj) = meanChoicesBefore{ii}(allDelays{ii}==delays(jj));
-        end
-    end
-end
-
-h = figure;
-ax = gca;
-
-plot(delays,mean(chBefore,1,'omitnan'),'*','linewidth',3,'markersize',8)
-hold on
-ax.ColorOrderIndex = 1;
-eb = errorbar(delays,mean(chBefore,1,'omitnan'),semOmitNan(chBefore,1));
-set(eb,'linestyle','none')
-[slope, bias, downshift, scale] = fitSigmoid(delays,mean(chBefore,1,'omitnan'));
-x = linspace(min(delays),max(delays),1e3);
-y = sigmoid_ext(x,slope,bias,downshift,scale);
-p0Before = equalProbabilityPoint(slope,bias,downshift,scale);
-ax.ColorOrderIndex = 1;
-plt(1) = plot(x,y,'LineWidth',2);
-
-ax.ColorOrderIndex = 2;
-plot(delays,mean(chAfter,1,'omitnan'),'*','linewidth',3,'markersize',8)
-hold on
-ax.ColorOrderIndex = 2;
-eb = errorbar(delays,mean(chAfter,1,'omitnan'),semOmitNan(chAfter,1));
-set(eb,'linestyle','none')
-[slope, bias, downshift, scale] = fitSigmoid(delays,mean(chAfter,1,'omitnan'));
-x = linspace(min(delays),max(delays),1e3);
-y = sigmoid_ext(x,slope,bias,downshift,scale);
-p0After= equalProbabilityPoint(slope,bias,downshift,scale);
-yAfter = sigmoid_ext(p0Before,slope,bias,downshift,scale);
-ax.ColorOrderIndex = 2;
-plt(2) = plot(x,y,'LineWidth',2);
-title('Right LGN')
-xlabel('Delays (ms)')
-ylabel('Leftward Choices (%)')
-legend(plt,'Before','After')
-makeFigureBig(h)
-
-disp(['Right Points of EP: Before: ', num2str(p0Before,3), 'ms. After: ', num2str(p0After,3),'ms'])
-disp(['Right Percent Change at EP: ', num2str(100*yAfter,3),'%'])
-
-[~,meanChoicesAfter,~,meanChoicesBefore,allDelays] = beforeAfterSonicationTimeSigmoid(tData(idxCtl),timeWindow,0);
-delays = [];
-for ii = 1:length(meanChoicesBefore)
-    delays = cat(1,delays,allDelays{ii});
-end
-delays = unique(delays);
-
-chAfter = nan(length(meanChoicesBefore),length(delays));
-chBefore = nan(length(meanChoicesBefore),length(delays));
-for ii = 1:length(meanChoicesAfter)
-    for jj = 1:length(delays)
-        if ~isempty(find(allDelays{ii}==delays(jj)))
-            chAfter(ii,jj) = meanChoicesAfter{ii}(allDelays{ii}==delays(jj));
-            chBefore(ii,jj) = meanChoicesBefore{ii}(allDelays{ii}==delays(jj));
-        end
-    end
-end
-
-h = figure;
-ax = gca;
-
-plot(delays,mean(chBefore,1,'omitnan'),'*','linewidth',3,'markersize',8)
-hold on
-ax.ColorOrderIndex = 1;
-eb = errorbar(delays,mean(chBefore,1,'omitnan'),semOmitNan(chBefore,1));
-set(eb,'linestyle','none')
-[slope, bias, downshift, scale] = fitSigmoid(delays,mean(chBefore,1,'omitnan'));
-x = linspace(min(delays),max(delays),1e3);
-y = sigmoid_ext(x,slope,bias,downshift,scale);
-p0Before = equalProbabilityPoint(slope,bias,downshift,scale);
-ax.ColorOrderIndex = 1;
-plt(1) = plot(x,y,'LineWidth',2);
-
-ax.ColorOrderIndex = 2;
-plot(delays,mean(chAfter,1,'omitnan'),'*','linewidth',3,'markersize',8)
-hold on
-ax.ColorOrderIndex = 2;
-eb = errorbar(delays,mean(chAfter,1,'omitnan'),semOmitNan(chAfter,1));
-set(eb,'linestyle','none')
-[slope, bias, downshift, scale] = fitSigmoid(delays,mean(chAfter,1,'omitnan'));
-x = linspace(min(delays),max(delays),1e3);
-y = sigmoid_ext(x,slope,bias,downshift,scale);
-p0After= equalProbabilityPoint(slope,bias,downshift,scale);
-yAfter = sigmoid_ext(p0Before,slope,bias,downshift,scale);
-ax.ColorOrderIndex = 2;
-plt(2) = plot(x,y,'LineWidth',2);
-title('Control')
-xlabel('Delays (ms)')
-ylabel('Leftward Choices (%)')
-legend(plt,'Before','After')
-makeFigureBig(h)
-
-disp(['Control Points of EP: Before: ', num2str(p0Before,3), 'ms. After: ', num2str(p0After,3),'ms'])
-disp(['Control Percent Change at EP: ', num2str(100*yAfter,3),'%'])
-return
-%% Behavior over time
-% idxRight = idxRight(1:3);
-% idxLeft = idxLeft(1:3);
-tWindow = 5*60;
-dt = 30;
-tBefore = 15*60;
-tAfter = 60*60;
-tm = -ceil(tBefore/dt)*dt:dt:ceil(tAfter/dt)*dt;
-
-pTimeLeft = zeros(length(idxLeft),length(tm));
-yTimeLeft = zeros(length(idxLeft),length(tm));
-mTimeLeft = zeros(length(idxLeft),length(tm));
-rawChLeft = zeros(length(idxLeft),length(tm));
-nTrialsLeft = zeros(length(idxLeft),length(tm));
-for ii = 1:length(idxLeft)
-    disp(['Processing Left LGN (', num2str(ii), ' of ', num2str(length(idxLeft)),')'])
-    [~,p0,~,~,~,bu] = behaviorOverTimeTime(newTLeft(ii),tWindow,[],-tWindow);
-    [~,pTimeLeft(ii,:),yTimeLeft(ii,:),mTimeLeft(ii,:),rawChLeft(ii,:),nTrialsLeft(ii,:),bu2] = behaviorOverTimeTime(newTLeft(ii),tWindow,p0,tm);
-end
-
-pTimeRight = zeros(length(idxRight),length(tm));
-yTimeRight = zeros(length(idxRight),length(tm));
-mTimeRight = zeros(length(idxRight),length(tm));
-rawChRight= zeros(length(idxLeft),length(tm));
-nTrialsRight = zeros(length(idxRight),length(tm));
-for ii = 1:length(idxRight)
-    disp(['Processing Right LGN (', num2str(ii), ' of ', num2str(length(idxRight)),')'])
-    [~,p0] = behaviorOverTimeTime(newTRight(ii),tWindow,[],-tWindow);
-    [~,pTimeRight(ii,:),yTimeRight(ii,:),mTimeRight(ii,:),rawChRight(ii,:),nTrialsRight(ii,:)] = behaviorOverTimeTime(newTRight(ii),tWindow,p0,tm);
-end
-
-if exist('idxCtl','var')
-    pTimeCtl = zeros(length(idxCtl),length(tm));
-    yTimeCtl = zeros(length(idxCtl),length(tm));
-    mTimeCtl = zeros(length(idxCtl),length(tm));
-    rawChCtl = zeros(length(idxCtl),length(tm));
-    nTrialsCtl = zeros(length(idxCtl),length(tm));
-    for ii = 1:length(idxCtl)
-        disp(['Processing Ctl LGN (', num2str(ii), ' of ', num2str(length(idxCtl)),')'])
-        [~,p0,~,~,~,bu] = behaviorOverTimeTime(newTCtl(ii),tWindow,[],-tWindow);
-        [~,pTimeCtl(ii,:),yTimeCtl(ii,:),mTimeCtl(ii,:),rawChCtl(ii,:),nTrialsCtl(ii,:),bu2] = behaviorOverTimeTime(newTCtl(ii),tWindow,p0,tm);
-    end
-end
-
-%% Plot Results: bias
-% Average the left
-variableToPlot = yTimeLeft;
-
-yTimeLeftMean = mean(variableToPlot,1,'omitnan');
-yTimeLeftSem = std(variableToPlot,[],1,'omitnan')./sqrt(sum(~isnan(variableToPlot),1));
-
-% Average the Right
-variableToPlot = yTimeRight;
-
-yTimeRightMean = mean(variableToPlot,1,'omitnan');
-yTimeRightSem = std(variableToPlot,[],1,'omitnan')./sqrt(sum(~isnan(variableToPlot),1));
-
-if exist('idxCtl','var')
-    % Average the left
-    variableToPlot = yTimeCtl;
-    
-    yTimeCtlMean = mean(variableToPlot,1,'omitnan');
-    yTimeCtlSem = std(variableToPlot,[],1,'omitnan')./sqrt(sum(~isnan(variableToPlot),1));
-end
-windowShift = 5;
-% Plot
-h = figure;
-ax = gca;
-shadedErrorBar(tm/60+windowShift,100*yTimeLeftMean,100*yTimeLeftSem,'lineprops',{'linewidth',2,'Color',ax.ColorOrder(1,:)});
-hold on
-shadedErrorBar(tm/60+windowShift,100*yTimeRightMean,100*yTimeRightSem,'lineprops',{'linewidth',2,'Color',ax.ColorOrder(2,:)});
-if exist('idxCtl','var')
-    shadedErrorBar(tm/60+windowShift,100*yTimeCtlMean,100*yTimeCtlSem,'lineprops',{'linewidth',2,'Color',ax.ColorOrder(3,:)});
-end
-axis([0,20,30,70])
-plot([-120,120],[1,1]*66.67,'k:')
-plot([-120,120],[1,1]*33.33,'k:')
-plot([-120,120],[1,1]*50,'k-')
-plot([-120,120],[1,1]*75,'k-.')
-plot([-120,120],[1,1]*25,'k-.')
-plot([5.5,5.5]-windowShift  ,[30,70],'k--','linewidth',2)
-
-% Show where it is significant
-% p = addSignificance(yTimeLeft,yTimeRight,tm/60+windowShift,h,0.05);
-
-legend('Left LGN','Right LGN','Control','location','northwest')
-xlabel('Time (minutes)')
-ylabel('Leftward Choices (%)')
-% title(['Choice at Equal Probability Point (', num2str(tWindow/60),' minute window)'])
-makeFigureBig(h);
-
-%% Plot Results: Point of equal probability
-% Average the left
-variableToPlot = pTimeLeft;
-
-yTimeLeftMean = mean(variableToPlot,1,'omitnan');
-yTimeLeftSem = std(variableToPlot,[],1,'omitnan')./sqrt(sum(~isnan(variableToPlot),1));
-
-% Average the Right
-variableToPlot = pTimeRight;
-
-yTimeRightMean = mean(variableToPlot,1,'omitnan');
-yTimeRightSem = std(variableToPlot,[],1,'omitnan')./sqrt(sum(~isnan(variableToPlot),1));
-
-% Average the Right
-if exist('idxCtl','var')
-    variableToPlot = pTimeCtl;
-    
-    yTimeCtlMean = mean(variableToPlot,1,'omitnan');
-    yTimeCtlSem = std(variableToPlot,[],1,'omitnan')./sqrt(sum(~isnan(variableToPlot),1));
-end
-
-% Plot
-h = figure;
-ax = gca;
-shadedErrorBar(tm/60,yTimeLeftMean,yTimeLeftSem,'lineprops',{'linewidth',2,'Color',ax.ColorOrder(1,:)});
-hold on
-shadedErrorBar(tm/60,yTimeRightMean,yTimeRightSem,'lineprops',{'linewidth',2,'Color',ax.ColorOrder(2,:)});
-if exist('idxCtl','var')
-    shadedErrorBar(tm/60,yTimeCtlMean,yTimeCtlSem,'lineprops',{'linewidth',2,'Color',ax.ColorOrder(3,:)});
-end
-axis([min(tm)/60,20,-40,40])
-
-% Show where it is significant
-addSignificance(pTimeLeft,pTimeRight,tm/60,h,0.05);
-
-legend('Left LGN','Right LGN','Control','location','northwest')
-xlabel('Time (minutes)')
-ylabel('Leftward Choices (%)')
-title(['No Bias Delay (', num2str(tWindow/60),' minute window)'])
-makeFigureBig(h);
-
-%% Plot results Contralateral Bias
-
-% Average LGN targeting
-variableToPlot = cat(1,1-yTimeLeft,yTimeRight);
-contraChoice = variableToPlot;
-
-yTimeRightMean = mean(variableToPlot,1,'omitnan');
-yTimeRightSem = std(variableToPlot,[],1,'omitnan')./sqrt(sum(~isnan(variableToPlot),1));
-
-if exist('idxCtl','var')
-    % Average the left
-    variableToPlot = yTimeCtl;
-    
-    yTimeCtlMean = mean(variableToPlot,1,'omitnan');
-    yTimeCtlSem = std(variableToPlot,[],1,'omitnan')./sqrt(sum(~isnan(variableToPlot),1));
-end
-
-% Plot
-h = figure;
-ax = gca;
-hold on
-shadedErrorBar(tm/60,100*yTimeRightMean,100*yTimeRightSem,'lineprops',{'linewidth',2,'Color',ax.ColorOrder(2,:)});
-if exist('idxCtl','var')
-    shadedErrorBar(tm/60,100*yTimeCtlMean,100*yTimeCtlSem,'lineprops',{'linewidth',2,'Color',ax.ColorOrder(3,:)});
-end
-axis([-5,15,30,70])
-plot([-120,120],[1,1]*66.67,'k:')
-plot([-120,120],[1,1]*33.33,'k:')
-plot([-120,120],[1,1]*50,'k-')
-plot([-120,120],[1,1]*75,'k-.')
-plot([-120,120],[1,1]*25,'k-.')
-
-% Show where it is significant
-p = addSignificance(contraChoice,yTimeCtl,tm/60,h,0.05);
-
-legend('LGN','Control','location','northwest')
-xlabel('Time (minutes)')
-ylabel('Contralateral Choices (%)')
-% title(['Choice at Equal Probability Point (', num2str(tWindow/60),' minute window)'])
-makeFigureBig(h);
-return
 %% Behavior over time averaging by block number
 nBlocks = 30;
 blockSize = 3;

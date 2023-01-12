@@ -61,8 +61,8 @@ axIdx = 1;
 if ~singleElement
     elementsOfInterest = gsParams.elementsOfInterest;
 else
-%     elementsOfInterest = [74,79,124,125,194,199];
-    elementsOfInterest = 1:256;
+    elementsOfInterest = [74,79,124,125,194,199];
+%     elementsOfInterest = 1:256;
 end
 
 powErr = zeros(1,length(elementsOfInterest));

@@ -89,9 +89,16 @@ for ii = 1:length(trial_data)
             result(ii) = 5;
     end
     
-    if (trial_data{ii}.us.sonicated)
+    if isfield(trial_data{ii},'injection')
+        if trial_data{ii}.injection
+            preUsTrials = nan;
+        elseif (trial_data{ii}.us.sonicated)
+            preUsTrials = ii;
+        end
+    elseif (trial_data{ii}.us.sonicated)
         preUsTrials = ii;
     end
+        
 
     if isfield(trial_data{ii},'choice')
         if ~iscell(trial_data{ii}.choice)
@@ -199,14 +206,18 @@ else
     usBlock = zeros(size(trial_data));
     for ii = 1:length(trial_data)
         usBlock(ii) = trial_data{ii}.pre_us_buckets;
+        bucketsBetweenSonications(ii) = trial_data{ii}.buckets_between_sonications;
     end
     usBlock = unique(usBlock);
-    if length(usBlock)>1
+    bucketsBetweenSonications = unique(bucketsBetweenSonications);
+    if length(usBlock)>1 || length(bucketsBetweenSonications)>1
         warning('The number of blocks before US changed during the session')
         keyboard
     end
 end
-
+if bucketsBetweenSonications<1000
+    keyboard
+end
 sonicationProperties = struct('FocalLocation',trial_data{1}.focalLocation,...
     'focalDev',trial_data{1}.focalDev,'nFocalSpots',trial_data{1}.nFocalSpots,...
     'voltage',voltage,'dc',dc,'prf',prf,'dur',dur);

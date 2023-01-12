@@ -1,4 +1,4 @@
-% setFgBurstMode(fg, period, nCycles) sets the 
+% setFgBurstMode(fg, ch, nCycles, phase, period) sets the 
 % function generator to burst mode with the specified parameters.
 % Currently this assumes that it is triggered burst mode and that the phase
 % is 0

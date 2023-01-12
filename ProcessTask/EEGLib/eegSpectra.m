@@ -23,9 +23,12 @@
 % 
 % Taylor Webb
 % 20 May 2022
-function spectra = eegSpectra(t,eeg,window,overlap)
+function spectra = eegSpectra(t,eeg,window,overlap,exclusionThreshold)
 if ~exist('overlap','var')
     overlap = 0;
+end
+if ~exist('exclusionThreshold','var')
+    exclusionThreshold = inf;
 end
 if ~iscell(t)
     error('Expected cell array')
@@ -36,7 +39,7 @@ if length(t) ~= length(eeg)
 end
 
 for hh = 1:length(t)
-    disp(['Session ',num2str(hh),' of ',num2str(length(t))])
+%     disp(['Session ',num2str(hh),' of ',num2str(length(t))])
     if length(t{hh}) == 1
         continue;
     end
@@ -57,7 +60,7 @@ for hh = 1:length(t)
     
     dt = abs(t{hh}(2)-t{hh}(1));
     nSamples = floor(window/dt);
-    nSampleJump = ceil(nSamples*(1-overlap))
+    nSampleJump = ceil(nSamples*(1-overlap));
     if ~mod(nSamples,2)
         nSamples = nSamples-1;
     end
@@ -97,15 +100,15 @@ for hh = 1:length(t)
     wt2 = zeros(1,nWindows);
     [~,curOffset] = min(abs(windowTime(1)-curT));
     for ii = 1:size(eeg{hh},1)
-        disp(['  Channel ', num2str(ii), ' of ', num2str(size(eeg{hh},1))])
+%         disp(['  Channel ', num2str(ii), ' of ', num2str(size(eeg{hh},1))])
         if sum(isnan(eeg{hh}(ii,:)))
             continue;
         end
         tic
         for jj = 1:nWindows
             if ~mod(jj,1e3)
-                disp(['    Window ', num2str(jj), ' of ', num2str(nWindows)])
-                disp(['      Elapsed Time: ', num2str(toc), ' s'])
+%                 disp(['    Window ', num2str(jj), ' of ', num2str(nWindows)])
+%                 disp(['      Elapsed Time: ', num2str(toc), ' s'])
             end
             curIdx = (((jj-1)*nSampleJump+1):(jj-1)*nSampleJump+nSamples)+curOffset;
             wt2(jj) = curT(curIdx(1));
@@ -113,7 +116,7 @@ for hh = 1:length(t)
             if isempty(curEeg)
                 continue
             end
-            if max(abs(curEeg))>100
+            if max(abs(curEeg))>exclusionThreshold
                 continue
             end
             curFft = fftshift(fft(curEeg));
@@ -123,11 +126,7 @@ for hh = 1:length(t)
             alpha(ii,jj) = mean(curFft(alphaIdx));
             beta(ii,jj) = mean(curFft(betaIdx));
             gamma(ii,jj) = mean(curFft(gammaIdx));
-            if gamma(ii,jj)>1e6
-                keyboard
-            end
             generic(ii,jj,:) = curFft(genericIdx);
-            keyboard
         end
     end
     

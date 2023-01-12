@@ -5,6 +5,7 @@ MATFILES/*
 *.snq
 *.png
 *.fig
+*.zip
 guiFileOutput.mat
 guiOutput.mat
 tmpBeforeSonication.mat

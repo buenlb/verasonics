@@ -34,11 +34,11 @@ for ii = 1:length(tData)
     curIdx = trIdx{ii};
     curT = t{ii};
 
-    usIdx = find(tData(ii).Block==tData(ii).usBlock);
+    usIdx = tData.sonicatedTrials;
     if isempty(usIdx)
         error(['Unable to find a sonication in tData #', num2str(ii)])
-    else
-        usIdx = usIdx(1);
+    elseif length(usIdx)>1
+        error('More than one sonication!')
     end
     tUsIdx = find(curId==usIdx);
     if isempty(tUsIdx)
