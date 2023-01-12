@@ -56,9 +56,10 @@ for q = 1:p_num
     fid = fopen(fileName);
     c = textscan(fid, '%f', 'Headerlines', numHeaderLines+2); % may not be 252 lines for every file...
     data = c{1};
-    
     x = data(1:2:end);
     data = data(2:2:end);
+    allData = data;
+    return
     data = reshape(data,[length(data)/2,2]);
     % calculate x axis properties
     if q == 1

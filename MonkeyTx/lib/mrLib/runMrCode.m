@@ -48,11 +48,12 @@
 
 clear all; close all; clc;
 %% Setup
-% verasonicsDir = 'C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\';
-verasonicsDir = 'C:\Users\Taylor\Documents\Projects\verasonics\verasonics\';
-% Add relevant paths to give access to library functions
+verasonicsDir = 'C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\';
+% verasonicsDir = 'C:\Users\Taylor\Documents\Projects\verasonics\verasonics\';
+% Add relevant paths to give a  ccess to library functions
 
 addpath([verasonicsDir, 'MonkeyTx\lib'])
+addpath([verasonicsDir, 'MonkeyTx\lib\mrLib'])
 addpath([verasonicsDir, 'MonkeyTx\lib\griddedImage'])
 addpath([verasonicsDir, 'MonkeyTx\lib\placementVerification'])
 addpath([verasonicsDir, 'MonkeyTx\MATFILES\'])
@@ -60,9 +61,9 @@ addpath([verasonicsDir, 'MonkeyTx\setupScripts\'])
 addpath([verasonicsDir, 'lib'])
 addpath([verasonicsDir, 'MonkeyTx\lib\mrLib\thermometry\'])
 addpath([verasonicsDir, 'MonkeyTx\lib\mrLib\transducerLocalization\']);
-
+return
 % Experiment Path
-sys.expPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20210929\';
+sys.expPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20220203\';
 
 % Gold Standard Acoustic Imaging Files
 eulerGs = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20210929\UltrasoundData\eulerGs.mat';
@@ -77,18 +78,18 @@ if strcmp(sys.txSn,'JEC482')
     sys.xDist = 187.59e-3/2;
     sys.yDist = 35e-3/2;
 else
-    sys.zDist = 9.53e-3;
+    sys.zDist = 9.53e-3+6e-3;
     sys.xDist = (169/2)*1e-3;
     sys.yDist = (35/2)*1e-3;
 end
     
 
 % Coupling File
-couplingFile = 'boltzmann_20210929_2.mat';
+couplingFile = 'CalvinPostLStim.mat';
 sys.couplingFile = [sys.expPath,'UltrasoundData\',couplingFile];
 
 % Log file
-logFile ='boltzmann20210929.mat';
+logFile ='calvin20220203_postLStim.mat';
 sys.logFile = [sys.expPath,'Logs\',logFile];
 
 % Imaging paths
@@ -96,7 +97,7 @@ sys.mrPath = [sys.expPath,'Images\'];
 sys.incomingDcms = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\IncomingImages\';
 
 % Anatomical Series
-sys.aSeriesNo = 8;
+sys.aSeriesNo = [];
 
 % Invert Transducer
 sys.invertTx = 0;
@@ -104,7 +105,7 @@ sys.invertTx = 0;
 sys.offElements = [];
 
 msgbox(['You have selected transducer: ', sys.txSn]);
-
+return
 %% Check Coupling
 rescan = 1;
 scIdx = 1;
@@ -143,7 +144,7 @@ sys = selectFocus(sys);
 saveState(sys);
 
 %% Sonicate
-sys = mrSonication(sys,5,23);
+sys = mrSonication(sys,25.5,25,.48);
 totalEnergy(sys);
 saveState(sys);
 % Overlay result

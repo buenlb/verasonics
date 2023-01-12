@@ -25,7 +25,7 @@ received = 0;
 if ~isfield(Resource.Parameters,'verasonicsPort')
     Resource.Parameters.verasonicsPort = serial('COM1');
     fopen(Resource.Parameters.verasonicsPort);
-    fprintf(Resource.Parameters.verasonicsPort,'INIT');0
+%     fprintf(Resource.Parameters.verasonicsPort,'INIT');
 end
 pt = Resource.Parameters.verasonicsPort;
 
@@ -50,6 +50,12 @@ while ~received
         case 'INIT'
             fprintf(pt,'INIT');
             disp('Initialized');
+        case 'ENDSONICATING'
+            fprintf(pt,'ENDSONICATING');
+            fclose(pt);
+            disp('Finished Sonicating')
+            closeVSX();
+            return;
         case 'TERMINATE'
             fprintf(pt,'TERMINATE');
             fclose(pt);
@@ -97,7 +103,7 @@ end
 
 % Find the phases for the first focal spot
 for ii = 1:size(targets,1)
-    elements = steerArray(elements,targets(ii,:)*1e-3,Trans.frequency,1);
+    elements = steerArray(elements,targets(ii,:)*1e-3,Trans.frequency,0);
     phs = [elements.t]';
     TX(ii).Delay = phs;
 end

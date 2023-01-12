@@ -1,53 +1,64 @@
-function run_lstim(voltage, target, dc)
+verasonicsDir = 'C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\';
+% verasonicsDir = 'C:\Users\Taylor\Documents\Projects\verasonics\verasonics\';
+% Add relevant paths to give access to library functions
 
-FG694VISA = 'USB0::0x0957::0x2A07::MY52600694::0::INSTR';
-FG670VISA = 'USB0::0x0957::0x2A07::MY52600670::0::INSTR';
+addpath([verasonicsDir, 'MonkeyTx\lib'])
+addpath([verasonicsDir, 'MonkeyTx\lib\griddedImage'])
+addpath([verasonicsDir, 'MonkeyTx\lib\placementVerification'])
+addpath([verasonicsDir, 'MonkeyTx\MATFILES\'])
+addpath([verasonicsDir, 'MonkeyTx\setupScripts\'])
+addpath([verasonicsDir, 'lib'])
+addpath([verasonicsDir, 'MonkeyTx\lib\mrLib\thermometry\'])
+addpath([verasonicsDir, 'MonkeyTx\lib\mrLib\transducerLocalization\']);
+addpath([verasonicsDir, 'MonkeyTx\lib\lStimLib\']);
 
-if ~exist('fg2','var')
-    fg2 = establishKeysightConnection(FG670VISA);
-end
-if ~exist('fg1','var')
-    fg1 = establishKeysightConnection(FG694VISA);
-end
-if strcmp(fg2.Status, 'closed')
-    fopen(fg2);
-end
-if strcmp(fg1.Status, 'closed')
-    fopen(fg1);
-end
-triggerAmplitude = 5e3;
+% Voltage at 480 (1.2 MPa, 31.4kPa/V): 38.2. 1 MPa: 31.8
+% Voltage at 650 (1.2 MPa, 51.2kPa/V): 23.4. 1 MPa: 19.5
 
-% Set channel 1 to do LEDs
-setFgWaveform(fg1,1,'SQU',4e-6,triggerAmplitude,triggerAmplitude/2,50,4);
-setFgBurstMode(fg1,1,4*30);
-setFgTriggerMode(fg1,1,'BUS',0);
+%% 480 kHz Pulsed
+% foci = [-8.5 5 57.7;13.2 6 52.7];
+% V = 31.8;
+% prf = 400; % 400 for 2.5 ms pulses, NA for CW
+% dc = 98; % 98 for pulses, 100 for CW
+% freq = 0.48;
 
-% Set channel 2 to trigger US triggers
-setFgWaveform(fg1,2,'SQU',4e-6,triggerAmplitude,triggerAmplitude/2,50,4);
-setFgBurstMode(fg1,2,1);
-setFgTriggerMode(fg1,2,'BUS',0);
+%% 480 kHz CW
+% foci = [-8.5 5 57.7;13.2 6 52.7];
+% V = 31.8;
+% prf = 400; % 400 for 2.5 ms pulses, NA for CW
+% dc = 100; % 98 for pulses, 100 for CW
+% freq = 0.48;
+% logFile = 'calvin_0.48_cw';
 
-% Set channel 1 of fg2 to trigger US 
-setFgWaveform(fg2,1,'SQU',0.5e-6,triggerAmplitude,triggerAmplitude/2,50,5);
-setFgBurstMode(fg2,1,15);
-setFgTriggerMode(fg2,1,'EXT',17);
+% %% 650 kHz Pulsed
+% foci = [-8.5 5 57.7;13.2 6 52.7];
+% V = 19.5;
+% prf = 400; % 400 for 2.5 ms pulses, NA for CW
+% dc = 98; % 98 for pulses, 100 for CW
+% freq = 0.65;
+% logFile = 'calvin_0.65_p';
+% 
+% %% 650 kHz CW
+foci = [-8.5 5 57.7;13.2 6 52.7];
+V = 19.5*2;
+prf = 400; % 400 for 2.5 ms pulses, NA for CW
+dc = 100; % 98 for pulses, 100 for CW
+freq = 0.65;
+logFile = 'calvin_0.65_CW';
 
- % Turn on output.
-outpOn(fg1,1);
-outpOn(fg1,2);
-outpOn(fg2,1);
-outpOn(fg2,2,'OFF');
+% Usage: lStim(duration,voltage,focalSpot(s),PRF,DC,freq,logFileName,txSn)
+Resource = lStim(20e-3,V,foci,prf,dc,freq,logFile,'JAB800'); % 2.5 ms pulses alternating LGN
 
 try
-    if length(voltage)~=length(dc)
-        error('There must be a voltage for every duty cycle')
-    end
-    
-    controlFgs_lstim([fg1,fg2],voltage);
-catch ER
-    fclose(fg2);
-    fclose(fg1);
-    rethrow(ER);
+    save tmpBeforeVSX.mat
+    filename = 'lStim.mat';
+    VSX;
+    load tmpBeforeVSX.mat
+catch ME
+    fclose(Resource.Parameters.fgs(1));
+%     fclose(Resource.Parameters.fgs(2));
+    rethrow(ME);
 end
-fclose(fg2);
-fclose(fg1);
+
+fclose(Resource.Parameters.fgs(1));
+% fclose(Resource.Parameters.fgs(2));

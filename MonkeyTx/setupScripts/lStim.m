@@ -15,7 +15,7 @@
 % December 2020
 % 
 
-function lStim(duration, voltage, target, PRF, duty, frequency, fName, txSn, dev, nTargets)
+function Resource = lStim(duration, voltage, target, PRF, duty, frequency, fName, txSn)
 maxV = 50; % Maximum allowed voltage
 %% Set up path locations
 srcDirectory = setPaths();
@@ -55,6 +55,8 @@ Resource.Parameters.startEvent = 1;
 Resource.Parameters.logFileName = fName;
 Resource.Parameters.priorSonication = [];
 Resource.Parameters.voltages = voltage;
+Resource.Parameters.fgs = prep_lstim(1);
+Resource.Parameters.nBlocks = 7;
 Resource.Parameters.DutyCycle = duty;
 Resource.Parameters.PulseRepFreq = PRF;
 Resource.Parameters.Duration = duration;
@@ -113,7 +115,7 @@ TW.type = 'parametric';
 TW.Parameters = [Trans.frequency,0.67,nHalfCycles,1]; % A, B, C, D
 
 %% Create a spotlight effect by sonicating multiple targets
-targets = generateTargets(target,nTargets,dev);
+targets = target;
 % Find phases for each target
 xTx = Trans.ElementPos(:,1);
 yTx = Trans.ElementPos(:,2);
@@ -128,15 +130,33 @@ for ii = 1:size(targets,1)
     phases{ii} = [elements.t]';
 end
 
-for ii = 1:length(phases)
-    % Specify TX structure array.
-    TX(ii).waveform = 1; % use 1st TW structure.
-    TX(ii).focus = 0;
-    TX(ii).Apod = ones(1,256);
-    % badElements = load('C:\Users\Verasonics\Downloads\elementsOff.mat');
-    % TX(1).Apod(badElements.unconnected) = 0;
-    
-    TX(ii).Delay = phases{ii};
+if duty < 100 || size(targets,1)==1
+    for ii = 1:length(phases)
+        % Specify TX structure array.
+        TX(ii).waveform = 1; % use 1st TW structure.
+        TX(ii).focus = 0;
+        TX(ii).Apod = ones(1,256);
+        % badElements = load('C:\Users\Verasonics\Downloads\elementsOff.mat');
+        % TX(1).Apod(badElements.unconnected) = 0;
+
+        TX(ii).Delay = phases{ii};
+    end
+elseif size(targets,1)==2
+    TX(1).waveform = 1; % use 1st TW structure.
+    TX(1).focus = 0;
+    TX(1).Apod = ones(1,256);
+    TX(1).Delay = phases{1};
+    for ii = 1:32
+        curIdx = ((ii-1)*4+1):ii*4;
+        if mod(ii,2)
+            idx(curIdx) = (1:2:7)+(ii-1)*8;
+        else
+            idx(curIdx) = (2:2:8)+(ii-1)*8;
+        end
+    end
+    TX(1).Delay(idx) = phases{2}(idx);
+else
+    error('More than two targets is not allowed for continuous wave case')
 end
 
 % Specify TGC Waveform structure.
@@ -146,7 +166,7 @@ TGC(1).Waveform = computeTGCWaveform(TGC);
 
 %% External Function
 Process(1).classname = 'External';
-Process(1).method = 'setNextLStim';
+Process(1).method = 'controlFgs_lstimVerasonics';
 Process(1).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'srcbufnum',1,...
 'srcframenum',1,...
@@ -214,13 +234,10 @@ Event(n).tx = 0; % use 1st TX structure.
 Event(n).rcv = 0; % no receive
 Event(n).recon = 0; % no reconstruction.
 Event(n).process = 0; % no processing
-Event(n).seqControl = [nsc,nsc+1,nsc+2];
+Event(n).seqControl = [nsc];
     SeqControl(nsc).command = 'jump';
     SeqControl(nsc).argument = serverEvent;
     SeqControl(nsc).condition = 'exitAfterJump';
-    nsc = nsc + 1;
-    SeqControl(nsc).command = 'sync';
-    SeqControl(nsc).argument = 2.1e9;
     nsc = nsc + 1;
 n = n+1;
 
