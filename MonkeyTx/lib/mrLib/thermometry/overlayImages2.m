@@ -1,10 +1,10 @@
-% Overlay Images 2 overlays cImg on gImg using the colormap, map, to
+ % Overlay Images 2 overlays cImg on gImg using the colormap, map, to
 % interpret the data in gImg.
 % 
 % Usage: overlayImages2(gImg,cImg,gWindow,cWindow,xData,yData,ax,transparency,map)
 function overlayImages2(gImg,cImg,gWindow,cWindow,xData,yData,ax,transparency,map)
 %% Process Inputs
-defaultMap = 'winter';
+defaultMap = 'hot';
 if nargin < 3
     gWindow = [min(gImg(:)),max(gImg(:))];
     cWindow = [min(cImg(:)),max(cImg(:))];

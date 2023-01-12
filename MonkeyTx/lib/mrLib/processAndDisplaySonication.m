@@ -25,7 +25,7 @@ elseif nargin < 3
     maxT = 2;
 end
 sys.baseline = 1:5;
-sys.dynamic = 6;
+sys.dynamic = sys.sonication(sonicationNo).firstDynamic;
 sys.curSonicationNo = sonicationNo;
 sys = adjustFocus(sys,sys.sonication(sonicationNo).focalSpot,'US');
 

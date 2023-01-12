@@ -16,7 +16,7 @@
 % 
 
 function doppler256_neuromodulate2_spotlight(duration, voltage, target, PRF, duty, frequency, fName, txSn, dev, nTargets)
-maxV = 50; % Maximum allowed voltage
+maxV = 51.2; % Maximum allowed voltage
 %% Set up path locations
 srcDirectory = setPaths();
 addpath([srcDirectory,'lib\mrLib'])
@@ -113,7 +113,16 @@ TW.type = 'parametric';
 TW.Parameters = [Trans.frequency,0.67,nHalfCycles,1]; % A, B, C, D
 
 %% Create a spotlight effect by sonicating multiple targets
-targets = generateTargets(target,nTargets,dev);
+if ~sum(isnan(target))
+    targets = generateTargets(target,nTargets,dev);
+else
+    nTargets(nTargets==1) = 0;
+    totTargets = sum(nTargets);
+    if totTargets == 0
+        totTargets = 1;
+    end
+    targets = nan(totTargets,3);
+end
 % Find phases for each target
 xTx = Trans.ElementPos(:,1);
 yTx = Trans.ElementPos(:,2);
@@ -124,8 +133,14 @@ elements.y = yTx*1e-3;
 elements.z = zTx*1e-3;
 
 for ii = 1:size(targets,1)
-    elements = steerArray(elements,targets(ii,:)*1e-3,frequency);
-    phases{ii} = [elements.t]';
+    if sum(isnan(targets(ii,:)))
+        rndPhs = load('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\taskLib\randomPhases.mat');
+        phases{ii} = rndPhs.phs{ii};
+        disp('USING RANDOM PHASES!')
+    else
+        elements = steerArray(elements,targets(ii,:)*1e-3,frequency,0);
+        phases{ii} = [elements.t]';
+    end
 end
 
 for ii = 1:length(phases)

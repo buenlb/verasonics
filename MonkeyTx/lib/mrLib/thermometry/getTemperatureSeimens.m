@@ -53,6 +53,7 @@ disp(['      Number of dcm images in path: ', num2str(nImages), '. Number of tem
 %% Generate the baseline
 baselineImgs = (1+(baseline(1)-1)*nSlices):(nSlices+(baseline(end)-1)*nSlices);
 baselineImg = zeros(size(img,1),size(img,2),nSlices);
+
 for ii = 1:nSlices
     curSlices = baselineImgs(ii):nSlices:nSlices*baseline(end);
     baselineImg(:,:,ii) = mean(img(:,:,curSlices),3);

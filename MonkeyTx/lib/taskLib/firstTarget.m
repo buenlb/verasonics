@@ -11,7 +11,7 @@
 %       sonication
 %   E:L Sonicate left LGN with parameters for Euler
 %   E:R Sonicate right LGN with parameters for Eule  r
-%   TERMINATE: Task complete, close communication.
+%   TERMINATE: Task comp.lete, close communication.
 % 
 % Taylor Webb
 % University of Utah
@@ -94,14 +94,14 @@ while ~received
             disp(['  Duty: ', num2str(dc), '%'])
             disp(['  Freqency: ', num2str(frequency), 'MHz'])
             disp(['  Duration: ', num2str(duration), ' ms'])
-            disp(['  Target Variation (<x,y,z>): <', num2str(dev(3)),',',num2str(dev(2)),',',num2str(dev(3)),'>'])
+            disp(['  Target Variation (<x,y,z>): <', num2str(dev(1)),',',num2str(dev(2)),',',num2str(dev(3)),'>'])
             disp(['  Saving in: ', fName])
             
             doppler256_neuromodulate2_spotlight(duration*1e-3,voltage,target,prf,dc,frequency,[expPath,fName,'_log'],txSn,dev,nTargets);
         case 'SKIPSKULL'
             fprintf(pt,'SKIPSKULL');
             fNameOrig = fName;
-            received = 1;
+%             received = 1;
         case 'SKULL'
             disp('Starting Skull Image')
             fprintf(pt,'SKULL');
@@ -136,8 +136,15 @@ while ~received
                 
                 scanIdx = scanIdx+1;
             end
-            
+            fprintf(pt,'INIT');
+%             received = 1;
+        case 'BEGINSONICATING'
+            fprintf(pt,'BEGINSONICATING');
             received = 1;
+        case 'ENDSONICATING'
+            fprintf(pt,'ENDSONICATING');
+            disp('Finished Sonicating')
+            closeVSX();
         case 'TERMINATE'
             fprintf(pt,'TERMINATE');
             fclose(pt);

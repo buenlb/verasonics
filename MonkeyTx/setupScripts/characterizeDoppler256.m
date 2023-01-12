@@ -1,18 +1,19 @@
 clear all; clc;
 
-HIFU = 1;
+HIFU = 0;
 %% Set up path locations
 srcDirectory = setPaths();
 
 %%
-% txSn = 'JAB800'; % Serial number of transducer - necessary for correct geometry
+txSn = 'JAB800'; % Serial number of transducer - necessary for correct geometry
 % txSn = 'IHG989';
-txSn = 'JEC482';
-frequency = 0.65; % Frequency in MHz
-focus = [10,0,57]; % Focal location in mm. x is the long axis of the array, y is the short axis, and z is depth
-nCycles = 5; % number of cycles with which to excite Tx (can integer multiples of 1/2)
+% txSn = 'JEC482';
+frequency = 0.48; % Frequency in MHz
+focus = [0,0,65]; % Focal location in mm. x is the long axis of the array, y is the short axis, and z is depth
+% focus2 = [-12,0,65];
+nCycles = 1; % number of cycles with which to excite Tx (can integer multiples of 1/2)
 % nCycles = round(300e-3*650e3);
-ioChannel = 256;
+ioChannel = 255;
 NA = 1;
 
 % Specify system parameters
@@ -85,8 +86,7 @@ TW(1).Parameters = [Trans.frequency,0.67,nCycles*2,1]; % A, B, C, D
 % Specify TX structure array.
 TX(1).waveform = 1; % use 1st TW structure.
 TX(1).focus = 0;
-TX(1).Apod = ones(1,256);
-% TX(1).Apod(ioChannel) = 1;
+TX(1).Apod = zeros(1,256);
 TX(1).Apod(ioChannel) = 1;
 
 
@@ -101,6 +101,20 @@ elements.z = zTx*1e-3;
 elements = steerArray(elements,focus*1e-3,frequency);
 delays = [elements.t]';
 TX(1).Delay = delays;
+
+if exist('focus2','var')
+    elements = steerArray(elements,focus2*1e-3,frequency);
+    delays2 = [elements.t]';
+    for ii = 1:32
+        curIdx = ((ii-1)*4+1):ii*4;
+        if mod(ii,2)
+            idx(curIdx) = (1:2:7)+(ii-1)*8;
+        else
+            idx(curIdx) = (2:2:8)+(ii-1)*8;
+        end
+    end
+    TX(1).Delay(idx) = delays2(idx);
+end
 % TX(1).Delay = zeros(1,256);
 
 % Specify TGC Waveform structure.
@@ -159,7 +173,7 @@ Event(n).recon = 0; % no reconstruction.
 Event(n).process = 0; % no processing
     Event(n).seqControl = [nsc,nsc+1,nsc+2];
     SeqControl(nsc).command = 'timeToNextAcq';
-    SeqControl(nsc).argument = 800;
+    SeqControl(nsc).argument = 1e6;
     nscTime2Aq = nsc;
     nsc = nsc + 1;
     SeqControl(nsc).command = 'transferToHost';
