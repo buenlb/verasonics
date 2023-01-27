@@ -1,4 +1,4 @@
-function vep = plotVeps(eeg,ledTrig,usTrig)
+function [vep,t] = plotVeps(eeg,ledTrig,usTrig)
 
 fs = 250;
 dt = 1/fs;
@@ -8,7 +8,8 @@ ledStim = find(diff(ledTrig)>0);
 
 % All led triggers should be separated by 250 ms (+/- 1 sample). Error 
 % check this.
-if sum((diff(t(ledStim))-0.25)>dt)
+if sum((diff(t(ledStim))-1)>2*dt)
+    keyboard
     error('The trigger for the LEDs is not 250 ms')
 end
 
@@ -20,7 +21,7 @@ d = designfilt('bandstopiir','FilterOrder',2, ...
 eeg = filtfilt(d,eeg);
 toc
 
-window = 200e-3;
+window = 250e-3;
 window = ceil(window/dt);
 
 vep = nan(window+1,length(ledStim));
@@ -28,8 +29,10 @@ for ii = 1:length(ledStim)
     vep(:,ii) = eeg(ledStim(ii):(ledStim(ii)+window))-mean(eeg(ledStim(ii):(ledStim(ii)+window)));
 end
 
+t = t(1:window+1);
+
 h = figure;
-shadedErrorBar(t(1:window+1)*1e3,mean(vep,2),semOmitNan(vep,2));
+shadedErrorBar(t*1e3,mean(vep,2),semOmitNan(vep,2));
 xlabel('time (ms)')
 ylabel('voltage (\mu V)')
 makeFigureBig(h);
