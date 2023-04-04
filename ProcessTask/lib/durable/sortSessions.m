@@ -65,11 +65,21 @@ for ii = 1:length(tData)
         monkS(setIdx) = curMonk;
         foci(setIdx) = curFoci;
         focalLocation(setIdx,:) = curFocalLocation;
+        ispta = p2I_brain(curVoltage*55.2*1e3)/1e4*curDc/100;
+        isppa = p2I_brain(curVoltage*55.2*1e3)/1e4;
+        if curFoci>1
+            effectivePrf = curPrf*curFoci;
+            effectiveDc = curDc*curFoci;
+        else
+            effectivePrf = curPrf;
+            effectiveDc = curDc;
+        end
         
         sessions(setIdx) = struct('PRF',curPrf,'dc',curDc,'duration',curDuration,...
             'pulseDuration',1/curPrf*curDc/100,'voltage',curVoltage,'freq',curFreq,...
             'monk',curMonk,'sessionsLeft',[],'sessionsRight',[],'sessionsCtl',[], ...
-            'nFoci',curFoci,'focalLocation',curFocalLocation);
+            'nFoci',curFoci,'focalLocation',curFocalLocation,'Ispta',ispta,...
+            'Isppa',isppa,'effectivePrf',effectivePrf,'effectiveDc',effectiveDc);
         if tData(ii).sonication.focalLocation(1)<0
             sessions(setIdx).sessionsLeft = ii;
         elseif tData(ii).sonication.focalLocation(1)>0

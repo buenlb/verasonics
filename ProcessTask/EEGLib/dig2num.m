@@ -1,5 +1,4 @@
 function num = dig2num(t,dig)
-
 bOn = find(diff(dig)>0);
 bOff = find(diff(dig)<0);
 
@@ -20,3 +19,8 @@ for ii = 1:length(bOn)
     end
 end
 num = bin2dec(num2str(binNum(2:end-1)));
+
+if isempty(num)
+    num = nan;
+end
+

@@ -24,6 +24,7 @@ if nargin == 0
         uigetfile('*.rhs', 'Select an RHS2000 Data File', 'MultiSelect', 'off');
     
     if (file == 0)
+        out = [];
         return;
     end
 else
@@ -79,6 +80,7 @@ desired_upper_bandwidth = fread(fid, 1, 'single');
 % the data acquisition.
 notch_filter_mode = fread(fid, 1, 'int16');
 notch_filter_frequencies = [];
+keyboard
 if (notch_filter_mode == 1)
     notch_filter_frequencies = [60];
 end

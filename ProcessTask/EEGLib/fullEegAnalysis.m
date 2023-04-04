@@ -27,7 +27,15 @@
 %       by a factor of 1e3 to avoid running out of memory when
 %       reconstructing multimple sessions.  
 
-function [eegOutJan, eegOutTaylor, eegOutTaylorNT, eegOutTaylorFileIO] = fullEegAnalysis(pth,baseName,tData)
+function [eegOutJan, eegOutTaylor, eegOutTaylorNT, eegOutTaylorFileIO] = fullEegAnalysis(pth,baseName,tData,COMPARISON)
+if ~exist('COMPARISON','var')
+    COMPARISON = 0;
+end
+
+eegOutJan = [];
+eegOutTaylorNT = [];
+eegOutTaylorFileIO = [];
+eegOutTaylor = [];
 
 %% Load Raw EEG Data
 if pth(end)~='\'
@@ -36,11 +44,12 @@ end
 files = dir([pth,baseName,'*.rhs']);
 
 if isempty(files)
-    error(['No files found with inquiry: ', pth, baseName, '*.rhs']);
+    return
+%     error(['No files found with inquiry: ', pth, baseName, '*.rhs']);
 end
 
 eegIn = struct('eeg',[],'dig',[],'t',[]);
-notches = [60,120,180];
+notches = [60];
 for ii = 1:length(files)
 %     disp(['Loading File: ', num2str(ii), ' of ', num2str(length(files))])
     data = read_Intan_RHS2000_file_JK([pth,files(ii).name],notches);
@@ -49,7 +58,7 @@ for ii = 1:length(files)
     eegIn.dig = cat(2,eegIn.dig,data.board_dig_in_data);
     eegIn.t = cat(2,eegIn.t,data.t);
 end
-
+keyboard
 %% Find trial times
 if size(eegIn.dig,1)<2
     warning('Binary Coding for trial number on different channel than expected')
@@ -60,34 +69,46 @@ end
 [taskIdx,trId] = findTaskIdx(eegIn.t,eegIn.dig(bCodeIdx,:));
 
 %% Set US On to t=0
-[~,zIdx] = alignEegSpectra({eegIn.t},tData,{taskIdx},{trId});
+try
+    [~,zIdx] = alignEegSpectra({eegIn.t},tData,{taskIdx},{trId});
+catch me
+    if strcmp(me.identifier,'eeg:noSonication')
+        return
+    elseif strcmp(me.identifier,'eeg:multSonication')
+        return
+    else
+        rethrow(me);
+    end
+end
 
 eegIn.zIdx = zIdx;
 eegIn.zeroT = eegIn.t(zIdx);
 
-%% Find Features (Jan)
-frequencies = [1 : 1 : 19, 20 : 2 : 38, 40 : 4 : 76, 80 : 8 : 320];
-% spike_thrs = [4i, 5i]; %uV; imaginary values stand for the number of sigmas to be exceeded (e.g., 5i: abs(signal) > 5 sigma)
-%frequencies = [2 : 2 : 320];
-frequency_bands = cell(size(frequencies));
-for f = 1 : numel(frequencies)
-    frequency_bands{f} = [frequencies(f) - 1, frequencies(f) + 1];
-end
-
-rereference = ''; %'' or 'CAR'
 windowdur = 0.5;
-
-data.amplifier_data = eegIn.eeg;
-[features, tFeatures] = derive_features(data,frequency_bands,[],windowdur,rereference);
-tFeatures = tFeatures-eegIn.zeroT;
-
-featuresChannelsAveraged = nan(size(features,1)/2,size(features,2),2);
-featuresChannelsAveraged(:,:,1) = features(1:length(frequencies),:);
-featuresChannelsAveraged(:,:,2) = features(length(frequencies)+1:end,:);
-featuresChannelsAveraged = mean(featuresChannelsAveraged,3,'omitnan');
-
-eegOutJan = struct('features',featuresChannelsAveraged,'tFeatures',tFeatures,...
-    'frequencies',frequencies,'windowDur',windowdur,'notches',notches);
+%% Find Features (Jan)
+if COMPARISON
+    frequencies = [1 : 1 : 19, 20 : 2 : 38, 40 : 4 : 76, 80 : 8 : 320];
+    % spike_thrs = [4i, 5i]; %uV; imaginary values stand for the number of sigmas to be exceeded (e.g., 5i: abs(signal) > 5 sigma)
+    %frequencies = [2 : 2 : 320];
+    frequency_bands = cell(size(frequencies));
+    for f = 1 : numel(frequencies)
+        frequency_bands{f} = [frequencies(f) - 1, frequencies(f) + 1];
+    end
+    
+    rereference = ''; %'' or 'CAR'
+    
+    data.amplifier_data = eegIn.eeg;
+    [features, tFeatures] = derive_features(data,frequency_bands,[],windowdur,rereference);
+    tFeatures = tFeatures-eegIn.zeroT;
+    
+    featuresChannelsAveraged = nan(size(features,1)/2,size(features,2),2);
+    featuresChannelsAveraged(:,:,1) = features(1:length(frequencies),:);
+    featuresChannelsAveraged(:,:,2) = features(length(frequencies)+1:end,:);
+    featuresChannelsAveraged = mean(featuresChannelsAveraged,3,'omitnan');
+    
+    eegOutJan = struct('features',featuresChannelsAveraged,'tFeatures',tFeatures,...
+        'frequencies',frequencies,'windowDur',windowdur,'notches',notches);
+end
 
 %% Find Features (Taylor)
 tAligned = alignEegSpectra({eegIn.t},tData,{taskIdx},{trId});
@@ -98,49 +119,55 @@ tFeatures = spectra.windowTime;
 frequencies = spectra.frequencies;
 
 %% Find Features (Taylor without thresholding)
-tAligned = alignEegSpectra({eegIn.t},tData,{taskIdx},{trId});
-spectra = eegSpectra(tAligned,{eegIn.eeg},windowdur,0.5);
-
-featuresChannelsAveragedNT = squeeze(mean(spectra.all0to100,1,'omitnan')).';
-tFeaturesNT = spectra.windowTime;
-frequenciesNT = spectra.frequencies;
+if COMPARISON
+    tAligned = alignEegSpectra({eegIn.t},tData,{taskIdx},{trId});
+    spectra = eegSpectra(tAligned,{eegIn.eeg},windowdur,0.5);
+    
+    featuresChannelsAveragedNT = squeeze(mean(spectra.all0to100,1,'omitnan')).';
+    tFeaturesNT = spectra.windowTime;
+    frequenciesNT = spectra.frequencies;
+end
 
 %% Downsample eegIn to include with eegOut
 ds = 1e3;
-% eegIn.eeg = eegIn.eeg(:,1:ds:end);
-% eegIn.dig = eegIn.dig(:,1:ds:end);
-% eegIn.t = eegIn.t(1:ds:end)-eegIn.zeroT;
-% eegIn.taskIdx = taskIdx;
-% eegIn.trId = trId;
+eegIn.eeg = eegIn.eeg(:,1:ds:end);
+eegIn.dig = eegIn.dig(:,1:ds:end);
+eegIn.t = eegIn.t(1:ds:end)-eegIn.zeroT;
+eegIn.taskIdx = taskIdx;
+eegIn.trId = trId;
 
-eegOutJan.eegIn = eegIn;
+eegOutTaylor.eegIn = eegIn;
 
 %%
-eegOutTaylorNT = struct('features',featuresChannelsAveragedNT,'tFeatures',tFeaturesNT,...
-    'frequencies',frequenciesNT,'windowDur',windowdur,'notches',notches);
+if COMPARISON
+    eegOutTaylorNT = struct('features',featuresChannelsAveragedNT,'tFeatures',tFeaturesNT,...
+        'frequencies',frequenciesNT,'windowDur',windowdur,'notches',notches);
+end
 
 %% Return result
 eegOutTaylor = struct('features',featuresChannelsAveraged,'tFeatures',tFeatures,...
     'frequencies',frequencies,'windowDur',windowdur,'notches',notches,...
-    'eegIn',eegIn);
+    'eegIn',eegIn,'featuresByPins',spectra.all0to100);
 
 %% My File IO
-[~,~,~,~,tEeg,eeg,dig,~,trId,taskIdx] =...
-                loadEEGTaskData(pth,baseName,tData);
-
-tAligned = alignEegSpectra({tEeg},tData,{taskIdx},{trId});
-spectra = eegSpectra(tAligned,{eeg},windowdur,0.5,50);
-
-eegIn.eeg = eeg(:,1:ds:end);
-eegIn.dig = dig(:,1:ds:end);
-eegIn.t = tAligned(1:ds:end);
-eegIn.taskIdx = taskIdx;
-eegIn.trId = trId;
-
-featuresChannelsAveraged = squeeze(mean(spectra.all0to100,1,'omitnan')).';
-tFeatures = spectra.windowTime;
-frequencies = spectra.frequencies;
-
-eegOutTaylorFileIO = struct('features',featuresChannelsAveraged,'tFeatures',tFeatures,...
-    'frequencies',frequencies,'windowDur',windowdur,'notches',notches,...
-    'eegIn',eegIn);
+if COMPARISON
+    [~,~,~,~,tEeg,eeg,dig,~,trId,taskIdx] =...
+                    loadEEGTaskData(pth,baseName,tData);
+    
+    tAligned = alignEegSpectra({tEeg},tData,{taskIdx},{trId});
+    spectra = eegSpectra(tAligned,{eeg},windowdur,0.5,50);
+    
+    eegIn.eeg = eeg(:,1:ds:end);
+    eegIn.dig = dig(:,1:ds:end);
+    eegIn.t = tAligned(1:ds:end);
+    eegIn.taskIdx = taskIdx;
+    eegIn.trId = trId;
+    
+    featuresChannelsAveraged = squeeze(mean(spectra.all0to100,1,'omitnan')).';
+    tFeatures = spectra.windowTime;
+    frequencies = spectra.frequencies;
+    
+    eegOutTaylorFileIO = struct('features',featuresChannelsAveraged,'tFeatures',tFeatures,...
+        'frequencies',frequencies,'windowDur',windowdur,'notches',notches,...
+        'eegIn',eegIn);
+end

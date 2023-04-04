@@ -85,7 +85,6 @@ for ii = 1:length(tm)
         title(['Time = ',num2str(tm(ii)/60), ' minutes.'])
         makeFigureBig(h);
         axis([min(delays),max(delays),0,100])
-        waitforbuttonpress
     end
     m(ii) = yD(delays==0);
     % all(ii) = mean(tData.ch(idx),'omitnan');

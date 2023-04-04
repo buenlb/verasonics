@@ -36,16 +36,16 @@ for ii = 1:length(tData)
 
     usIdx = tData.sonicatedTrials;
     if isempty(usIdx)
-        error(['Unable to find a sonication in tData #', num2str(ii)])
+        error('eeg:noSonication',['Unable to find a sonication in tData #', num2str(ii)])
     elseif length(usIdx)>1
-        error('More than one sonication!')
+        error('eeg:multSonication','More than one sonication!')
     end
     tUsIdx = find(curId==usIdx);
     if isempty(tUsIdx)
-        warning(['Unable to find the sonication trial in the EEG data. Cell index #', num2str(ii)])
-        tAligned{ii} = nan;
-        zIdx = nan;
-        continue
+        error('eeg:noSonication',['Unable to find the sonication trial in the EEG data. Cell index #', num2str(ii)])
+    end
+    if length(tUsIdx)>1
+        error('eeg:multSonication','More than one sonication!')
     end
     zIdx = curIdx(tUsIdx);
     tAligned{ii} = curT-curT(curIdx(tUsIdx));

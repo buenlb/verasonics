@@ -105,10 +105,34 @@ for ii = 1:length(eegOutJ)
     end
 end
 %%
-% close all
-idx1 = [idxRight idxLeft];
-% idx1 = idx1(idx1~=130);
+
+keepIdx = keepIdxLog & keepIdxNan & keepIdxBl & keepIdxNs & keepIdxNc;
+
+close all hidden
+sessions = sortSessions(tData,monk,0);
+
+% Select out the relevant sessions:
+% Select for correct duration/Ispta
+% sIdx = getSessionIdx(sessions,'duration',30000,'=','monk','b','=');
+sIdx = getSessionIdx(sessions,'duration',30000,'=','Ispta',1,'>');
+sessions2 = sessions(sIdx);
+
+% Select only parameters with at least 5 per side
+keepIdxSessions = true(size(sessions2));
+for ii = 1:length(sessions2)
+    if length(sessions2(ii).sessionsLeft) < 4 || length(sessions2(ii).sessionsRight) < 4
+        keepIdxSessions(ii) = false;
+    end
+
+end
+sessions2 = sessions2(keepIdxSessions);
+
+[idxLeft,idxRight] = getLeftRightIdx(sessions2,1:length(sessions2));
+idx1 = [idxLeft,idxRight];
+disp([num2str(sum(~keepIdx(idx1))), ' removed from final sessions.'])
+idx1 = idx1(keepIdx(idx1));
 idx1 = idx1(idx1<=length(eegOutJ));
+
 fRange = [30,70];
 gIdxJ = find(eegOutJ(1).frequencies>=fRange(1) & eegOutJ(1).frequencies<=fRange(2));
 gIdxT = find(eegOutT(1).frequencies>=fRange(1) & eegOutT(1).frequencies<=fRange(2));
@@ -243,7 +267,7 @@ makeFigureBig(h);
 
 % Anova
 INCLUDEHG = 0;
-anovaTms = [5,10]+0.5;
+anovaTms = [5,10,15]+0.5;
 anovaTmIdx = zeros(size(anovaTms));
 for ii = 1:length(anovaTms)
     anovaTmIdx(ii) = find(anovaTms(ii) == x);

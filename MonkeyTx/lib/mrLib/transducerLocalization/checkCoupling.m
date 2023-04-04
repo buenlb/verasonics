@@ -28,7 +28,7 @@
 % Taylor Webb
 % University of Utah
 
-function [pass,distErr,powErr,totErrPow,curGs,curCr,gsSkullIdx,crSkullIdx,d,elementsOfInterest] = checkCoupling(gs,cr,singleElement)
+function [pass,distErr,powErr,totErrPow,curGs,curCr,gsSkullIdx,crSkullIdx,d,elementsOfInterest,com] = checkCoupling(gs,cr,singleElement)
 
 if nargin < 3
     singleElement = 0;
@@ -131,6 +131,7 @@ curCr = crRaw;
 curGs = gsRaw;
 curCr(d>gsParams.powerRange(2) | d<gsParams.powerRange(1),:) = 0;
 curGs(d>gsParams.powerRange(2) | d<gsParams.powerRange(1),:) = 0;
+com = sum(d'.*(mean(curCr,2))/sum(mean(curCr,2)));
 curPw = max(mean(curCr,2));
 gsPw = max(mean(curGs,2));
 totErrPow = (curPw-gsPw)/gsPw;

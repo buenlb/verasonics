@@ -1,6 +1,6 @@
 function img = drawRoiEdges(img, roi)
 
-roi = boolean(roi);
+roi = logical(roi);
 roiEdges = edge(roi);
 if length(size(img)) ~= 3 || size(img,3) ~= 3
     error('Expecting a planar RGB image. Dimensions must by MxNx3');

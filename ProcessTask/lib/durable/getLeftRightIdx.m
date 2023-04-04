@@ -1,9 +1,33 @@
-function [idxLeft,idxRight,idxCtl] = getLeftRightIdx(sessions,idx)
+function [idxLeft,idxRight,idxCtl] = getLeftRightIdx(sessions,idx,nSessions,days)
 idxLeft = [];
 idxRight = [];
 idxCtl = [];
 for ii = 1:length(idx)
-    idxLeft = cat(2,idxLeft,sessions(idx(ii)).sessionsLeft);
-    idxRight = cat(2,idxRight,sessions(idx(ii)).sessionsRight);
-    idxCtl = cat(2,idxCtl,sessions(idx(ii)).sessionsCtl);
+    curIdxLeft = sessions(idx(ii)).sessionsLeft;
+    curIdxRight = sessions(idx(ii)).sessionsRight;
+    curIdxCtl = sessions(idx(ii)).sessionsCtl;
+
+    if exist('nSessions','var')
+        if ~exist('days','var')
+            error('If you request a number of sessions you must provide days!')
+        end
+        [~,tmpIdx] = sort(days(curIdxLeft));
+        curIdxLeft = curIdxLeft(tmpIdx);
+    
+        [~,tmpIdx] = sort(days(curIdxRight));
+        curIdxRight= curIdxRight(tmpIdx);
+        
+        curIdxLeft = curIdxLeft(1:nSessions);
+        curIdxRight = curIdxRight(1:nSessions);
+
+        if ~isempty(curIdxCtl)
+            [~,tmpIdx] = sort(days(curIdxCtl));
+            curIdxCtl = curIdxCtl(tmpIdx);
+            curIdxCtl = curIdxCtl(1:nSessions);
+        end
+    end
+
+    idxLeft = cat(2,idxLeft,curIdxLeft);
+    idxRight = cat(2,idxRight,curIdxRight);
+    idxCtl = cat(2,idxCtl,curIdxCtl);
 end

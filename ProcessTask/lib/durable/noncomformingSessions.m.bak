@@ -9,6 +9,6 @@ exc{1} = 'Euler20220208.mat';
 
 % Euler20220323.mat: The log states that a second pulse began after the
 %   initial ultrasound. While the probe was disconnected after the first
-%   pulse, it is still likely that the US effected this session in
+%   pulse, it is still likely that th US effected this session in
 %   unpredictable ways.
 exc{2} = 'Euler20220323.mat';

@@ -31,4 +31,8 @@ end
 close(d);
 toc
 
-tDenoised(tMagImg<mean(tMagImg(:))) = 0;
+for ii = 1:size(tDenoised,4)
+    tmp = tDenoised(:,:,:,ii);
+    tmp(tMagImg<0.75*mean(tMagImg(:))) = 0;
+    tDenoised(:,:,:,ii) = tmp;
+end

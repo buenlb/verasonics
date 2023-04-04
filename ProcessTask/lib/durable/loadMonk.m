@@ -5,13 +5,13 @@ switch monk
     case 'b'
         pth = 'D:\Task\Boltz\durable\';
     case 'c_saline'
-        pth = 'D:\Task\Calvin\Saline\';
+        pth = 'D:\Task\Matt\Saline\Calvin\';
     case 'h_saline'
-        pth = 'D:\Task\Hobbes\Saline\';
+        pth = 'D:\Task\Matt\Saline\Hobbes\';
     case 'c'
-        pth = 'D:\Task\Calvin\Propofol\';
+        pth = 'D:\Task\Matt\Propofol\Calvin\';
     case 'h'
-        pth = 'D:\Task\Hobbes\Propofol\';
+        pth = 'D:\Task\Matt\Propofol\Hobbes\';
     otherwise
         error(['Unrecognized Monk: ' monk]);
 end

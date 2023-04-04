@@ -74,7 +74,7 @@ else
     
     gImg = sys.aImg/max(gImgMax*sys.aImg(:));
 
-    cMap = colormap('winter');
+    cMap = colormap('hot');
 
     tImg(tImg<tWindow(1)) = tWindow(1);
     tImg(tImg>tWindow(2)) = tWindow(2);
