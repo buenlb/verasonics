@@ -58,7 +58,7 @@ for ii = 1:length(files)
     eegIn.dig = cat(2,eegIn.dig,data.board_dig_in_data);
     eegIn.t = cat(2,eegIn.t,data.t);
 end
-keyboard
+
 %% Find trial times
 if size(eegIn.dig,1)<2
     warning('Binary Coding for trial number on different channel than expected')
@@ -84,7 +84,7 @@ end
 eegIn.zIdx = zIdx;
 eegIn.zeroT = eegIn.t(zIdx);
 
-windowdur = 0.5;
+windowdur = 0.1;
 %% Find Features (Jan)
 if COMPARISON
     frequencies = [1 : 1 : 19, 20 : 2 : 38, 40 : 4 : 76, 80 : 8 : 320];
