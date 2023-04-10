@@ -12,7 +12,7 @@
 % OUTPUTS
 %   sys: Updated fields are tWindow (temperatures displayed), colorTempImg
 %       (true color image), and other temperature data as described by
-%       overlayTemperatureAnatomy.
+%       overlayTempeclratureAnatomy.
 % 
 % Taylor Webb
 % University of Utah

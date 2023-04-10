@@ -1,12 +1,16 @@
 % doppler256_neuromodulate sets up a VSX mat file to run a neuromodulatory
 % sonication.
 % 
-% @INPUTS
-%   duration: Sonication duration in seconds.
-%   volages: peak voltage applied to each element in volts
-%   target: target location in mm
-%   PRF: Pulse repitition frequency in Hz
+% @INPUTs
+%   target: target location(s) in mm
+%   isi: Inter stimulus interval per target (ms, the inter stimulus interval 
+%       from the perspective of the TX is isi/nTargets).
+%   nReps: Number of times to deliver each LGN sonication (if sonicating
+%       multiple targets, the total reps will be nTargets*nReps).
+%   prf: Pulse repitition frequency in Hz
 %   duty: desired duty cycle (%)
+%   duration: duration of each individual stimulus event (ms)
+%   volage: peak voltage applied to each element in volts
 %   frequency: Frequency in MHz
 %   fName: Full path in which to save log file
 % 
@@ -15,8 +19,13 @@
 % December 2020
 % 
 
-function Resource = lStim(duration, voltage, target, PRF, duty, frequency, fName, txSn)
+function Resource = lStim(target, isi, nReps, prf, duty, duration, voltage, frequency, fName, txSn)
 maxV = 50; % Maximum allowed voltage
+duration = duration/1e3;
+isi = isi*1e3;
+if isi/2>4.19e6
+    error('ISI cannot be longer than 4.19 s')
+end
 %% Set up path locations
 srcDirectory = setPaths();
 addpath([srcDirectory,'lib\mrLib'])
@@ -34,8 +43,8 @@ end
 
 %% Set up pulsing
 if duty < 100
-    numTransmits = duration*PRF;
-    pulseDuration = 1/PRF*duty/100;
+    numTransmits = duration*prf;
+    pulseDuration = 1/prf*duty/100;
 else
     numTransmits = 1;
     pulseDuration = duration;
@@ -55,10 +64,8 @@ Resource.Parameters.startEvent = 1;
 Resource.Parameters.logFileName = fName;
 Resource.Parameters.priorSonication = [];
 Resource.Parameters.voltages = voltage;
-Resource.Parameters.fgs = prep_lstim(1);
-Resource.Parameters.nBlocks = 7;
 Resource.Parameters.DutyCycle = duty;
-Resource.Parameters.PulseRepFreq = PRF;
+Resource.Parameters.PulseRepFreq = prf;
 Resource.Parameters.Duration = duration;
 Resource.Parameters.txSn = txSn;
 Resource.Parameters.log = struct('Date',datetime,'targets',target,'voltages',voltage,'Parameters',Resource.Parameters,'frequency',frequency);
@@ -130,7 +137,7 @@ for ii = 1:size(targets,1)
     phases{ii} = [elements.t]';
 end
 
-if duty < 100 || size(targets,1)==1
+if duty < 100 || size(targets,1)==1 || 1
     for ii = 1:length(phases)
         % Specify TX structure array.
         TX(ii).waveform = 1; % use 1st TW structure.
@@ -166,7 +173,7 @@ TGC(1).Waveform = computeTGCWaveform(TGC);
 
 %% External Function
 Process(1).classname = 'External';
-Process(1).method = 'controlFgs_lstimVerasonics';
+Process(1).method = 'closeVSX';
 Process(1).Parameters = {'srcbuffer','receive',... % name of buffer to process.
 'srcbufnum',1,...
 'srcframenum',1,...
@@ -181,15 +188,90 @@ Event(n).rcv = 0;
 Event(n).recon = 0;
 Event(n).process = 0;
 Event(n).seqControl = nsc; % set TPC profile command.
-SeqControl(nsc).command = 'setTPCProfile';
-SeqControl(nsc).argument = 5;
-SeqControl(nsc).condition = 'immediate';
+    SeqControl(nsc).command = 'setTPCProfile';
+    SeqControl(nsc).argument = 5;
+    SeqControl(nsc).condition = 'immediate';
 nsc = nsc + 1;
 % Resource.Parameters.startEvent = n;
 n = n+1;
 
-%% Listen to server
-Event(n).info = 'Set next parameters';
+Event(n).info = 'Set loop count';
+Event(n).tx = 0;
+Event(n).rcv = 0;
+Event(n).recon = 0;
+Event(n).process = 0;
+Event(n).seqControl = nsc; % set TPC profile command.
+    SeqControl(nsc).command = 'loopCnt';
+    SeqControl(nsc).argument = nReps-1;
+    nsc = nsc+1;
+n = n+1;
+
+%% Sonicate all targets
+nTargets = size(targets,1);
+for ii = 1:nTargets
+    Event(n).info = 'Sonicate.';
+    Event(n).tx = ii;
+    Event(n).rcv = 0; % no receive
+    Event(n).recon = 0; % no reconstruction.
+    Event(n).process = 0; % no processing
+    if ii == 1
+        Event(n).seqControl = [nsc,nsc+1];
+            SeqControl(nsc).command = 'triggerOut';
+            nscTrigOut = nsc;
+            nsc = nsc+1;
+            firstSonicationIdx = n;
+            SeqControl(nsc).command = 'timeToNextAcq';
+            if duty < 100
+                SeqControl(nsc).argument = 1e6/prf;
+            else
+                SeqControl(nsc).argument = isi/2;
+            end
+            nscTime2Acq = nsc;
+            nsc = nsc+1;
+    else
+        Event(n).seqControl = [nscTrigOut,nscTime2Acq];
+    end
+    n = n+1;
+    
+    for jj = 2:numTransmits
+        Event(n) = Event(firstSonicationIdx);
+        Event(n).tx = ii;
+        Event(n).seqControl = nscTime2Acq;
+        if jj == numTransmits
+            Event(n).seqControl = nsc;
+            SeqControl(nsc).command = 'timeToNextAcq';
+            SeqControl(nsc).argument = isi/2-duration*1e6+1e6/prf;
+            nsc = nsc+1;
+        end
+        n = n+1;
+    end
+end
+
+Event(n).info = 'Test Loop';
+Event(n).tx = 0; % use 1st TX structure.
+Event(n).rcv = 0; % no receive
+Event(n).recon = 0; % no reconstruction.
+Event(n).process = 0; % no processing
+Event(n).seqControl = nsc;
+    SeqControl(nsc).command = 'loopTst';
+    SeqControl(nsc).argument = firstSonicationIdx;
+    nsc = nsc + 1;
+n = n+1;
+
+%% Force the software sequencer to wait until US is finished.
+Event(n).info = 'Sync';
+Event(n).tx = 0;
+Event(n).rcv = 0;
+Event(n).recon = 0;
+Event(n).process = 0;
+Event(n).seqControl = nsc; % set TPC profile command.
+    SeqControl(nsc).command = 'sync';
+    SeqControl(nsc).argument = 10*60*1e6; % Allow up to five minutes for pulse sequence to run.
+    nsc = nsc+1;
+n = n+1;
+
+%% close VSX
+Event(n).info = 'Close';
 Event(n).tx = 0;
 Event(n).rcv = 0;
 Event(n).recon = 0;
@@ -199,48 +281,6 @@ Event(n).seqControl = 0;
 % nsc = nsc+1;
 serverEvent = n;
 n = n+1;
-
-%% Sonicate
-Event(n).info = 'Sonicate.';
-Event(n).tx = 1; % use 1st TX structure.
-Event(n).rcv = 0; % no receive
-Event(n).recon = 0; % no reconstruction.
-Event(n).process = 0; % no processing
-Event(n).seqControl = [nsc,nsc+1];
-    SeqControl(nsc).command = 'pause';
-    SeqControl(nsc).condition = 'extTrigger';
-    SeqControl(nsc).argument = 17;
-    nsc = nsc + 1;
-    SeqControl(nsc).command = 'timeToNextAcq';
-    SeqControl(nsc).argument = 1/PRF*1e6;
-    nscTime2Acq = nsc;
-    nsc = nsc + 1;
-    firstSonicationIdx = n;
-n = n+1;
-
-for ii = 2:numTransmits
-    Event(n) = Event(firstSonicationIdx);
-    if mod(ii,size(targets,1))
-        Event(n).tx = mod(ii,size(targets,1));
-    else
-        Event(n).tx = size(targets,1);
-    end
-    Event(n).seqControl = nscTime2Acq;
-    n = n+1;
-end
-
-Event(n).info = 'Return to beginning';
-Event(n).tx = 0; % use 1st TX structure.
-Event(n).rcv = 0; % no receive
-Event(n).recon = 0; % no reconstruction.
-Event(n).process = 0; % no processing
-Event(n).seqControl = [nsc];
-    SeqControl(nsc).command = 'jump';
-    SeqControl(nsc).argument = serverEvent;
-    SeqControl(nsc).condition = 'exitAfterJump';
-    nsc = nsc + 1;
-n = n+1;
-
 
 % Save all the structures to a .mat file.
 scriptName = mfilename('fullpath');

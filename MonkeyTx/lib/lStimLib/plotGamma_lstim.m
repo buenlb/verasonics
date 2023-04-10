@@ -60,6 +60,7 @@ windowSize = 3.5;
 tTestWindow = 20;
 isi = 8;
 VERBOSE = 0;
+plotResults = 1;
 for ii = 1:length(varargin)/2
     switch(varargin{(ii-1)*2+1})
         case 'fftWindow'
@@ -72,6 +73,8 @@ for ii = 1:length(varargin)/2
             isi = varargin{ii*2};
         case 'verbose'
             VERBOSE = varargin{ii*2};
+        case 'plotResults'
+            plotResults = varargin{ii*2};
         otherwise
             error([varargin{(ii-1)*2+1}, ' is not a valid name for a name value pair.'])
     end
@@ -99,15 +102,7 @@ fs = round(1/dt);
 %     error('The trigger for the LEDs is not 250 ms')
 % end
 
-disp('Low Pass Filtering...')
-tic
-d = designfilt('bandstopiir','FilterOrder',2, ...
-               'HalfPowerFrequency1',59,'HalfPowerFrequency2',61, ...
-               'DesignMethod','butter','SampleRate',fs);
-eeg = filtfilt(d,eeg);
-toc
-
-disp('Notch Filtering')
+disp('Filtering...')
 tic
 d = designfilt('bandstopiir','FilterOrder',2, ...
                'HalfPowerFrequency1',59,'HalfPowerFrequency2',61, ...
@@ -135,7 +130,7 @@ if VERBOSE
 end
 
 %% During Stim
-delay = 0.4;
+delay = 0.15;
 delayIdx = round(delay*fs); % To avoid US artifact
 avgBandDuring = [];
 semBandDuring = [];
@@ -162,10 +157,10 @@ if VERBOSE
     ylabel('voltage (\mu V)')
     makeFigureBig(h);
 end
-
-if size(avgBandDuring,2)>1
+% keyboard
+if size(avgBandDuring,2)>1 && plotResults
     h = figure;
-    xt = delay:windowSize:floor((isi/2-delay)/windowSize)*windowSize;
+    xt = delay:windowSize:(isi/2-windowSize);
     shadedErrorBar(xt,mean(avgBandDuring,1),semOmitNan(avgBandDuring,1));
     xlabel('time (s)')
     ylabel([num2str(band(1)), ' - ', num2str(band(2)),' Hz (\mu V)']);
@@ -192,29 +187,31 @@ if VERBOSE
 end
 
 %% Plot all together
-h = figure;
-if VERBOSE
-    divider = 1;
-    subtractor = 0;
-else
-    divider = mean(avgBand)/100;
-    subtractor = 100;
-end
-ax = gca;
-bf = shadedErrorBar(tBefore,avgBand/divider-subtractor,semBand/divider,'lineprops',{'Color',ax.ColorOrder(1,:)});
-hold on
-if size(tDuring,2)>1
-    for ii = 1:size(tDuring,1)
-        dr = shadedErrorBar(tDuring(ii,:),avgBandDuring(ii,:)/divider-subtractor,semBandDuring(ii,:)/divider,'lineprops',{'Color',ax.ColorOrder(2,:)});
+if plotResults
+    h = figure;
+    if VERBOSE
+        divider = 1;
+        subtractor = 0;
+    else
+        divider = mean(avgBand)/100;
+        subtractor = 100;
     end
-else
-    dr = shadedErrorBar(tDuring,avgBandDuring/divider-subtractor,semBandDuring/divider,'lineprops',{'Color',ax.ColorOrder(2,:)});
+    ax = gca;
+    bf = shadedErrorBar(tBefore,avgBand/divider-subtractor,semBand/divider,'lineprops',{'Color',ax.ColorOrder(1,:)});
+    hold on
+    if size(tDuring,2)>1
+        for ii = 1:size(tDuring,1)
+            dr = shadedErrorBar(tDuring(ii,:),avgBandDuring(ii,:)/divider-subtractor,semBandDuring(ii,:)/divider,'lineprops',{'Color',ax.ColorOrder(2,:)});
+        end
+    else
+        dr = shadedErrorBar(tDuring,avgBandDuring/divider-subtractor,semBandDuring/divider,'lineprops',{'Color',ax.ColorOrder(2,:)});
+    end
+    ar = shadedErrorBar(tAfter,avgBandPost/divider-subtractor,semBandPost/divider,'lineprops',{'Color',ax.ColorOrder(3,:)});
+    xlabel('time (s)')
+    ylabel('% change')
+    legend([bf.mainLine,dr.mainLine,ar.mainLine],'Before','During','After')
+    makeFigureBig(h);
 end
-ar = shadedErrorBar(tAfter,avgBandPost/divider-subtractor,semBandPost/divider,'lineprops',{'Color',ax.ColorOrder(3,:)});
-xlabel('time (s)')
-ylabel('% change')
-legend([bf.mainLine,dr.mainLine,ar.mainLine],'Before','During','After')
-makeFigureBig(h);
 
 bnd = struct('tBefore',tBefore,'bndBefore',avgBand,'semBndBefore',semBand,...
     'tDuring',tDuring,'bndDuring',avgBandDuring,'semBndDuring',semBandDuring,...
@@ -231,17 +228,21 @@ disp(['After: ', num2str(tAfter(idxAfter(end))-tAfter(idxAfter(1)),2), '(Post St
 
 [~,p] = ttest2(avgBand(idxBefore),avgBandPost(idxAfter));
 
-h = figure;
-ax = gca;
-bar(1:2,[mean(avgBand(idxBefore)),mean(avgBandPost(idxAfter))]);
-hold on
-eb = errorbar(1:2,[mean(avgBand(idxBefore)),mean(avgBandPost(idxAfter))],...
-    [semOmitNan(avgBand(idxBefore)),semOmitNan(avgBandPost(idxAfter))]);
-set(eb,'linestyle','none','Color',ax.ColorOrder(1,:),'linewidth',2);
-sigstar([1,2],p);
-ax.XTick = [1:2];
-ax.XTickLabel = {'Before','After'};
-ax.XTickLabelRotation = 90;
-ylabel('Power in selected band')
-title(['p=', num2str(p,2)])
-makeFigureBig(h)
+bnd.p = p;
+
+if plotResults
+    h = figure;
+    ax = gca;
+    bar(1:2,[mean(avgBand(idxBefore)),mean(avgBandPost(idxAfter))]);
+    hold on
+    eb = errorbar(1:2,[mean(avgBand(idxBefore)),mean(avgBandPost(idxAfter))],...
+        [semOmitNan(avgBand(idxBefore)),semOmitNan(avgBandPost(idxAfter))]);
+    set(eb,'linestyle','none','Color',ax.ColorOrder(1,:),'linewidth',2);
+    sigstar([1,2],p);
+    ax.XTick = [1:2];
+    ax.XTickLabel = {'Before','After'};
+    ax.XTickLabelRotation = 90;
+    ylabel('Power in selected band')
+    title(['p=', num2str(p,2)])
+    makeFigureBig(h)
+end

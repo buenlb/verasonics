@@ -1,6 +1,8 @@
 %% Analyze EEG LSTIM Results: GAMMA
 % addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\ProcessTask\EEGLib\');
 sys.EEGSystem = 'INTAN';
+addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\ProcessTask\EEGLib\');
+
 if strcmp(sys.EEGSystem,'BCI')
     fName = 'C:\Users\Verasonics\Documents\OpenBCI_GUI\Recordings\OpenBCISession_gamma1_boltzmann20230131\OpenBCI-RAW-2023-01-31_13-18-46.txt';
     [t,eeg,digUs] = loadEegBci(fName,16);
@@ -12,7 +14,8 @@ elseif strcmp(sys.EEGSystem,'INTAN')
     digUs = dig(1,:)';
     eeg = mean(eeg,1)';
 end
-plotGamma_lstim(t,eeg,digUs,[30,70],'windowSize',2.5,'verbose',0);
+plotGamma_lstim(t,eeg,digUs,[8,13],'windowSize',0.1,'fftWindow',0.05,'verbose',0);
+plotUeps(t,eeg,digUs,'notch',[59,61],'window',1,'verbose',1);
 
 %% Analyze EEG LSTIM Results: VEPs
 addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\ProcessTask\EEGLib\');
@@ -26,8 +29,8 @@ if strcmp(sys.EEGSystem,'BCI')
     ledTrig = digUs(:,1);
     digUs = digUs(:,2);
 elseif strcmp(sys.EEGSystem,'INTAN')
-    pth = 'D:\LStim\hobbes20230221\EEG\';
-    fNameBase = 'vep_2MPa_50dc_inside_lightsOff_230221_';
+    pth = 'D:\calvin20230330\eeg\';
+    fNameBase = 'calvin_2MPa_50pDC_Outside_VEPs_10msLED_3MinSonication';
     [t,eeg,dig,alg] = concatIntan(pth,fNameBase);
 
     % Low Pass Filter
@@ -52,6 +55,5 @@ elseif strcmp(sys.EEGSystem,'INTAN')
     alg(alg>=3.3) = 1;
     ledTrig = alg';
     eeg = mean(eeg,1)';
-% eeg = eeg(1,:);
 end
-[vepB,vepP,t] = plotVeps(t,eeg,ledTrig,digUs,'notch',[59,61],'window',500e-3,'verbose',1);
+[vepB,vepP,tVep] = plotVeps(t,eeg,ledTrig,digUs,'notch',[59,61],'window',500e-3,'verbose',0);
