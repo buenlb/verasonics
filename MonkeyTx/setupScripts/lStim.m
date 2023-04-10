@@ -137,7 +137,7 @@ for ii = 1:size(targets,1)
     phases{ii} = [elements.t]';
 end
 
-if duty < 100 || size(targets,1)==1
+if duty < 100 || size(targets,1)==1 || 1
     for ii = 1:length(phases)
         % Specify TX structure array.
         TX(ii).waveform = 1; % use 1st TW structure.
@@ -221,7 +221,11 @@ for ii = 1:nTargets
             nsc = nsc+1;
             firstSonicationIdx = n;
             SeqControl(nsc).command = 'timeToNextAcq';
-            SeqControl(nsc).argument = 1e6/prf;
+            if duty < 100
+                SeqControl(nsc).argument = 1e6/prf;
+            else
+                SeqControl(nsc).argument = isi/2;
+            end
             nscTime2Acq = nsc;
             nsc = nsc+1;
     else
@@ -236,7 +240,7 @@ for ii = 1:nTargets
         if jj == numTransmits
             Event(n).seqControl = nsc;
             SeqControl(nsc).command = 'timeToNextAcq';
-            SeqControl(nsc).argument = isi/2;
+            SeqControl(nsc).argument = isi/2-duration*1e6+1e6/prf;
             nsc = nsc+1;
         end
         n = n+1;
@@ -262,7 +266,7 @@ Event(n).recon = 0;
 Event(n).process = 0;
 Event(n).seqControl = nsc; % set TPC profile command.
     SeqControl(nsc).command = 'sync';
-    SeqControl(nsc).argument = 5*60*1e6; % Allow up to five minutes for pulse sequence to run.
+    SeqControl(nsc).argument = 10*60*1e6; % Allow up to five minutes for pulse sequence to run.
     nsc = nsc+1;
 n = n+1;
 

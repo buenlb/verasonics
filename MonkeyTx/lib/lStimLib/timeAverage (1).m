@@ -2,6 +2,7 @@ function [m,sDev,sError] = timeAverage(v,dt,window)
 windowIdx = ceil(window/dt);
 
 nWindows = floor(length(v)/windowIdx);
+
 m = nan(nWindows,1);
 sDev = m;
 sError = m;

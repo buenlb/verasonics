@@ -61,15 +61,17 @@ addpath([verasonicsDir, 'MonkeyTx\setupScripts\'])
 addpath([verasonicsDir, 'lib'])
 addpath([verasonicsDir, 'MonkeyTx\lib\mrLib\thermometry\'])
 addpath([verasonicsDir, 'MonkeyTx\lib\mrLib\transducerLocalization\']);
-return
+
 % Experiment Path
-sys.expPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20220203\';
+sys.expPath = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20230208\';
 
 % Gold Standard Acoustic Imaging Files
 eulerGs = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20210929\UltrasoundData\eulerGs.mat';
 boltzmannGs = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20210929\UltrasoundData\boltzmannGs.mat';
+hobbesGs = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20220202\UltrasoundData\hobbesGS.mat';
+calvinGs = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20220203\UltrasoundData\calvinGS.mat';
 sys.goldStandard = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\test_20210913\UltrasoundData\exVivoSkull1_gs.mat';
-sys.goldStandard = eulerGs;
+sys.goldStandard = calvinGs;
 % Set the transducer you are using
 sys.txSn = 'JAB800';
 
@@ -87,11 +89,12 @@ end
     
 
 % Coupling File
-couplingFile = 'CalvinPostLStim.mat';
+% couplingFile = 'calvin_preMR.mat';
+couplingFile = 'calvin_preMR.mat';
 sys.couplingFile = [sys.expPath,'UltrasoundData\',couplingFile];
 
 % Log file
-logFile ='calvin20220203_postLStim.mat';
+logFile ='calvin20230208.mat';
 sys.logFile = [sys.expPath,'Logs\',logFile];
 
 % Imaging paths
@@ -99,7 +102,7 @@ sys.mrPath = [sys.expPath,'Images\'];
 sys.incomingDcms = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\IncomingImages\';
 
 % Anatomical Series
-sys.aSeriesNo = [];
+sys.aSeriesNo = 6;
 
 % Invert Transducer
 sys.invertTx = 0;
@@ -146,7 +149,9 @@ sys = selectFocus(sys);
 saveState(sys);
 
 %% Sonicate
-sys = mrSonication(sys,25.5,25,.48);
+duration = 5;
+voltage = 30; %*1.6
+sys = mrSonication(sys,duration,voltage,.48);
 totalEnergy(sys);
 saveState(sys);
 % Overlay result
