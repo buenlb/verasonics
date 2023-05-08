@@ -13,7 +13,7 @@ catch
 end
 % 
 t = 1e6*(0:(Receive(1).endSample-1))/(Receive(1).ADCRate*1e6/Receive(1).decimFactor);
-Resource.Parameters.ioChannel
+Resource.Parameters.ioChannel;
 accum = zeros(size(Receive(1).startSample:Receive(1).endSample));
 for ii = 1:length(Receive)
     accum = double(RData(Receive(ii).startSample:Receive(ii).endSample,Resource.Parameters.ioChannel))'+accum;
@@ -22,5 +22,5 @@ accum = accum/Resource.Parameters.numAvg;
 plot(t,accum)
 axis([0,max(t),-10000,10000])
 drawnow
-save('C:\Users\Verasonics\Desktop\Taylor\Data\tmpSingleElement.mat','t','accum','Receive');
+% save('C:\Users\Verasonics\Desktop\Taylor\Data\tmpSingleElement.mat','t','accum','Receive');
 return

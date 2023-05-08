@@ -34,27 +34,29 @@ clear all; close all; clc;
 % cd 'C:\Users\Verasonics\Documents\Vantage-4.4.0-2012091800';
 activate;
 
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\');
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\taskLib');
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\placementVerification');
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\lib\');
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\MATFILES\');
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\setupScripts\');
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\mrLib\transducerLocalization\');
+mainPth = 'C:\Users\Administrator\Documents\MonkeyCode\';
+
+addpath([mainPth,'MonkeyTx\lib\']);
+addpath([mainPth,'MonkeyTx\lib\taskLib']);
+addpath([mainPth,'MonkeyTx\lib\placementVerification']);
+addpath([mainPth, 'lib\']);
+addpath([mainPth,'MonkeyTx\MATFILES\']);
+addpath([mainPth,'MonkeyTx\setupScripts\']);
+addpath([mainPth,'MonkeyTx\lib\mrLib\transducerLocalization\']);
 
 %% User defined inputs
 monk = input('Monkey (c/h): ', 's');
 switch monk
     case 'c'
-        goldStd = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20220203\UltrasoundData\calvinGS.mat';
+        goldStd = [mainPth, 'Data\calvinGS.mat'];
         txSn = 'JAB800';
     case 'h'
-        goldStd = 'C:\Users\Verasonics\Desktop\Taylor\Data\MRExperiments\20220202\UltrasoundData\hobbesGS.mat';
+        goldStd = [mainPth,'Data\hobbesGS.mat'];
         txSn = 'JAB800';
     otherwise
         error([monk, ' not a recognized subject! Please choose c or h (case sensitive).'])
 end
-expPath = 'C:\Users\Verasonics\Documents\firstTargetData\';
+expPath = [mainPth, 'Data\DrugDelivery\'];
 disp(['Using Tx: ', txSn]);
 
 %% Open Communications
@@ -119,12 +121,13 @@ while ~received
             error(['Unrecognized message from server: ', msg])
     end
 end
-
+% fName = 'test';
 %% Wait for input from user
 skIdx = 0;
 terminate = 0;
 while ~terminate
     command = input('Give a command (i: image the skull; s: prepare for sonication; t: terminate)','s');
+    try
     switch command
         case 'i'
             rescan = 1;
@@ -161,6 +164,10 @@ while ~terminate
             terminate = 1;
         otherwise
             disp('Unrecognized Command')
+    end
+    catch me
+        disp('Command Failed!')
+        disp(['Error: ', me.message]);
     end
 end
         

@@ -80,7 +80,7 @@ Resource.HIFU.externalHifuPwr = 1;
 % installed the driver for the external power supply, and it is connected
 % to the host computer and turned on, you should see it listed along with
 % the COM port ID number assigned to it.
-Resource.HIFU.extPwrComPortID = 'COM5';
+Resource.HIFU.extPwrComPortID = 'COM4';
 
 Resource.HIFU.psType = 'QPX600DP'; % set to 'QPX600DP' to match supply being used
 
