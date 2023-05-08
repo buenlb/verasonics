@@ -1,8 +1,14 @@
 function [t,eeg,dig,alg] = concatIntan(path,baseName)
 
 %% Find total number of files
+if isempty(path)
+    tmpIdx = find(baseName=='\' | baseName=='/');
+    path = baseName(1:tmpIdx(end));
+    baseName = (baseName(tmpIdx(end)+1:end));
+end
+
 files = dir([path,baseName,'*.rhs']);
-files = files(1:end-1);
+% files = files(1:end-1);
 if isempty(files)
     t = [];
     eeg = [];

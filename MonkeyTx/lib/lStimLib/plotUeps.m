@@ -16,17 +16,14 @@
 %           250e-3)
 % 
 % @OUTPUTS:
-%   vepB: eeg signal in relevant window after each led trigger that occurs
-%       before the US
-%   vepB: eeg signal in relevant window after each led trigger that occurs
-%       after the US
-%   t: time vector corresponding to vepB and vepP, referenced to the led
+%   vep: eeg signal in relevant window after each ultrasound pulse occurs
+%   tVep: time vector corresponding to vep, referenced to the led
 %       trigger (s)
 % 
 % Taylor Webb
 % January, 2023
 
-function [vepB,vepP,t] = plotUeps(t,eeg,usTrig,varargin)
+function [vep,tVep,h] = plotUeps(t,eeg,usTrig,varargin)
 dt = mean(diff(t));
 fs = round(1/dt);
 
@@ -54,16 +51,6 @@ for ii = 1:length(varargin)/2
 end
 
 ledStim = find(diff(usTrig)>0);
-% All led triggers should be separated by 250 ms (+/- 1 sample). Error 
-% check this.
-% if sum(abs((diff(t(ledStim))-4))>2*dt)
-%     rmIdx = find(abs((diff(t(ledStim))-0.5))>2*dt);
-%     warning(['Removing ', num2str(length(rmIdx)), ' points from led trigger. (', num2str(rmIdx),')'])
-%     tmp = true(size(ledStim));
-%     tmp(rmIdx) = false;
-%     ledStim = ledStim(tmp);
-% %     error('The trigger for the LEDs is not 250 ms')
-% end
 
 disp('Filtering...')
 tic
@@ -78,25 +65,25 @@ toc
 window = ceil(window/dt);
 %% Baseline Epoch
 baselineLed = ledStim;
-vepB = nan(window+1,length(baselineLed));
-ledB = vepB;
+vep = nan(window+1,length(baselineLed));
+ledB = vep;
 for ii = 1:length(baselineLed)
-    vepB(:,ii) = eeg(baselineLed(ii):(baselineLed(ii)+window))-mean(eeg(baselineLed(ii):(baselineLed(ii)+window)));
+    vep(:,ii) = eeg(baselineLed(ii):(baselineLed(ii)+window))-mean(eeg(baselineLed(ii):(baselineLed(ii)+window)));
     ledB(:,ii) = usTrig(baselineLed(ii):(baselineLed(ii)+window));
 end
 
 tVep = t(1:window+1);
 h = figure;
 ax = gca;
-shadedErrorBar(tVep*1e3,mean(vepB,2),semOmitNan(vepB,2),'lineprops',{'Color',ax.ColorOrder(1,:)});
+shadedErrorBar(tVep*1e3,mean(vep,2),semOmitNan(vep,2),'lineprops',{'Color',ax.ColorOrder(1,:)});
 xlabel('time (ms)')
 ylabel('voltage (\mu V)')
 makeFigureBig(h);
 
 if VERBOSE
-    h = figure;
+    h1 = figure;
     subplot(211)
     plot(tVep,mean(ledB,2))
     title('Double Check Triggers: Before')
-    makeFigureBig(h);
+    makeFigureBig(h1);
 end

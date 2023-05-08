@@ -1,4 +1,4 @@
-function h = plotDurableContralateralResults(tm,y,idxLeft,idxRight,h,idxCtl,xLim,yLim)
+function [h,mLine] = plotDurableContralateralResults(tm,y,idxLeft,idxRight,h,idxCtl,xLim,yLim)
 
 if ~exist('h','var')
     h = figure;
@@ -24,12 +24,12 @@ contraVar(idxLeft,:) = 100-contraVar(idxLeft,:);
 idx = [idxLeft,idxRight];
 contraVar = contraVar(idx,:);
 
-contraVar(:,sum(~isnan(contraVar),1)<6) = nan;
-
-shadedErrorBar(tm/60,mean(contraVar,1,'omitnan'),semOmitNan(contraVar,1),'lineprops',{'Color',ax.ColorOrder(ax.ColorOrderIndex,:),'linewidth',2})
+s = shadedErrorBar(tm/60,mean(contraVar,1,'omitnan'),semOmitNan(contraVar,1),'lineprops',{'Color',ax.ColorOrder(ax.ColorOrderIndex,:),'linewidth',2});
+mLine(1) = s.mainLine;
 if exist('idxCtl','var')
     contraVar = 100*y(idxCtl,:);
-    shadedErrorBar(tm/60,mean(contraVar,1,'omitnan'),semOmitNan(contraVar,1),'lineprops',{'Color',ax.ColorOrder(ax.ColorOrderIndex,:),'linewidth',2})
+    s = shadedErrorBar(tm/60,mean(contraVar,1,'omitnan'),semOmitNan(contraVar,1),'lineprops',{'Color',ax.ColorOrder(ax.ColorOrderIndex,:),'linewidth',2});
+    mLine(2) = s.mainLine;
 end
 ax.XLim = [0,60];
 plot([-120,120],[1,1]*66.67,'k-')

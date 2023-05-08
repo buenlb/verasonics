@@ -82,7 +82,7 @@ notch_filter_mode = fread(fid, 1, 'int16');
 % notch_filter_frequencies = [];
 % keyboard
 if (notch_filter_mode == 1)
-    notch_filter_frequencies = [60];
+%     notch_filter_frequencies = [60];
 end
 
 desired_impedance_test_frequency = fread(fid, 1, 'single');
