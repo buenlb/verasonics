@@ -20,6 +20,20 @@ monk(length(tDataB)+1:length(tData)) = 'e';
 [tDataCS, filesCS] = loadMonk('c_saline');
 [tDataH, filesH] = loadMonk('h');
 [tDataHS, filesHS] = loadMonk('h_saline');
+%%
+tDataC = setUltrasoundTrial(tDataC);
+tDataCS = setUltrasoundTrial(tDataCS);
+tDataH = setUltrasoundTrial(tDataH);
+tDataHS = setUltrasoundTrial(tDataHS);
+
+tDataDD = [tDataC,tDataCS,tDataH,tDataHS];
+
+monkDD(1:length(tDataC)+length(tDataCS)) = 'c';
+monkDD((end+1):length(tDataDD)) = 'h';
+drug(1:length(tDataC)) = 'p';
+drug((end+1):(end+1+length(tDataCS))) = 's';
+drug((end+1):(end+1+length(tDataH))) = 'p';
+drug((end+1):(end+1+length(tDataHS))) = 's';
 
 %% Combine subjects - nanoparticles
 tDataN = [tDataC,tDataH];
@@ -134,14 +148,28 @@ for ii = 1:length(tData)
     end
     % Process behavior over time
     p0(ii) = behaviorOverTime2(tData(ii),baseline,tWindow);
-%     idx =  1:tData(ii).sonicatedTrials;
-%     idx = idx(logical(tData(ii).correctDelay(idx)));
-%     if length(idx)<200
-%         disp('!!!Skipped')
-%         continue
-%     end
-%     [~,slope,bias,downshift,scale] = plotSigmoid(tData(ii),idx);
-%     p0(ii) = equalProbabilityPoint(slope,bias,downshift,scale);
     [epp(ii,:),y(ii,:),m(ii,:),allCh(ii,:),chVectors(:,:,ii),dVectors(:,:,ii),err(ii,:)]...
         = behaviorOverTime2(tData(ii),tm,tWindow,p0(ii));
+end
+return
+%% Process drug delivery data
+y = nan(length(tDataDD),length(tm));
+m = y;
+allCh = y;
+epp = y;
+err = y;
+p0 = nan(size(tDataDD));
+chVectors = nan(5,length(tm),length(tDataDD));
+dVectors = chVectors;
+for ii = 1:length(tDataDD)
+    disp(['Processing Behavior: ', num2str(ii), ' of ', num2str(length(tDataDD))])
+    if isnan(tDataDD(ii).sonicatedTrials)
+        continue
+    end
+    % Process behavior over time
+    baseline = tDataDD(ii).timing(tDataDD(ii).sonicatedTrials-1).startTime-...
+        tDataDD(ii).timing(tDataDD(ii).sonicatedTrials).startTime;
+    p0(ii) = behaviorOverTime2(tDataDD(ii),baseline,tWindow);
+    [epp(ii,:),y(ii,:),m(ii,:),allCh(ii,:),chVectors(:,:,ii),dVectors(:,:,ii),err(ii,:)]...
+        = behaviorOverTime2(tDataDD(ii),tm,tWindow,p0(ii));
 end

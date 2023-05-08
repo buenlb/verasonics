@@ -489,6 +489,7 @@ end
 eegData = amplifier_data;
 digData = board_dig_in_data;
 algData = board_adc_data;
+
 return
 
 

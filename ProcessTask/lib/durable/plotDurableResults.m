@@ -1,4 +1,8 @@
-function h = plotDurableResults(tm,y,idxLeft,idxRight,idxCtl,xLim,yLim)
+function h = plotDurableResults(tm,y,idxLeft,idxRight,idxCtl,h,xLim,yLim)
+
+if ~exist('h','var')
+    h = figure;
+end
 
 if isempty(idxCtl)
     clear idxCtl;
@@ -10,7 +14,6 @@ if ~exist('yLim','var')
     yLim = [20,80];
 end
 
-h = figure;
 ax = gca;
 yLeft = mean(y(idxLeft,:),1,'omitnan');
 yLeftSem = semOmitNan(y(idxLeft,:),1);

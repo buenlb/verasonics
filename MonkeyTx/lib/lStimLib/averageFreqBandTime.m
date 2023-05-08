@@ -17,4 +17,7 @@ for ii = 1:nWindows
     data = eeg(((ii-1)*windowIdx+1):(ii*windowIdx));
     DATA = abs(fftshift(fft(data)));
     f(ii) = mean(DATA(bandIdx));
+    if max(data) > 500
+        f(ii) = nan;
+    end
 end

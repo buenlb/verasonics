@@ -49,7 +49,7 @@ if isempty(files)
 end
 
 eegIn = struct('eeg',[],'dig',[],'t',[]);
-notches = [60];
+notches = [60,120,180,240,320];
 for ii = 1:length(files)
 %     disp(['Loading File: ', num2str(ii), ' of ', num2str(length(files))])
     data = read_Intan_RHS2000_file_JK([pth,files(ii).name],notches);
@@ -84,7 +84,7 @@ end
 eegIn.zIdx = zIdx;
 eegIn.zeroT = eegIn.t(zIdx);
 
-windowdur = 0.1;
+windowdur = 0.5;
 %% Find Features (Jan)
 if COMPARISON
     frequencies = [1 : 1 : 19, 20 : 2 : 38, 40 : 4 : 76, 80 : 8 : 320];

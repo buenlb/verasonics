@@ -1,11 +1,13 @@
 function [tBands,hAll,hDuring] = multiGammaResults(pth,fNameBase,bands,bandLabels)
 [t,eeg,dig] = concatIntan(pth,fNameBase);
 digUs = dig(1,:)';
-eeg = mean(eeg,1)';
+% eeg = mean(eeg,1)';
 
 clear tBands;
 for hh = 1:size(bands,1)
-    bnd = plotGamma_lstim(t,eeg,digUs,bands(hh,:),'windowSize',3.5,'fftWindow',0.25,'verbose',0,'plotResults',0);
+    bndLeft = plotGamma_lstim(t,eeg(1,:),digUs,bands(hh,:),'windowSize',3.5,'fftWindow',0.25,'verbose',0,'plotResults',0);
+    bndRight = plotGamma_lstim(t,eeg(2,:),digUs,bands(hh,:),'windowSize',3.5,'fftWindow',0.25,'verbose',0,'plotResults',0);
+    bnd = plotGamma_lstim(t,mean(eeg,1)',digUs,bands(hh,:),'windowSize',3.5,'fftWindow',0.25,'verbose',0,'plotResults',0);
     
     divider = mean(bnd.bndBefore)/100;
     subtractor = 100;
@@ -31,9 +33,14 @@ for hh = 1:size(bands,1)
 
     lgPlts(hh) = bf.mainLine;
 
-    tBands(hh) = bnd;
+    largeWindow = bnd;
 
-    duringBnd = plotGamma_lstim(t,eeg,digUs,bands(hh,:),'windowSize',0.5,'fftWindow',0.25,'verbose',0,'plotResults',0);
+    windowSize = 0.1;
+    fftWindow = 0.1;
+
+    duringBndLeft = plotGamma_lstim(t,eeg(1,:),digUs,bands(hh,:),'windowSize',windowSize,'fftWindow',fftWindow,'verbose',0,'plotResults',0);
+    duringBndRight = plotGamma_lstim(t,eeg(2,:),digUs,bands(hh,:),'windowSize',windowSize,'fftWindow',fftWindow,'verbose',0,'plotResults',0);
+    duringBnd = plotGamma_lstim(t,mean(eeg,1)',digUs,bands(hh,:),'windowSize',windowSize,'fftWindow',fftWindow,'verbose',0,'plotResults',0);
     if hh == 1
         hDuring = figure;
         hold on;
@@ -43,6 +50,9 @@ for hh = 1:size(bands,1)
     end
     pltDuring = shadedErrorBar(duringBnd.tDuring(1,:)-duringBnd.tDuring(1,1),mean(duringBnd.bndDuring,1)/mean(duringBnd.bndDuring(:,1)),semOmitNan(duringBnd.bndDuring,1)/mean(duringBnd.bndDuring(:,1)),'lineprops',{'Color',ax.ColorOrder(hh,:)});
     lgPltsDuring(hh) = pltDuring.mainLine;
+    tBands(hh) = struct('longWindow',largeWindow,'shortWindow',duringBnd,...
+        'longWindowLeft',bndLeft,'longWindowRight',bndRight,...
+        'shortWindowLeft',duringBndLeft,'shortWindowRight',duringBndRight);
 end
 figure(hAll)
 xlabel('time (s)')
