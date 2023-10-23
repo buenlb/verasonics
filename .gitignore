@@ -6,6 +6,8 @@ MATFILES/*
 *.png
 *.fig
 *.zip
+*.mat
+*.svg
 guiFileOutput.mat
 guiOutput.mat
 tmpBeforeSonication.mat

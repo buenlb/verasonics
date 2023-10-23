@@ -30,7 +30,7 @@
 
 %% Clear workspace to prepare
 clear all; close all; clc;
-activate
+% activate
 %% Add relevant paths
 addpath('C:\Users\Taylor\Documents\Projects\verasonics\verasonics\MonkeyTx\setupScripts\')
 addpath('C:\Users\Taylor\Documents\Projects\verasonics\verasonics\MonkeyTx\lib\taskLib\')
@@ -48,31 +48,37 @@ addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\ProcessTask\lib')
 %--DC---
 %----------Duration----------
 %|||----|||----|||----|||------------------------|||----|||----|||----|||------------------------|||----...
-% prf = 200; % Hz
-% duration = 100; % ms
-% dc = 50; % %
-% voltage = 2e3/55.2; % V
-% target = [-9.5,6,57;13.5,6,56]; % mm; referenced to US Tx
-% frequency = 0.48; % MHz
+prf = 10000; % Hz
+duration = 100; % ms
+dc = 50; % %
+voltage = 1.93e3/55.2; % V
+target = [-9.5,6,57;13.5,6,56]; % mm; referenced to US Tx
+frequency = 0.48; % MHz
 
 % Sonication parameters for BBB opening
-prf = 200; % Hz
-duration = 30; % ms
-dc = 100; % %
-voltage = 1.5e3/55.2; % V
-target = [-9.5,6,57;-9.5,6,57]; % mm; referenced to US Tx
-frequency = 0.48; % MHz
+% prf = 200; % Hz
+% duration = 30; % ms
+% dc = 100; % %
+% voltage = 1.5e3/55.2; % V
+% target = [-9.5,6,57;-9.5,6,57]; % mm; referenced to US Tx
+% frequency = 0.48; % MHz
 
 %% Define parameters specific to gamma measurement
 timeBeforeGamma = 60; % time (seconds) to wait before starting US
 timeAfterGamma = 120; % time (seconds) after gamma to wait before completing code
-% nReps = 5; % Number of sonications delivered to each LGN
-% isiGamma = 8000; % ms; time between sonication of LGN (note that when both LGNs are stimulated the time between sonications is half of this).
+nReps = 40; % Number of sonications delivered to each LGN
+
+% Note that the code uses a the sequence control command timeToNextAq to
+% set the time between sonication of the left/right LGN. timeToNextAq is
+% limited to ~4.2 seconds (see Verasonics documentation). Thus the maximum
+% ISI time is 8.38 seconds. The setup script will throw an error if a 
+% longer time is requested. 
+isiGamma = 8000; % ms; time between sonication of LGN (note that when both LGNs are stimulated the time between sonications is half of this).
 
 % Parameters for BBB Sonication
 % isiGamma = 8000;
-isiGamma = 600; % BBB sonication
-nReps = ceil(60/(isiGamma*1e-3));
+% isiGamma = 600; % BBB sonication
+% nReps = ceil(60/(isiGamma*1e-3));
 
 %% Define parameters specific to VEP measurement
 led_prf = 2; % Hz
@@ -155,7 +161,7 @@ uInput = questdlg({['Using ',sys.EEGSystem],'','\bfSonication Details: ',...
     ['V^2s (gamma):',num2str(vssGamma,4),'V^2s; (VEP): ', num2str(vssVep,4),'V^2s'],...
     '',['You have ', num2str(28843-runningEnergy,5),'V^2s remaining.']},...
     'Ultrasound Protocol','Begin Gamma','Begin VEPs','Cancel',opts);
-
+return
 % Set wait times
 txSn = 'JAB800';
 switch uInput

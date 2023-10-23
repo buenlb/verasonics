@@ -1,4 +1,4 @@
-function [t,eeg,dig,alg] = concatIntan(path,baseName)
+function [t,eeg,dig,alg,chs] = concatIntan(path,baseName)
 
 %% Find total number of files
 if isempty(path)
@@ -25,7 +25,7 @@ for ii = 1:length(files)
     % dig: 2xN vector of digital chanel recordings
     % eeg: 2xN vector of eeg data
     % t: sample times
-    [tTmp,eegTmp,digTmp,algTmp] = loadIntanData(path,files(ii).name);
+    [tTmp,eegTmp,digTmp,algTmp,chs] = loadIntanData(path,files(ii).name);
     if ii == 1
         t = tTmp;
         eeg = eegTmp;

@@ -143,9 +143,11 @@ rawEeg = [];
 for ii = 1:length(usIdx)
 %     data(ii,:) = eeg((delayIdx+usIdx(ii)):(delayIdx+usIdx(ii)+windowIdx-1));
     trigCheck(ii,:) = digUs(usIdx(ii):(usIdx(ii)+windowIdx-1));
-    rawEeg(ii,:) = eeg(usIdx(ii):(usIdx(ii)+windowIdx-1))-mean(eeg(usIdx(ii):(usIdx(ii)+windowIdx-1)));
+%     rawEeg(ii,:) = eeg(usIdx(ii):(usIdx(ii)+windowIdx-1))-mean(eeg(usIdx(ii):(usIdx(ii)+windowIdx-1)));
     curIdx = (delayIdx+usIdx(ii)):(usIdx(ii)+isi/2*fs);
     data = eeg(curIdx);
+    rawEeg(ii,:) = eeg(curIdx);
+    tRawEeg = t(curIdx)-t(usIdx(ii));
 %     if max(data)>500
 %         data = nan(size(data));
 %     end
@@ -154,7 +156,7 @@ for ii = 1:length(usIdx)
     tDuring(ii,:) = t(curIdx(round(windowIdx/2):windowIdx:windowIdx*size(avgBandDuring,2)));
 end
 
-tRawEeg = 0:dt:((size(rawEeg,2)-1)*dt);
+% tRawEeg = 0:dt:((size(rawEeg,2)-1)*dt);
 
 if VERBOSE
     h = figure;

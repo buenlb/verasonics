@@ -1,4 +1,4 @@
-function h = plotDurableResults(tm,y,idxLeft,idxRight,idxCtl,h,xLim,yLim)
+function h = plotDurableResults(tm,y,idxLeft,idxRight,idxCtl,h,xLim,yLim,lineProps)
 
 if ~exist('h','var')
     h = figure;
@@ -12,6 +12,9 @@ if ~exist('xLim','var')
 end
 if ~exist('yLim','var')
     yLim = [20,80];
+end
+if isempty(h)
+    h = figure;
 end
 
 ax = gca;

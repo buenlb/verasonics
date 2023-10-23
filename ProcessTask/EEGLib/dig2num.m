@@ -1,4 +1,4 @@
-function num = dig2num(t,dig)
+function num = dig2num(t,dig,bitWidth)
 bOn = find(diff(dig)>0);
 bOff = find(diff(dig)<0);
 
@@ -10,9 +10,9 @@ end
 
 binNum = [];
 for ii = 1:length(bOn)
-    nOnes(ii) = round((t(bOff(ii))-t(bOn(ii)))/3e-3);
+    nOnes(ii) = floor((t(bOff(ii))-t(bOn(ii)))/bitWidth);
     if ii < length(bOn)
-        nZeros(ii) = round((t(bOn(ii+1))-t(bOff(ii)))/3e-3);
+        nZeros(ii) = floor((t(bOn(ii+1))-t(bOff(ii)))/bitWidth);
         binNum = cat(2,binNum,[ones(1,nOnes(ii)),zeros(1,nZeros(ii))]);
     else
         binNum = cat(2,binNum,ones(1,nOnes(ii)));
@@ -23,4 +23,3 @@ num = bin2dec(num2str(binNum(2:end-1)));
 if isempty(num)
     num = nan;
 end
-

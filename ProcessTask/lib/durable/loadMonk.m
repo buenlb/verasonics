@@ -1,22 +1,15 @@
-function [tData,processed] = loadMonk(monk)
-switch monk
-    case 'e'
-        pth = 'D:\Task\Euler\durable\';
-    case 'b'
-        pth = 'D:\Task\Boltz\durable\';
-    case 'c_saline'
-        pth = 'D:\Task\Matt\Saline\Calvin\';
-    case 'h_saline'
-        pth = 'D:\Task\Matt\Saline\Hobbes\';
-    case 'c'
-        pth = 'D:\Task\Matt\Propofol\Calvin\';
-    case 'h'
-        pth = 'D:\Task\Matt\Propofol\Hobbes\';
-    otherwise
-        error(['Unrecognized Monk: ' monk]);
+function [tData,processed] = loadMonk(pth)
+
+% Make sure they didn't forget the final slash
+if pth(end)~='\' && pth(end)~='/'
+    pth(end+1) = '\';
 end
 
 files = dir([pth,'*.mat']);
+if isempty(files)
+    error(['No Behavioral Data found in ', pth])
+end
+
 date = getDate({files.name});
 if min(abs(diff(date))) == 0
     disp('Found Duplicates. Keeping only the second of each')

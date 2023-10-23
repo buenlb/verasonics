@@ -44,7 +44,7 @@ for ii = 1:length(idx)
         trNum(ii) = nan;
         continue
     else
-        trNum(ii) = dig2num(t(idx(ii):idx(ii)+200e-3*20e3),dig(idx(ii):idx(ii)+100e-3*20e3));
+        trNum(ii) = dig2num(t(idx(ii):idx(ii)+200e-3*20e3),dig(idx(ii):idx(ii)+100e-3*20e3),2.9e-3);
 %         plot(t(idx(ii):idx(ii)+100e-3*20e3),dig(idx(ii):idx(ii)+100e-3*20e3))
     end
 end

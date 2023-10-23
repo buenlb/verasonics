@@ -6,7 +6,8 @@ end
 var2test = var2plot;
 var2plot = var2test;
 
-inters = {[-10,-5],[5.5,15.5]};
+% inters = {[-10,-5],[5.5,15.5]};
+inters = {[-6,-3],[3.5,15.5]};
 curP = zeros(size(inters));
 for hh = 1:length(inters)
     tmpTm = inters{hh}(1):tWindow/60:inters{hh}(2);

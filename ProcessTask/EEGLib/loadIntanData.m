@@ -1,5 +1,5 @@
 % loadIntanData uses the file provided by intan to load [path,file]
-function [t,eegData,digData,algData] = loadIntanData(path, file)
+function [t,eegData,digData,algData,amplifier_channels] = loadIntanData(path, file)
 
 % read_Intan_RHS2000_file
 %

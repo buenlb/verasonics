@@ -6,9 +6,9 @@ addpath('C:\Users\Taylor\Documents\Projects\verasonics\verasonics\ProcessTask\EE
 addpath('C:\Users\Taylor\Documents\Projects\verasonics\verasonics\ProcessTask\lib\')
 addpath('C:\Users\Taylor\Documents\Projects\verasonics\verasonics\ProcessTask\lib\durable\')
 %% Load files - US Only
-[tDataB, filesB] = loadMonk('b');
-[tDataE, filesE] = loadMonk('e');
-
+[tDataB, filesB] = loadMonk('D:\Task\Boltz\durable\');
+[tDataE, filesE] = loadMonk('D:\Task\Euler\durable\');
+% return
 %% Combine subjects
 tData = [tDataB,tDataE];
 processedFiles = [filesB,filesE];
@@ -16,35 +16,35 @@ monk(1:length(tDataB)) = 'b';
 monk(length(tDataB)+1:length(tData)) = 'e';
 
 %% Load files - nanoparticles
-[tDataC, filesC] = loadMonk('c');
-[tDataCS, filesCS] = loadMonk('c_saline');
-[tDataH, filesH] = loadMonk('h');
-[tDataHS, filesHS] = loadMonk('h_saline');
+% [tDataC, filesC] = loadMonk('D:\Task\Matt\Propofol\Calvin\');
+% [tDataCS, filesCS] = loadMonk('D:\Task\Matt\Saline\Calvin\');
+% [tDataH, filesH] = loadMonk('D:\Task\Matt\Propofol\Hobbes\');
+% [tDataHS, filesHS] = loadMonk('D:\Task\Matt\Saline\Hobbes\');
 %%
-tDataC = setUltrasoundTrial(tDataC);
-tDataCS = setUltrasoundTrial(tDataCS);
-tDataH = setUltrasoundTrial(tDataH);
-tDataHS = setUltrasoundTrial(tDataHS);
-
-tDataDD = [tDataC,tDataCS,tDataH,tDataHS];
-
-monkDD(1:length(tDataC)+length(tDataCS)) = 'c';
-monkDD((end+1):length(tDataDD)) = 'h';
-drug(1:length(tDataC)) = 'p';
-drug((end+1):(end+1+length(tDataCS))) = 's';
-drug((end+1):(end+1+length(tDataH))) = 'p';
-drug((end+1):(end+1+length(tDataHS))) = 's';
-
-%% Combine subjects - nanoparticles
-tDataN = [tDataC,tDataH];
-monkN(1:length(tDataC)) = 'c';
-monkN(length(tDataC)+1:length(tDataN)) = 'h';
-processedFilesN = [filesC, filesH];
-
-tDataS = [tDataCS, tDataHS];
-monkSaline(1:length(tDataCS)) = 'c';
-monkSaline(length(tDataCS)+1:length(tDataS)) = 'h';
-processedFilesS = [filesCS, filesHS];
+% tDataC = setUltrasoundTrial(tDataC);
+% tDataCS = setUltrasoundTrial(tDataCS);
+% tDataH = setUltrasoundTrial(tDataH);
+% tDataHS = setUltrasoundTrial(tDataHS);
+% 
+% tDataDD = [tDataC,tDataCS,tDataH,tDataHS];
+% 
+% monkDD(1:length(tDataC)+length(tDataCS)) = 'c';
+% monkDD((end+1):length(tDataDD)) = 'h';
+% drug(1:length(tDataC)) = 'p';
+% drug((end+1):(end+1+length(tDataCS))) = 's';
+% drug((end+1):(end+1+length(tDataH))) = 'p';
+% drug((end+1):(end+1+length(tDataHS))) = 's';
+% 
+% %% Combine subjects - nanoparticles
+% tDataN = [tDataC,tDataH];
+% monkN(1:length(tDataC)) = 'c';
+% monkN(length(tDataC)+1:length(tDataN)) = 'h';
+% processedFilesN = [filesC, filesH];
+% 
+% tDataS = [tDataCS, tDataHS];
+% monkSaline(1:length(tDataCS)) = 'c';
+% monkSaline(length(tDataCS)+1:length(tDataS)) = 'h';
+% processedFilesS = [filesCS, filesHS];
 %% This code temporarily replaces the above while I am still sorting out loadDataDurable
 % old = load('tmpSideSonicated.mat');
 % load data10October2022.mat;
@@ -167,9 +167,9 @@ for ii = 1:length(tDataDD)
         continue
     end
     % Process behavior over time
-    baseline = tDataDD(ii).timing(tDataDD(ii).sonicatedTrials-1).startTime-...
-        tDataDD(ii).timing(tDataDD(ii).sonicatedTrials).startTime;
-    p0(ii) = behaviorOverTime2(tDataDD(ii),baseline,tWindow);
+%     baseline = tDataDD(ii).timing(tDataDD(ii).sonicatedTrials-1).startTime-...
+%         tDataDD(ii).timing(tDataDD(ii).sonicatedTrials).startTime;
+    p0(ii) = behaviorOverTime2(tDataDD(ii),0,tWindow);
     [epp(ii,:),y(ii,:),m(ii,:),allCh(ii,:),chVectors(:,:,ii),dVectors(:,:,ii),err(ii,:)]...
         = behaviorOverTime2(tDataDD(ii),tm,tWindow,p0(ii));
 end

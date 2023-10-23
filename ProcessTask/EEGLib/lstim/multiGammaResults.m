@@ -1,4 +1,4 @@
-function [tBands,hAll,hDuring] = multiGammaResults(pth,fNameBase,bands,bandLabels)
+function [tBands,hAll,hDuring,rawEeg,rawT] = multiGammaResults(pth,fNameBase,bands,bandLabels)
 [t,eeg,dig] = concatIntan(pth,fNameBase);
 digUs = dig(1,:)';
 % eeg = mean(eeg,1)';
@@ -40,7 +40,8 @@ for hh = 1:size(bands,1)
 
     duringBndLeft = plotGamma_lstim(t,eeg(1,:),digUs,bands(hh,:),'windowSize',windowSize,'fftWindow',fftWindow,'verbose',0,'plotResults',0);
     duringBndRight = plotGamma_lstim(t,eeg(2,:),digUs,bands(hh,:),'windowSize',windowSize,'fftWindow',fftWindow,'verbose',0,'plotResults',0);
-    duringBnd = plotGamma_lstim(t,mean(eeg,1)',digUs,bands(hh,:),'windowSize',windowSize,'fftWindow',fftWindow,'verbose',0,'plotResults',0);
+    [duringBnd,rawEeg,rawT] = plotGamma_lstim(t,mean(eeg,1)',digUs,bands(hh,:),'windowSize',windowSize,'fftWindow',fftWindow,'verbose',0,'plotResults',1);
+    
     if hh == 1
         hDuring = figure;
         hold on;

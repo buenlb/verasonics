@@ -1,4 +1,7 @@
 clear; close all hidden; clc;
+%% Toggle EEG
+PROCESSEEG = 1;
+
 %% Add paths
 addpath('C:\Users\Taylor\Documents\Projects\verasonics\verasonics\lib\')
 addpath('C:\Users\Taylor\Documents\Projects\verasonics\verasonics\ProcessTask\')
@@ -28,6 +31,14 @@ drug((end+1):(end+length(tDataHS))) = 's';
 
 processedFilesDD = [filesC,filesCS,filesH,filesHS];
 
+%% EEG
+if PROCESSEEG
+    eegOutH = eegDurable(tDataH,filesH,'D:\Task\Hobbes\EEG\','Hobbes_');
+    eegOutC = eegDurable(tDataC,filesC,'D:\Task\Calvin\EEG\','calvin_');
+    eegOutCS = eegDurable(tDataCS,filesCS,'D:\Task\Calvin\EEG\','calvin_');
+    eegOutHS = eegDurable(tDataHS,filesHS,'D:\Task\Hobbes\EEG\','Hobbes_');
+    eegOut = [eegOutC,eegOutCS,eegOutH,eegOutHS];
+end
 %% Process behavior over time
 % Set time window and range
 tWindow = 3*60;
@@ -57,7 +68,8 @@ for ii = 1:length(tDataDD)
     % Process behavior over time
     baseline = tDataDD(ii).timing(tDataDD(ii).sonicatedTrials-1).startTime-...
         tDataDD(ii).timing(tDataDD(ii).sonicatedTrials).startTime;
-    [p0(ii),~,m0(ii)] = behaviorOverTime2(tDataDD(ii),baseline,300);
+    [p0(ii),~,m0(ii)] = behaviorOverTime2(tDataDD(ii),baseline,180);
+%     keyboard
     [epp(ii,:),y(ii,:),m(ii,:),allCh(ii,:),chVectors(:,:,ii),dVectors(:,:,ii),err(ii,:)]...
         = behaviorOverTime2(tDataDD(ii),tm,tWindow,p0(ii));
 end
@@ -74,11 +86,12 @@ sIdxP = getSessionIdx(sessions,'Ispta',5,'<','drug','p','=');
 
 % var2plot = 100*m./repmat(100*m0',[1,length(tm)]);
 var2plot = 100*y;
+var2plot(:,tm<4*60) = nan;
 
 h = figure;
 h = plotDurableResults(tm,var2plot,idxLeftP,idxRightP,[],h,[0,20]);
 figure(h)
-title('Propofol')
+title('Propofol')       
 
 h = figure;
 h = plotDurableResults(tm,var2plot,idxLeftS,idxRightS,[],h,[0,20]);
@@ -91,7 +104,8 @@ time = [];
 drugAnova = [];
 grp = {lgn,drugAnova,time};
 
-tms = 60*(10:3:20);
+tms = 60*(4:3:20);
+% tms = 60*4;
 tmIdx = zeros(size(tms));
 for ii = 1:length(tms)
     tmIdx(ii) = find(tms(ii)==tm);
@@ -119,3 +133,12 @@ end
 for t = 2 : size(tbl, 1) - 2
     fprintf('%s \t F(%d,%d) = %.2f, p = %.2g\n', tbl{t, 1}, tbl{t, 3}, tbl{size(tbl, 1) - 1, 3}, tbl{t, 6}, tbl{t, 7});
 end
+
+%% EEG Results
+tSmoothed = 0.1:0.5:20*60;
+window = 30;
+gamma = plotEEG(eegOut,[30,70],tDataDD,[idxLeftP,idxRightP],'both',tSmoothed,window,[1,2]);
+
+figure
+ax = gca;
+shadedErrorBar(tSmoothed/60,mean(gamma,1,'omitnan'),semOmitNan(gamma,1),'lineprops',{'Color',ax.ColorOrder(1,:)})

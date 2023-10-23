@@ -75,7 +75,7 @@ setFgBurstMode(fg1,2,1);
 setFgTriggerMode(fg1,2,'EXT',0,'NEG'); 
 
 outpOn(fg1,2);
-return
+
 %% Begin session!
 logPath = 'C:\Users\Taylor\Documents\tmp\';
 verasonicsLogName = [logPath, 'verasonicsLog.mat'];
