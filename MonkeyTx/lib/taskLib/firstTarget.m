@@ -22,13 +22,15 @@ clear all; close all; clc;
 % cd 'C:\Users\Verasonics\Documents\Vantage-4.4.0-2012091800';
 activate;
 
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\');
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\taskLib');
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\placementVerification');
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\lib\');
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\MATFILES\');
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\setupScripts\');
-addpath('C:\Users\Verasonics\Desktop\Taylor\Code\verasonics\MonkeyTx\lib\mrLib\transducerLocalization\');
+mainPth = 'C:\Users\Administrator\Documents\MonkeyCode\';
+
+addpath([mainPth, 'MonkeyTx\lib\']);
+addpath([mainPth, 'MonkeyTx\lib\taskLib']);
+addpath([mainPth, 'MonkeyTx\lib\placementVerification']);
+addpath([mainPth, 'lib\']);
+addpath([mainPth, 'MonkeyTx\MATFILES\']);
+addpath([mainPth, 'MonkeyTx\setupScripts\']);
+addpath([mainPth, 'MonkeyTx\lib\mrLib\transducerLocalization\']);
 
 %% User defined inputs
 monk = input('Monkey (b/e): ', 's');

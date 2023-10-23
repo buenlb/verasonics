@@ -1,19 +1,19 @@
 clear all; clc;
 
-HIFU = 0;
+HIFU = 1;
 %% Set up path locations
 srcDirectory = setPaths();
 
 %%
-% txSn = 'JAB800'; % Serial number of transducer - necessary for correct geometry
-txSn = 'IHG989';
+txSn = 'JAB800'; % Serial number of transducer - necessary for correct geometry
+% txSn = 'IHG989';
 % txSn = 'JEC482';
 frequency = 0.48; % Frequency in MHz
 focus = [0,0,65]; % Focal location in mm. x is the long axis of the array, y is the short axis, and z is depth
 % focus2 = [-12,0,65];
-nCycles = 1; % number of cycles with which to excite Tx (can integer multiples of 1/2)
+nCycles = 5; % number of cycles with which to excite Tx (can integer multiples of 1/2)
 % nCycles = round(300e-3*650e3);
-ioChannel = 255;
+ioChannel = 10;
 NA = 1;
 
 % Specify system parameters
@@ -44,7 +44,7 @@ if HIFU
     % installed the driver for the external power supply, and it is connected
     % to the host computer and turned on, you should see it listed along with
     % the COM port ID number assigned to it.
-    Resource.HIFU.extPwrComPortID = 'COM5';
+    Resource.HIFU.extPwrComPortID = 'COM4';
 
     Resource.HIFU.psType = 'QPX600DP'; % set to 'QPX600DP' to match supply being used
 
@@ -173,7 +173,7 @@ Event(n).recon = 0; % no reconstruction.
 Event(n).process = 0; % no processing
     Event(n).seqControl = [nsc,nsc+1,nsc+2];
     SeqControl(nsc).command = 'timeToNextAcq';
-    SeqControl(nsc).argument = 1e3;
+    SeqControl(nsc).argument = 1e5;
     nscTime2Aq = nsc;
     nsc = nsc + 1;
     SeqControl(nsc).command = 'transferToHost';
